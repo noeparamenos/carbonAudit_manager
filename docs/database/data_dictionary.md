@@ -1,5 +1,8 @@
 # Diccionario de datos
 
+- Base de datos: carbon_audit
+- Sistema gestor: PostgreSQL
+- Schema utilizado: public
 
 ## 0. Dirección
 
