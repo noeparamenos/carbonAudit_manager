@@ -1,70 +1,88 @@
+```mermaid
 erDiagram
-EMPRESA ||--o{ DEPARTAMENTO : "tiene"
-DEPARTAMENTO ||--o{ EMPLEADOS : "contiene"
-DEPARTAMENTO ||--o{ CONSUMOS_MENSUALES : "registra"
-DEPARTAMENTO ||--o{ RESPONSABLES : "gestiona"
-EMPLEADOS ||--o| COMMUTING_EMPLEADOS : "realiza"
-EMPLEADOS ||--o{ RESPONSABLES : "es asignado"
-FACTORES_EMISION ||--o{ CONSUMOS_MENSUALES : "aplica a"
-FACTORES_EMISION ||--o{ COMMUTING_EMPLEADOS : "aplica a"
+    DIRECCION ||--o{ EMPRESA: "sede de"
+    DIRECCION ||--o{ DEPARTAMENTO: "ubicado en"
+    DIRECCION ||--o{ EMPLEADO: "residencia de"
+    EMPRESA ||--o{ DEPARTAMENTO: "tiene"
+    DEPARTAMENTO ||--o{ EMPLEADO: "pertenece"
+    DEPARTAMENTO ||--o{ RESPONSABLE: "gestionado por"
+    DEPARTAMENTO ||--o{ CONSUMO_MENSUAL: "genera"
+    EMPLEADO ||--o{ RESPONSABLE: "actúa como"
+    EMPLEADO ||--o{ COMMUTING_EMPLEADO: "realiza"
+    FACTORES_EMISION ||--o{ EMPLEADO: "define transporte"
+    FACTORES_EMISION ||--o{ CONSUMO_MENSUAL: "aplica a"
+    FACTORES_EMISION ||--o{ COMMUTING_EMPLEADO: "calcula huella"
+
+    DIRECCION {
+        int id_direccion PK
+        varchar calle "NN"
+        varchar ciudad "NN"
+        varchar codigo_postal "NN"
+        varchar provincia
+        decimal latitud
+        decimal longitud
+    }
 
     EMPRESA {
         int id_empresa PK
-        string nombre_social NOT_NULL
-        string cif UK_NOT_NULL
-        string direccion
-        string telefono
-        string email
-        string sector
+        varchar nombre_social "NN"
+        varchar cif "NN"
+        varchar telefono
+        varchar email
+        varchar sector
+        int id_direccion FK
     }
 
     DEPARTAMENTO {
         int id_departamento PK
-        int id_empresa FK
-        string nombre NOT_NULL
-        string descripcion
-        string direccion_completa
+        varchar nombre "NN"
+        text descripcion
         boolean incluir_alcance3
+        int id_direccion FK "NN"
+        int id_empresa FK "NN"
     }
 
-    EMPLEADOS {
+    EMPLEADO {
         int id_empleado PK
+        varchar nombre "NN"
+        decimal distancia_trabajo
+        int medio_transporte FK "NN"
+        int dias_presenciales "NN"
+        int id_direccion FK "NN"
         int id_dept FK
-        string nombre NOT_NULL
-        string direccion_residencia
-        decimal distancia_trabajo_km
+    }
+
+    RESPONSABLE {
+        int id_asignacion PK
+        date fecha_inicio "NN"
+        date fecha_fin
+        int id_dept FK "NN"
+        int id_empleado FK "NN"
     }
 
     FACTORES_EMISION {
         int id_factor PK
-        string nombre NOT_NULL
-        string unidad NOT_NULL
-        decimal valor_factor NOT_NULL
-        int alcance NOT_NULL
+        varchar nombre "NN"
+        varchar unidad "NN"
+        decimal valor_factor "NN"
+        int alcance "NN"
     }
 
-    CONSUMOS_MENSUALES {
+    CONSUMO_MENSUAL {
         int id_consumo PK
-        int id_dept FK
-        int id_factor FK
-        decimal cantidad NOT_NULL
-        int mes NOT_NULL
-        int anio NOT_NULL
+        decimal cantidad "NN"
+        int mes "NN"
+        int anio "NN"
+        int id_dept FK "NN"
+        int id_factor FK "NN"
     }
 
-    COMMUTING_EMPLEADOS {
-        int id_transporte PK
-        int id_empleado FK
-        int id_factor FK
-        decimal distancia_diaria_km NOT_NULL
-        int dias_presenciales_mes NOT_NULL
+    COMMUTING_EMPLEADO {
+        int id_empleado FK "NN"
+        int id_factor FK "NN"
+        decimal distancia_diaria_km
+        int dias_presenciales_mes
+        int mes "NN"
+        int anio "NN"
     }
-
-    RESPONSABLES {
-        int id_asignacion PK
-        int id_dept FK
-        int id_empleado FK
-        date fecha_inicio NOT_NULL
-        date fecha_fin
-        boolean activo
-    }
+```

@@ -10,6 +10,7 @@ el cálculo de la huella de carbono en PYMES.
 - Base de datos: PostgreSQL
 - Arquitectura: DAO
 - Build: Maven
+- UI: JavaFX
 
 ## Capas de la aplicación
 

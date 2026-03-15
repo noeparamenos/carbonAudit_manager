@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>poo</groupId>
-    <artifactId>carbon-audit-manager-app</artifactId>
+    <artifactId>Carbon Audit Manager</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
