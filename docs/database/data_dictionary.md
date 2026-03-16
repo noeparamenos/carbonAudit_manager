@@ -66,7 +66,7 @@
 | medio_transporte  | INT          | FK -> Factores de emisison (id_factor) NOT NULL | Medio de desplazamiento a la oficina     |
 | dias_presenciales | INT          | NOT NULL DEFAULT (20)                           | Total de dias que se desplaza al mes     |
 | id_direccion      | INT          | FK -> Direccion(id_direccion)  NOT NULL         | Dirección de residencia                  |
-| id_dept           | INT          | FK -> Departamento(id_departamento)             | Departamento actual                      |
+| id_dept           | INT          | FK -> Departamento(id_departamento) NOT NULL    | Departamento actual                      |
 
 ---
 
@@ -89,7 +89,7 @@
 ## 5. Factores de Emisión
 
 - Contiene los **coeficientes oficiales de emisión de CO₂ equivalente**.
-- Evitar registros repetidos: UNIQUE(id_dept, id_factor, mes, anio)
+- Evitar registros repetidos: UNIQUE(nombre, unidad)
 
 | Campo         | Tipo           | Restricciones                       | Descripción                               |
 |---------------|----------------|-------------------------------------|-------------------------------------------|
@@ -126,14 +126,14 @@
 - Permite mantener un historico de los medios de desplazamiento, evolución del teletrabajo...
 - Garantizar un unico registro empleado/mes: PRIMARY KEY (id_empleado, mes, anio)
 
-| Campo                 | Tipo         | Restricciones                          | Descripción                           |
-|-----------------------|--------------|----------------------------------------|---------------------------------------|
-| id_empleado           | INT          | FK → Empleados(id_empleado)  NOT NULL  | Empleado asociado                     |
-| id_factor             | INT          | FK → Factores(id_factor) NOT NULL      | Medio de transporte                   |
-| distancia_diaria_km   | DECIMAL(6,2) | NOT NULL                               | Distancia total diaria (ida y vuelta) |
-| dias_presenciales_mes | INT          | NOT NULL                               | Días presenciales en el mes           |
-| mes                   | INT          | CHECK (mes BETWEEN 1 AND 12)  NOT NULL | Mes trabajado                         |
-| anio                  | INT          | CHECK (anio >= 1950)          NOT NULL | Año del mes trabajado                 |
+| Campo                 | Tipo         | Restricciones                             | Descripción                           |
+|-----------------------|--------------|-------------------------------------------|---------------------------------------|
+| id_empleado           | INT          | PK FK → Empleados(id_empleado)  NOT NULL  | Empleado asociado                     |
+| id_factor             | INT          | FK → Factores(id_factor) NOT NULL         | Medio de transporte                   |
+| distancia_diaria_km   | DECIMAL(6,2) | NOT NULL                                  | Distancia total diaria (ida y vuelta) |
+| dias_presenciales_mes | INT          | NOT NULL                                  | Días presenciales en el mes           |
+| mes                   | INT          | PK CHECK (mes BETWEEN 1 AND 12)  NOT NULL | Mes trabajado                         |
+| anio                  | INT          | PK CHECK (anio >= 1950)          NOT NULL | Año del mes trabajado                 |
 
 ---
 

@@ -63,7 +63,7 @@ CREATE TABLE EMPLEADO
     medio_transporte  INT          NOT NULL REFERENCES FACTORES_EMISION (id_factor),
     dias_presenciales INT          NOT NULL DEFAULT 20,
     id_direccion      INT          NOT NULL REFERENCES DIRECCION (id_direccion),
-    id_dept           INT REFERENCES DEPARTAMENTO (id_departamento)
+    id_dept           INT          NOT NULL REFERENCES DEPARTAMENTO (id_departamento)
 );
 
 
