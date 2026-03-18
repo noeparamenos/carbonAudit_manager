@@ -14,6 +14,7 @@ public class Direccion {
     // Información de la dirección a especificar
     private String calle;
     private String ciudad;
+    private int numero;
     private String codigoPostal;
     private String provincia;
 
@@ -25,13 +26,22 @@ public class Direccion {
 
     public Direccion() {}
 
-    public Direccion(String calle, String ciudad, String codigoPostal) {
+    public Direccion(String calle, int numero, String ciudad, String codigoPostal) {
         this.calle = calle;
+        this.numero = numero;
         this.ciudad = ciudad;
         this.codigoPostal = codigoPostal;
     }
 
     // ==== GETTERS Y SETTERS ===================
+
+    public int getNumero() {
+        return numero;
+    }
+
+    public void setNumero(int numero) {
+        this.numero = numero;
+    }
 
     public String getProvincia() {
         return provincia;
@@ -40,6 +50,7 @@ public class Direccion {
     public void setProvincia(String provincia) {
         this.provincia = provincia;
     }
+
 
     public int getIdDireccion() { return idDireccion; }
     public void setIdDireccion(int idDireccion) { this.idDireccion = idDireccion; }
@@ -61,7 +72,7 @@ public class Direccion {
 
     @Override
     public String toString() {
-        return calle + ", " + ciudad + " (" + codigoPostal + ")";
+        return calle + ", " +numero+ ", "+ ciudad + " (" + codigoPostal + ")";
     }
 
 

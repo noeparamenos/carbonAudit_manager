@@ -14,6 +14,28 @@ Describe la organización de la lógica orientada a objetos, enfocándose en la 
   
   - **Composición de Objetos:** Las relaciones entre tablas se han representado como como **referencias a objetos completos**. Para permitir el acceso a todos los datos navegando entre métodos sin tener que realizar constantemente consultas a la BD.
 
+Para tu archivo `class_architecture.md`, el resumen debe ser técnico, directo y resaltar las decisiones de diseño que hemos tomado (como el manejo de tipos de datos y validaciones). 
+
+Aquí tienes una estructura profesional lista para copiar y pegar:
+
+---
+
+## DAO
+
+- El paquete DAO (Data Access Object) actúa como la **capa de persistencia** del sistema. Su función principal es abstraer toda la lógica de comunicación con la base de datos PostgreSQL, permitiendo que el resto de la aplicación trabaje con objetos Java (POJOs) sin usar SQL.
+- Se ha optado por una implementación de DAOs manuales mediante JDBC para garantizar la máxima transparencia en las transacciones, un control estricto sobre los tipos de datos numéricos de alta precisión y evitar la sobrecarga de dependencias externas (como jakarta/hibernate)
+
+
+  1. **Interfaz Genérica `DAO<T, K>`**: 
+      * Define las operaciones CRUD estándar (`create`, `findById`, `findAll`, `update`, `delete`).
+      * Utiliza **Generics** para asegurar que cada DAO maneje el tipo de entidad (`T`) y el tipo de clave primaria (`K`) correctos.
+  2.  **Patrón Singleton en `DatabaseManager`**: 
+      * Centraliza la conexión a la base de datos mediante una única instancia, optimizando el uso de recursos y el pool de conexiones.
+  3.  **Composición y Relaciones**: 
+      * Los DAOs están interconectados para reconstruir objetos complejos a partir de claves foráneas (FK).
+
+- Manejo de errores: Se capturan `SQLException` y se proporciona información sobre violaciones de restricciones de integridad asegurando que el sistema sea robusto.
+
 
 ## 2. Capa Service
 - La responsabilidad de transformar consumos en $CO_2$ recae exclusivamente en el `CarbonService`. Esto evita la dispersión de fórmulas y asegura un único punto de verdad.
@@ -23,7 +45,8 @@ Describe la organización de la lógica orientada a objetos, enfocándose en la 
 
 ## 2. Tipos de Datos y Precisión Técnica
 
-- Debido a que se trata de un sistema de auditoría, la integridad del dato es un requisito crítico. Por lo que se a optado con tipos de datos con gran precisión para los cálculos.
+- Debido a que se trata de un sistema de auditoría, la integridad del dato es un requisito crítico. Por lo que se a optado con tipos de datos con gran precisión para los cálculos. 
+- Ademas usar BigDecimal nos permite recuperar nulos en la BD y asignarlos como null al objeto, evitando errores como asingar un 0 a una coordenada
 
 
 ## 3. Entidades Clave

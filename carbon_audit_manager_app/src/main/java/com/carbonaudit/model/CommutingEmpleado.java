@@ -10,7 +10,7 @@ public class CommutingEmpleado {
 
     // RELACIONES COMO OBJETOS (Composición)
     private Empleado empleado;       // Quién se desplaza
-    private FactorEmision transporte; // Qué medio usa (Coche, Bus, etc.)
+    private FactorEmision medioTransporte; // Qué medio usa (Coche, Bus, etc.)
 
     // Datos del un mes concreto
     private BigDecimal distanciaDiariaKm;
@@ -22,11 +22,11 @@ public class CommutingEmpleado {
 
     public CommutingEmpleado() {}
 
-    public CommutingEmpleado(Empleado empleado, FactorEmision transporte,
+    public CommutingEmpleado(Empleado empleado, FactorEmision medioTransporte,
                              BigDecimal distanciaDiariaKm, int diasPresencialesMes,
                              int mes, int anio) {
         this.empleado = empleado;
-        this.transporte = transporte;
+        this.medioTransporte = medioTransporte;
         this.distanciaDiariaKm = distanciaDiariaKm;
         this.diasPresencialesMes = diasPresencialesMes;
         this.mes = mes;
@@ -38,8 +38,8 @@ public class CommutingEmpleado {
     public Empleado getEmpleado() { return empleado; }
     public void setEmpleado(Empleado empleado) { this.empleado = empleado; }
 
-    public FactorEmision getTransporte() { return transporte; }
-    public void setTransporte(FactorEmision transporte) { this.transporte = transporte; }
+    public FactorEmision getMedioTransporte() { return medioTransporte; }
+    public void setMedioTransporte(FactorEmision medioTransporte) { this.medioTransporte = medioTransporte; }
 
     public BigDecimal getDistanciaDiariaKm() { return distanciaDiariaKm; }
     public void setDistanciaDiariaKm(BigDecimal distanciaDiariaKm) { this.distanciaDiariaKm = distanciaDiariaKm; }

@@ -1,0 +1,3 @@
+- Se ha exigido que la empresa tenga una direccion (not null en la BD)
+- Se ha añadido el numero de calle a la direccion (int)
+- Se han comprobado las restricciones de integridad en cada una de las clases DAO

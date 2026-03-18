@@ -30,7 +30,7 @@ erDiagram
         varchar telefono
         varchar email
         varchar sector
-        int id_direccion FK
+        int id_direccion FK "NN"
     }
 
     DEPARTAMENTO {

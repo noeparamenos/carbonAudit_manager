@@ -13,6 +13,7 @@
 |---------------|---------------|---------------|----------------------------------------------------|
 | id_direccion  | SERIAL        | PK            | Identificador único de la ubicación                |
 | calle         | VARCHAR(200)  | NOT NULL      | Nombre de la vía y número                          |
+| numero        | INT           | NOT NULL      | Numero de la calle                                 |
 | ciudad        | VARCHAR(100)  | NOT NULL      | Municipio o ciudad                                 |
 | codigo_postal | VARCHAR(10)   | NOT NULL      | Código postal para mejorar precisión del geocoding |
 | provincia     | VARCHAR(100)  |               | Estado o provincia                                 |
@@ -23,15 +24,15 @@
 
 - Entidad principal que representa a la organización usuaria del sistema.
 
-| Campo         | Tipo de Dato | Restricciones                 | Descripción                                    |
-|---------------|--------------|-------------------------------|------------------------------------------------|
-| id_empresa    | SERIAL       | PK                            | Identificador único autoincremental            |
-| nombre_social | VARCHAR(100) | UNIQUE, NOT NULL              | Nombre legal de la PYME                        |
-| cif           | VARCHAR(15)  | UNIQUE, NOT NULL              | Código de Identificación Fiscal                |
-| telefono      | VARCHAR(20)  |                               | Teléfono de contacto                           |
-| email         | VARCHAR(100) |                               | Email corporativo para notificaciones          |
-| sector        | VARCHAR(50)  |                               | Sector económico (industrial, servicios, etc.) |
-| id_direccion  | INT          | FK -> Direccion(id_direccion) | Dirección de la sede principal                 | 
+| Campo         | Tipo de Dato | Restricciones                          | Descripción                                    |
+|---------------|--------------|----------------------------------------|------------------------------------------------|
+| id_empresa    | SERIAL       | PK                                     | Identificador único autoincremental            |
+| nombre_social | VARCHAR(100) | UNIQUE, NOT NULL                       | Nombre legal de la PYME                        |
+| cif           | VARCHAR(15)  | UNIQUE, NOT NULL                       | Código de Identificación Fiscal                |
+| telefono      | VARCHAR(20)  |                                        | Teléfono de contacto                           |
+| email         | VARCHAR(100) |                                        | Email corporativo para notificaciones          |
+| sector        | VARCHAR(50)  |                                        | Sector económico (industrial, servicios, etc.) |
+| id_direccion  | INT          | FK -> Direccion(id_direccion) NOT NULL | Dirección de la sede principal                 | 
 
 ---
 
@@ -56,7 +57,7 @@
 ## 3. Empleado
 
 - Representa a los empleados de la empresa.
-- Sus datos se utilizan principalmente para cálculos de movilidad y asignación de responsabilidades dentro del sistema.
+  - Sus datos se utilizan principalmente para cálculos de movilidad y asignación de responsabilidades dentro del sistema.
 
 | Campo             | Tipo         | Restricciones                                   | Utilidad                                 |
 |-------------------|--------------|-------------------------------------------------|------------------------------------------|
