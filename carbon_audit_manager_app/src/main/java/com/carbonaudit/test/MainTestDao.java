@@ -29,7 +29,7 @@ public class MainTestDao {
             dir.setCiudad("Madrid");
             dir.setCodigoPostal("24248");
             dir = direccionDAO.create(dir);
-            System.out.println("✅ Dirección creada con ID: " + dir.getIdDireccion());
+            System.out.println("Dirección creada con ID: " + dir.getIdDireccion());
 
             // 3. TEST: Crear Empresa vinculada
             Empresa emp = new Empresa();
@@ -37,7 +37,7 @@ public class MainTestDao {
             emp.setCif("A12345678");
             emp.setDireccion(dir); // Pasamos el objeto con el ID ya generado
             emp = empresaDAO.create(emp);
-            System.out.println("✅ Empresa 'EcoCorp' creada con ID: " + emp.getIdEmpresa());
+            System.out.println("Empresa 'EcoCorp' creada con ID: " + emp.getIdEmpresa());
 
             // 4. TEST: Crear un Factor de Emisión (Electricidad)
             FactorEmision luz = new FactorEmision();
@@ -46,7 +46,7 @@ public class MainTestDao {
             luz.setValorFactor(new BigDecimal("0.25900")); // kgCO2e/kWh
             luz.setAlcance(2);
             luz = factorDAO.create(luz);
-            System.out.println("✅ Factor de Emisión creado: " + luz.getNombre());
+            System.out.println("Factor de Emisión creado: " + luz.getNombre());
 
             // 5. TEST: Forzar error de validación (Mes inexistente)
             System.out.println("--- Probando validador de mes ---");
@@ -55,7 +55,7 @@ public class MainTestDao {
                 error.setMes(13); // Esto debería lanzar IllegalArgumentException
                 consumoDAO.create(error);
             } catch (IllegalArgumentException e) {
-                System.out.println("✅ El validador funciona: " + e.getMessage());
+                System.out.println("El validador funciona: " + e.getMessage());
             }
 
         } catch (Exception e) {
