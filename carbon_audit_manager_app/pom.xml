@@ -18,25 +18,39 @@
     </properties>
 
     <dependencies>
+        <!--PostgreSQL-->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>42.7.2</version>
         </dependency>
-
+        <!--Java FX-->
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
             <version>${javafx.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
             <version>${javafx.version}</version>
         </dependency>
+
+        <!--Leectura de JSONs y conversion a variables Java-->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version>
+        </dependency>
+        <!-- Para crear un .env con la API Key privada-->
+        <dependency>
+            <groupId>io.github.cdimascio</groupId>
+            <artifactId>dotenv-java</artifactId>
+            <version>3.0.0</version>
+        </dependency>
     </dependencies>
 
+    <!-- Java FX -->
     <build>
         <plugins>
             <plugin>
@@ -47,7 +61,6 @@
                     <mainClass>com.carbonaudit.Main</mainClass>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
 </project>

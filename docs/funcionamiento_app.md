@@ -1,7 +1,7 @@
 
 
-# 1. Fase de Configuración (El "Set-up")
-- Antes de calcular nada, el administrador define la estructura de la empresa. Es una tarea que se hace una sola vez o cuando hay cambios.
+# 1. Fase de Configuración 
+    1. El administrador define la estructura de la empresa. 
 
 - Alta de Departamentos: Se crean áreas (ej. Producción, Administración). Aquí es donde marcas el booleano de "Incluir Alcance 3" que diseñamos.
 
