@@ -85,7 +85,7 @@ public class EmpleadoDAO implements DAO<Empleado, Integer> {
         Empleado emp = new Empleado();
         emp.setIdEmpleado(rs.getInt("id_empleado"));
         emp.setNombre(rs.getString("nombre"));
-        emp.setDistanciaTrabajo(rs.getBigDecimal("distancia_tra         bajo"));
+        emp.setDistanciaTrabajo(rs.getBigDecimal("distancia_trabajo"));
         emp.setDiasPresenciales(rs.getInt("dias_presenciales"));
 
         // Dependencias (composicion)

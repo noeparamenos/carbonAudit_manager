@@ -1,6 +1,7 @@
 package com.carbonaudit.service.external;
 
 import com.carbonaudit.model.Direccion;
+
 import java.math.BigDecimal;
 
 public class TestGeolocalizacion {
@@ -30,10 +31,10 @@ public class TestGeolocalizacion {
 
             geoService.completarCoordenadas(casaEmpleado);
 
-            System.out.println("Resultado -> Latitud: " + casaEmpleado.getLatitud() +
+            System.out.println("Latitud: " + casaEmpleado.getLatitud() +
                     " | Longitud: " + casaEmpleado.getLongitud());
 
-            System.out.println("\n--- PRUEBA 2: CÁLCULO DE RUTA (COMMUTING) ---");
+            System.out.println("\n-- CÁLCULO DE RUTA (COMMUTING) ---");
             // Creamos una segunda dirección (la oficina)
             Direccion oficina = new Direccion("Paseo de la Castellana", 200, "Madrid", "28046");
             geoService.completarCoordenadas(oficina);
@@ -42,7 +43,7 @@ public class TestGeolocalizacion {
             BigDecimal distanciaKm = geoService.calcularDistancia(casaEmpleado, oficina);
 
             System.out.println("Distancia real por carretera: " + distanciaKm + " km");
-            System.out.println("Prueba superada con éxito. Datos listos para auditoría.");
+            System.out.println("Test finalizado con exito.");
 
         } catch (Exception e) {
             System.err.println("ERROR EN LA PRUEBA: " + e.getMessage());

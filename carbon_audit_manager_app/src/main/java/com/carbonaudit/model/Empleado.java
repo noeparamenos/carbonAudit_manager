@@ -36,7 +36,16 @@ public class Empleado {
         this.departamento = departamento;
     }
 
+    public Empleado(String nombre, FactorEmision medioTransporte, int diasPresenciales, Direccion direccion, Departamento departamento) {
+        this.nombre = nombre;
+        this.medioTransporte = medioTransporte;
+        this.diasPresenciales = diasPresenciales;
+        this.direccion = direccion;
+        this.departamento = departamento;
+    }
+
     // ==== GETTERS Y SETTERS ====
+
 
     public int getIdEmpleado() { return idEmpleado; }
     public void setIdEmpleado(int idEmpleado) { this.idEmpleado = idEmpleado; }
