@@ -3,7 +3,6 @@ package com.carbonaudit.service;
 
 
 import com.carbonaudit.model.*;
-import com.carbonaudit.dao.*; // Importas tus DAOs listos
 import com.carbonaudit.service.external.IServicioGeografico;
 
 import java.math.BigDecimal;
@@ -12,14 +11,12 @@ public class ServicioCalculoHuella {
 
 
     private final IServicioGeografico geoService;
-    private final DireccionDAO direccionDao;
-    private final FactorEmisionDAO factorDao;
+
 
     // Constructor (Inyección de dependencias)
-    public ServicioCalculoHuella(IServicioGeografico geoService, DireccionDAO direccionDao, FactorEmisionDAO factorDao) {
+    public ServicioCalculoHuella(IServicioGeografico geoService) {
         this.geoService = geoService;
-        this.direccionDao = direccionDao;
-        this.factorDao = factorDao;
+
     }
 
     // =========== COMMUTING DE EMPLEADOS ==============
@@ -30,27 +27,18 @@ public class ServicioCalculoHuella {
      */
     private void validarDatosEmpleado(Empleado emp) {
         // 1. Validaciones de seguridad
-        if (emp.getDistanciaTrabajo() == null) {
-            throw new IllegalStateException("El empleado no tiene calculada la distancia al trabajo. Ejecuta calcularYAsignarDistanciaCommuting primero.");
+        if (emp.getDepartamento().getDireccion() == null) {
+            throw new IllegalStateException("El empleado no tiene un departamento con direccion valida asignada.");
+        }
+        if (emp.getDireccion() == null) {
+            throw new IllegalStateException("El empleado no tiene una direccion válida.");
         }
         if (emp.getMedioTransporte() == null || emp.getMedioTransporte().getValorFactor() == null) {
             throw new IllegalStateException("El empleado no tiene un medio de transporte o factor de emisión válido asignado.");
         }
     }
 
-    /**
-     * Procesa una dirección: busca coordenadas y la guarda en DB.
-     * @param dir de la que queremos obtener las coordenadas
-     * @return La direccion con las coordenadas actualizadas
-     */
-    public Direccion registrarDireccion(Direccion dir) throws Exception {
-        // 1. Usamos el servicio externo para completar lat/lon
-        geoService.completarCoordenadas(dir);
 
-        // Persistir la direccion en la BD
-        direccionDao.create(dir);
-        return dir;
-    }
 
     /**
      * Calcula la distancia real entre la casa del empleado y su departamento de trabajo,
@@ -59,9 +47,8 @@ public class ServicioCalculoHuella {
      * @param empleado El empleado a procesar.
      * @throws Exception Si faltan datos o falla la conexión con el servicio de mapas.
      */
-    public void AsignarDistanciaCommuting(Empleado empleado) throws Exception {
+    public void AsignarDistanciaTrabajo(Empleado empleado) throws Exception {
 
-        validarDatosEmpleado(empleado);
 
         // Datos de direcciones
         Direccion dirEmpleado = empleado.getDireccion();

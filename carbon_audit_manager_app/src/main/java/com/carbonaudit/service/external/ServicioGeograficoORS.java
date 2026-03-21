@@ -39,16 +39,18 @@ public class ServicioGeograficoORS implements IServicioGeografico {
      */
     @Override
     public void completarCoordenadas(Direccion dir) throws Exception {
+
         // Extrae los datos de la direccion y los formateamos
-        String textoDireccion = String.format("%s %d, %s, %s",
+        String textoDireccion = String.format("%s %d, %s",
                 dir.getCalle(),
                 dir.getNumero(),
-                dir.getCiudad(),
-                dir.getCodigoPostal());
+                dir.getCiudad());
         String direccionCodificada = URLEncoder.encode(textoDireccion, StandardCharsets.UTF_8);
 
         // Construccion de la URL del endpoint de Geocoding
-        String url = BASE_URL + "/geocode/search?api_key=" + apiKey + "&text=" + direccionCodificada + "&limit=1";
+        String url = BASE_URL + "/geocode/search?api_key=" +
+                apiKey + "&text=" + direccionCodificada + "&limit=1";
+
         HttpRequest peticion = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .GET()
