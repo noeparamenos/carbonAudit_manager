@@ -38,6 +38,7 @@ public class Empleado {
 
     // ==== GETTERS Y SETTERS ====
 
+
     public int getIdEmpleado() { return idEmpleado; }
     public void setIdEmpleado(int idEmpleado) { this.idEmpleado = idEmpleado; }
 
