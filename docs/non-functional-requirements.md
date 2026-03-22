@@ -24,18 +24,18 @@ El sistema permite a las organizaciones cumplir con las normativas de sostenibil
 ### 3.1. Arquitectura y Desarrollo
 * **RNF-01 (Patrón de Diseño):** Implementación obligatoria de la arquitectura **DAO (Data Access Object)** para la separación de la lógica de negocio y el acceso a datos.
 * **RNF-02 (Persistencia):** Uso del SGBD **PostgreSQL** para garantizar la integridad referencial de los datos de consumo y departamentos.
-* **RNF-03 (Tecnologías Core):** Desarrollo basado en **Java 21 (JDK)** y gestión de dependencias con **Maven**[cite: 15, 41].
+* **RNF-03 (Tecnologías Core):** Desarrollo basado en **Java 21 (JDK)** y gestión de dependencias con **Maven**.
 
 ### 3.2. Interfaz y Experiencia (UI/UX)
 * **RNF-04 (Frontend):** Interfaz construida con **JavaFX 21 y FXML**, diseñada mediante **Scene Builder**.
 * **RNF-05 (Entorno):** Compatibilidad para diferentes SO.
 
 ### 3.3. Metodología de Emisiones (Estándares)
-* **RNF-06 (Modelo de Alcances):** Clasificación interna de consumos según el GHG Protocol (Alcances 1, 2 y 3).
+* **RNF-06 (Modelo de Alcances):** Clasificación interna de consumos según el **GHG Protocol** (Alcances 1, 2 y 3).
 * **RNF-07 (Precisión de Transporte):** El sistema debe soportar cálculos de transporte por distancia (km) y tipo de combustible para mayor precisión en el Alcance 3.
 
 ## 4. Stack Tecnológico
-* **Lenguaje:** Java 21[cite: 15].
-* **Base de Datos:** PostgreSQL[cite: 15].
+* **Lenguaje:** Java 21.
+* **Base de Datos:** PostgreSQL.
 * **IDE:** IntelliJ IDEA.
 * **Control de Versiones:** Git. 
