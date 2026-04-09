@@ -50,6 +50,7 @@ public class EmpleadoDAO implements DAO<Empleado, Integer> {
             pstmt.setInt(6, empleado.getDepartamento().getIdDepartamento());
 
             ResultSet rs = pstmt.executeQuery();
+
             if (rs.next()) {
                 empleado.setIdEmpleado(rs.getInt(1)); // Recuperación del ID autogenerado
             }

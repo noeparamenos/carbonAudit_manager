@@ -185,4 +185,33 @@ public class ConsumoMensualDAO implements DAO<ConsumoMensual, Integer> {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Recupera todos los consumos de un departamento para un período específico (mes y año)
+     *
+     * @param idDepartamento ID del departamento
+     * @param mes           Mes del período (1-12)
+     * @param anio          Año del período
+     * @return Lista de consumos del departamento en ese período
+     */
+    public List<ConsumoMensual> getConsumosDepartamentoMes(int idDepartamento, int mes, int anio) {
+        List<ConsumoMensual> consumos = new ArrayList<>();
+        String sql = "SELECT * FROM CONSUMO_MENSUAL WHERE id_dept = ? AND mes = ? AND anio = ?";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, idDepartamento);
+            pstmt.setInt(2, mes);
+            pstmt.setInt(3, anio);
+
+
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                consumos.add(mapResultSetToConsumo(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return consumos;
+    }
 }

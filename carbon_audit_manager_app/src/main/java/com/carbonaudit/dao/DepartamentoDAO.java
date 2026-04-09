@@ -175,6 +175,27 @@ public class DepartamentoDAO implements DAO<Departamento, Integer> {
     }
 
     /**
+     * Recupera todos los departamentos de una empresa específica.
+     * @param idEmpresa ID de la empresa
+     * @return Lista de departamentos pertenecientes a esa empresa
+     */
+    public List<Departamento> findAllByEmpresa(int idEmpresa) {
+        List<Departamento> lista = new ArrayList<>();
+        String sql = "SELECT * FROM DEPARTAMENTO WHERE id_empresa = ?";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, idEmpresa);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                lista.add(mapResultSetToDepartamento(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return lista;
+    }
+
+    /**
      * Borra un Departamento de la BD
      * @param id del departamento a borrar
      */

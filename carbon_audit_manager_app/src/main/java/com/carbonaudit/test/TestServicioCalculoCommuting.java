@@ -20,8 +20,8 @@ public class TestServicioCalculoCommuting {
 
             ServicioCalculoHuella calculoService = new ServicioCalculoHuella(servicioGeografico);
 
-            direccionEmpl = new Direccion("Avenida del Padre Isla", 120, "León", "24008");
-            direccionDep = new Direccion("C. Monte", 2, "Fresnillo del Monte", "24232");
+            direccionEmpl = new Direccion("Calle La Laguna", 6, "La Mata del Paramo", "24008");
+            direccionDep = new Direccion("Calle Manuel Llaneza", 3, "Oviedo", "33010");
 
             // Asignacion de posicionamiento
             servicioGeografico.completarCoordenadas(direccionDep);

@@ -1,8 +1,6 @@
 package com.carbonaudit.dao;
 
 import com.carbonaudit.model.CommutingEmpleado;
-import com.carbonaudit.model.Empleado;
-import com.carbonaudit.model.FactorEmision;
 
 import java.math.BigDecimal;
 import java.sql.*;
@@ -188,5 +186,36 @@ public class CommutingEmpleadoDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Recupera todos los registros de commuting de empleados de un departamento para un mes específico
+     *
+     * @param idDepartamento ID del departamento
+     * @param mes           Mes del período (1-12)
+     * @param anio          Año del período
+     * @return Lista de commutings de empleados del departamento y el mes indicado
+     */
+    public List<CommutingEmpleado> getCommutingsDepartamentoMes(int idDepartamento, int mes, int anio) {
+        List<CommutingEmpleado> lista = new ArrayList<>();
+        // JOIN con EMPLEADO para filtrar solo los empleados pertenecientes al departamento
+        String sql = "SELECT ce.* FROM COMMUTING_EMPLEADO ce " +
+                     "JOIN EMPLEADO e ON ce.id_empleado = e.id_empleado " +
+                     "WHERE e.id_dept = ? AND ce.mes = ? AND ce.anio = ?";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, idDepartamento);
+            pstmt.setInt(2, mes);
+            pstmt.setInt(3, anio);
+
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                lista.add(mapResultSetToCommuting(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return lista;
     }
 }

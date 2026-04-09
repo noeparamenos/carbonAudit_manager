@@ -41,11 +41,10 @@ public class ServicioGeograficoORS implements IServicioGeografico {
     public void completarCoordenadas(Direccion dir) throws Exception {
 
         // Extrae los datos de la direccion y los formateamos
-        String textoDireccion = String.format("%s %d, %s, %s, León, España",
+        String textoDireccion = String.format("%s %d, %s",
                 dir.getCalle(),
                 dir.getNumero(),
-                dir.getCiudad(),
-                dir.getCodigoPostal());
+                dir.getCiudad());
         String direccionCodificada = URLEncoder.encode(textoDireccion, StandardCharsets.UTF_8);
 
         // Construccion de la URL del endpoint de Geocoding

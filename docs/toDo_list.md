@@ -50,9 +50,11 @@ Desarrollo del Motor de Cálculo (Service) y la lógica de negocio
     - [x] Implementar metodo que calcule la **distancia al trabajo** del empelado usando el servicio externo
     - [x] Implementar un método que calcule el **impacto mensual del commuting** de un empleado 
     - [x] Implementar pruebas para asegurar la precisión en los cálculos de transporte por distancia y tipo de combustible.
-  - [ ] Implementar la lógica de cálculo del cálculo de la huella 
-    - [ ] Implementar un método que calcule la huella total mensual de un departamento basado en los factores de emision asignados.
-
+  - [x] Implementar la lógica de cálculo del cálculo de la huella 
+    - [x] Implementar método de consulta en el DAO para obtener los consumos mensuales de un departamento
+    - [x] Implementar método de consulta en el DAO para obtener todos los commutings de los empleados de un departamento
+    - [x] Implementar un método que calcule la huella total mensual de un departamento basado en los factores de emision asignados.
+    - [ ] Implementar una prueba para verificar el funcionamiento del calculo.
 ---
 
 ## Fase 3: Interfaz de Usuario y Dashboard 
