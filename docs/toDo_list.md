@@ -59,13 +59,17 @@ Desarrollo del Motor de Cálculo (Service) y la lógica de negocio
 
 ## Fase 3: Interfaz de Usuario y Dashboard 
 Creación de la UI con JavaFX y visualización de resultados.
-  - [ ] Diseño Frontend
+    - [ ] Diseño Frontend
     - [ ] Diseñar pantallas (`.fxml`) utilizando **Scene Builder**.
     - [ ] Crear formularios de entrada de datos para consumos de energía y desplazamientos.
   - [ ] Visualización de Impacto:**
     - [ ] Desarrollar un **Dashboard** gráfico que muestre el desglose de emisiones por departamentos
     - [ ] Asegurar la visualización dinámica de los datos procesados en el Backend.
     - [ ] Implementar la generación de resúmenes de datos para facilitar la toma de decisiones.
+- [ ] Validaciones de integridad en la UI
+    - [ ] Al borrar un Departamento: comprobar si tiene Empleados/Consumos asociados. Si los tiene, informar al usuario de que debe reasignarlos o eliminarlos antes de proceder.
+    - [ ] Al borrar un Empleado: comprobar si tiene registros de CommutingEmpleado asociados. Mismo comportamiento.
+    - [ ] Al borrar una Empresa: comprobar si tiene Departamentos asociados.
 
 ---
 

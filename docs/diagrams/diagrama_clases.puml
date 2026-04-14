@@ -1,0 +1,196 @@
+@startuml Diagrama de Clases - CarbonAudit Manager
+
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor White
+    BorderColor #555
+    ArrowColor #333
+}
+skinparam package {
+    BackgroundColor #FAFAFA
+}
+
+' ========================= CAPA MODELO =========================
+
+package "com.carbonaudit.model" {
+
+    class Direccion {
+        - idDireccion : int
+        - calle : String
+        - numero : int
+        - ciudad : String
+        - codigoPostal : String
+        - provincia : String
+        - latitud : BigDecimal
+        - longitud : BigDecimal
+    }
+
+    class Empresa {
+        - idEmpresa : int
+        - nombreSocial : String
+        - cif : String
+        - telefono : String
+        - email : String
+        - sector : String
+    }
+
+    class Departamento {
+        - idDepartamento : int
+        - nombre : String
+        - descripcion : String
+        - incluirAlcance3 : boolean
+    }
+
+    class Empleado {
+        - idEmpleado : int
+        - nombre : String
+        - distanciaTrabajo : BigDecimal
+        - diasPresenciales : int
+    }
+
+    class Responsable {
+        - idAsignacion : int
+        - fechaInicio : LocalDate
+        - fechaFin : LocalDate
+        + isActivo() : boolean
+    }
+
+    class ConsumoMensual {
+        - idConsumo : int
+        - cantidad : BigDecimal
+        - mes : int
+        - anio : int
+        + calcularEmision() : BigDecimal
+    }
+
+    class CommutingEmpleado {
+        - distanciaDiariaKm : BigDecimal
+        - diasPresencialesMes : int
+        - mes : int
+        - anio : int
+    }
+
+    class FactorEmision {
+        - idFactor : int
+        - nombre : String
+        - unidad : String
+        - valorFactor : BigDecimal
+        - alcance : int
+    }
+}
+
+' Relaciones del modelo
+Empresa "1..*" --> "1" Direccion
+Empresa "1" *-- "1..*" Departamento
+Departamento "1..*" --> "1" Direccion
+Departamento "1" *-- "0..*" Empleado
+Empleado "1..*" --> "1" Direccion
+Empleado "1" --> "1" FactorEmision : medioTransporte
+Departamento "1" *-- "0..*" ConsumoMensual
+ConsumoMensual "0..*" --> "1" FactorEmision
+Empleado "1" *-- "0..*" CommutingEmpleado
+CommutingEmpleado "0..*" --> "1" FactorEmision
+Responsable "0..*" --> "1" Departamento
+Responsable "0..*" --> "1" Empleado
+
+' ========================= CAPA DAO =========================
+
+package "com.carbonaudit.dao" {
+
+    interface "DAO<T, K>" as DAO {
+        + create(entity: T) : T
+        + findById(id: K) : Optional<T>
+        + findAll() : List<T>
+        + update(entity: T) : void
+        + delete(id: K) : void
+    }
+
+    class DatabaseManager <<Singleton>> {
+        - instance : DatabaseManager
+        + getInstance() : DatabaseManager
+        + getConnection() : Connection
+    }
+
+    ' Los DAOs concretos solo muestran los métodos que extienden
+    class EmpresaDAO
+    class DireccionDAO
+    class FactorEmisionDAO
+    class ResponsableDAO
+    class EmpleadoDAO
+    class DepartamentoDAO {
+        + findAllByEmpresa(idEmpresa) : List
+    }
+    class ConsumoMensualDAO {
+        + getConsumosDepartamentoMes(idDept, mes, anio) : List
+    }
+    class CommutingEmpleadoDAO {
+        + getCommutingsDepartamentoMes(idDept, mes, anio) : List
+    }
+}
+
+' Los DAOs implementan la interfaz genérica
+EmpresaDAO ..|> DAO
+DepartamentoDAO ..|> DAO
+EmpleadoDAO ..|> DAO
+ConsumoMensualDAO ..|> DAO
+CommutingEmpleadoDAO ..|> DAO
+FactorEmisionDAO ..|> DAO
+DireccionDAO ..|> DAO
+ResponsableDAO ..|> DAO
+
+' Todos los DAOs usan DatabaseManager
+DAO ..> DatabaseManager : usa
+
+' ========================= CAPA SERVICIO =========================
+
+package "com.carbonaudit.service" {
+
+    interface IServicioGeografico {
+        + completarCoordenadas(dir: Direccion) : void
+        + calcularDistancia(origen: Direccion, destino: Direccion) : BigDecimal
+    }
+
+    class ServicioGeograficoORS implements IServicioGeografico
+
+    class ServicioCalculoHuella {
+        + AsignarDistanciaTrabajo(emp: Empleado) : void
+        + getCommutingMensual(emp: Empleado) : BigDecimal
+        + getHuellaTotalDepartamentoMes(dept, mes, anio) : BigDecimal
+        + getHuellaTotalEmpresaMes(empresa, mes, anio) : BigDecimal
+        + getHuellaPorScope(dept, mes, anio) : Map
+        + getHuellaAnualDepartamento(dept, anio) : BigDecimal
+        + getHuellaAnualEmpresa(empresa, anio) : BigDecimal
+        + getVariacionMensual(dept, mes, anio) : BigDecimal
+    }
+}
+
+' Dependencias de los servicios
+ServicioCalculoHuella --> IServicioGeografico
+ServicioCalculoHuella ..> ConsumoMensualDAO : usa
+ServicioCalculoHuella ..> CommutingEmpleadoDAO : usa
+ServicioCalculoHuella ..> DepartamentoDAO : usa
+
+' ===================== VISIBILIDAD =====================
+' Prefijos de visibilidad UML:
+'   -  privado  (private)
+'   +  público  (public)
+'   #  protegido (protected)
+'
+' Solo se representan métodos de negocio relevantes.
+' Getters/setters se omiten (convención POJO).
+' Atributos de relación se omiten del cuerpo de las clases
+' cuando ya están representados como flechas.
+' ========================================================
+
+' ===================== RELACIONES =====================
+' Composición (*--): el hijo no puede existir sin el padre.
+'   - Empresa *-- Departamento
+'   - Departamento *-- Empleado
+'   - Departamento *-- ConsumoMensual
+'   - Empleado *-- CommutingEmpleado
+'
+' Asociación (-->): Direccion es un objeto compartido.
+'   Varias entidades pueden referenciar la misma dirección.
+' ========================================================
+
+@enduml
