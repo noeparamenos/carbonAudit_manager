@@ -14,12 +14,15 @@ import java.util.Map;
 
 public class ServicioCalculoHuella {
 
-    private final IServicioGeografico geoService;
+    private final IServicioGeografico geoService; // Interfaz
     private final ConsumoMensualDAO consumoDAO;
     private final CommutingEmpleadoDAO commutingDAO;
     private final DepartamentoDAO departamentoDAO;
 
-    // Constructor principal
+    /**
+     * Constructor que recibe la interfaz de geoService para poder usar distintas formas de calcular las distancias
+     * @param geoService
+     */
     public ServicioCalculoHuella(IServicioGeografico geoService) {
         this.geoService = geoService;
         this.consumoDAO = new ConsumoMensualDAO();
@@ -27,27 +30,19 @@ public class ServicioCalculoHuella {
         this.departamentoDAO = new DepartamentoDAO();
     }
 
-    // Constructor alternativo para testing (permite inyectar mocks de DAOs)
-    public ServicioCalculoHuella(IServicioGeografico geoService, ConsumoMensualDAO consumoDAO, CommutingEmpleadoDAO commutingDAO) {
-        this.geoService = geoService;
-        this.consumoDAO = consumoDAO;
-        this.commutingDAO = commutingDAO;
-        this.departamentoDAO = new DepartamentoDAO();
-    }
-
     // =========== COMMUTING DE EMPLEADOS ==============
 
     /**
-     * Valida que todos los campos esten presentes para evitar NullPoniterException
+     * Válida que todos los campos estén presentes para evitar `NullPointerException`
      * @param emp a validar los datos
      */
     private void validarDatosEmpleado(Empleado emp) {
         // 1. Validaciones de seguridad
         if (emp.getDepartamento().getDireccion() == null) {
-            throw new IllegalStateException("El empleado no tiene un departamento con direccion valida asignada.");
+            throw new IllegalStateException("El empleado no tiene un departamento con dirección valida asignada.");
         }
         if (emp.getDireccion() == null) {
-            throw new IllegalStateException("El empleado no tiene una direccion válida.");
+            throw new IllegalStateException("El empleado no tiene una dirección válida.");
         }
         if (emp.getMedioTransporte() == null || emp.getMedioTransporte().getValorFactor() == null) {
             throw new IllegalStateException("El empleado no tiene un medio de transporte o factor de emisión válido asignado.");

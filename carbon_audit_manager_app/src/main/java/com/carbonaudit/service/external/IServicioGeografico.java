@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 
 /**
  * Interfaz para servicios de geolocalización y rutas.
- * Define los métods necesarios para interactuar con APIs externas (como OpenRouteService)
+ * Define los métods necesarios para interactuar con APIs externas (ej OpenRouteService, google...)
  */
 public interface IServicioGeografico {
 
