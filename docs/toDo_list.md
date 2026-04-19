@@ -2,6 +2,21 @@
 
 Este documento detalla la hoja de ruta para el desarrollo de la aplicación.
 
+## Fase 0: Análisis y Diseño
+Modelado previo del sistema antes de entrar en implementación.
+
+- **Diagrama de Casos de Uso:**
+  - [x] Identificar los actores del sistema (Administrador, Responsable, servicio externo ORS).
+  - [x] Definir los casos de uso principales y sus relaciones.
+  - [x] Generar el diagrama en PlantUML.
+- **Diagrama de Clases:**
+  - [x] Representar la capa de modelo.
+  - [x] Representar la capa DAO con la interfaz genérica y sus implementaciones.
+  - [x] Representar la capa de servicio con sus dependencias.
+  - [x] Generar el diagrama en PlantUML.
+
+---
+
 ## Fase 1: Modelo de Datos 
 Diseño relacional y estructuras Java (POO)
 
@@ -54,7 +69,7 @@ Desarrollo del Motor de Cálculo (Service) y la lógica de negocio
     - [x] Implementar método de consulta en el DAO para obtener los consumos mensuales de un departamento
     - [x] Implementar método de consulta en el DAO para obtener todos los commutings de los empleados de un departamento
     - [x] Implementar un método que calcule la huella total mensual de un departamento basado en los factores de emision asignados.
-    - [ ] Implementar una prueba para verificar el funcionamiento del calculo.
+    - [x] Implementar una prueba para verificar el funcionamiento del calculo.
 ---
 
 ## Fase 3: Interfaz de Usuario y Dashboard 

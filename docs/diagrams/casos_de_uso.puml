@@ -1,0 +1,65 @@
+@startuml Casos de Uso - CarbonAudit Manager
+
+left to right direction
+
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam usecase {
+    BackgroundColor White
+    BorderColor #555
+    ArrowColor #333
+}
+
+' ========================= ACTORES =========================
+
+actor "Administrador" as Admin
+actor "Responsable" as Resp
+actor "Servicio Geográfico\n(ORS)" as ORS
+
+' ========================= CASOS DE USO =========================
+
+rectangle "CarbonAudit Manager" {
+
+    ' --- Configuración de la organización ---
+    usecase "Gestionar Empresa"              as UC_Empresa
+    usecase "Gestionar Departamentos"        as UC_Dept
+    usecase "Gestionar Empleados"            as UC_Empleado
+    usecase "Gestionar Factores\nde Emisión" as UC_Factor
+    usecase "Asignar Responsable\na Departamento" as UC_AsignarResp
+
+    ' --- Operativa mensual ---
+    usecase "Registrar Consumo Mensual"      as UC_Consumo
+    usecase "Generar Commuting\nMensual"     as UC_Commuting
+    usecase "Calcular Distancia\nal Trabajo" as UC_Distancia
+
+    ' --- Cálculos e informes ---
+    usecase "Consultar Huella\nde Carbono"     as UC_Huella
+    usecase "Visualizar Graficos"              as UC_Dashboard
+    usecase "Generar Informe"                  as UC_Informe
+}
+
+' ========================= RELACIONES =========================
+
+' Administrador: configura la estructura de alto nivel de la organización
+Admin --> UC_Empresa
+Admin --> UC_Dept
+Admin --> UC_Factor
+Admin --> UC_AsignarResp
+
+' Responsable: gestiona su departamento (empleados, consumos) y consulta informes
+Resp --> UC_Empleado
+Resp --> UC_Consumo
+Resp --> UC_Huella
+Resp --> UC_Informe
+
+
+' Dependencias entre casos de uso
+UC_Empleado ..> UC_Distancia : <<include>>
+UC_Commuting ..> UC_Huella : <<extend>>
+UC_Dashboard ..> UC_Huella : <<extend>>
+UC_Informe ..> UC_Huella : <<include>>
+
+' Servicio externo: interviene en el cálculo de distancias
+UC_Distancia --> ORS
+
+@enduml
