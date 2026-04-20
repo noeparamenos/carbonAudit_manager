@@ -16,4 +16,4 @@ Thumbs.db
 *.log
 
 # API keys
-.env
+*.env
