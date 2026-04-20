@@ -1,7 +1,9 @@
 1. La implementación de la permisividad de NOT NULL para empresas se vuelve tediosa en la clase EmpresaDAO
-    - Se ha exigido que la empresa tenga una dirección (not null en la BD)
+    - Se ha exigido que la empresa tenga una dirección (not null en la BD) eliminando la tediosidad
+    - Esto además es más lógico ya que toda empresa tiene una dirección y muchos departamentos estarán instalados en la misma dirección de la empresa
 2. El calculo de direcciones sin numero de calle es impreciso
     - Se ha añadido el número de calle a la dirección (int) a la BD y la clase modelo
+    - Esto no acaba de solucionar todos los problemas de la API (ver error 5)
 3. Ejecución de tests de las clases DAO: Errores de integridad no bien descritos
     - Se han comprobado las restricciones de integridad en cada una de las clases DAO
     - Dan información al usuario sobre la regla que se está incumpliendo 

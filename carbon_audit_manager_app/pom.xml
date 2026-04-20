@@ -27,6 +27,11 @@
         <!--Java FX-->
         <dependency>
             <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
             <version>${javafx.version}</version>
         </dependency>
@@ -58,7 +63,18 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <mainClass>com.carbonaudit.Main</mainClass>
+                    <!-- Usamos Launcher para evitar la comprobación estricta
+                         de módulos que hace el JVM cuando main() está en una
+                         clase que extiende Application. Ver Launcher.java -->
+                    <mainClass>com.carbonaudit.Launcher</mainClass>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <mainClass>com.carbonaudit.Launcher</mainClass>
                 </configuration>
             </plugin>
         </plugins>
