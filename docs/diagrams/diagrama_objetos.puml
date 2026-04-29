@@ -1,0 +1,116 @@
+@startuml Diagrama de Objetos - CarbonAudit Manager
+
+skinparam classAttributeIconSize 0
+skinparam object {
+    BackgroundColor #EEF4FF
+    BorderColor #555
+    ArrowColor #333
+}
+skinparam note {
+    BackgroundColor #FFFDE7
+    BorderColor #999
+}
+
+' ========================= INSTANCIAS =========================
+
+object "cerealesSiro : Empresa" as empresa {
+    idEmpresa = 1
+    nombreSocial = "Cereales SIRO S.A."
+    cif = "A34156789"
+    telefono = "979780100"
+    email = "info@siro.es"
+    sector = "Alimentación"
+}
+
+object "plantaSiro : Direccion" as dirEmpresa {
+    idDireccion = 1
+    calle = "Ctra. Madrid-Irún"
+    numero = 186
+    ciudad = "Venta de Baños"
+    codigoPostal = "34200"
+    provincia = "Palencia"
+    latitud = 41.9283
+    longitud = -4.4811
+}
+
+object "deptIT : Departamento" as deptIT {
+    idDepartamento = 3
+    nombre = "Informática"
+    descripcion = "Infraestructura y desarrollo"
+    incluirAlcance3 = true
+}
+
+object "oficinasIT : Direccion" as dirDepto {
+    idDireccion = 2
+    calle = "Ctra. Madrid-Irún"
+    numero = 186
+    ciudad = "Venta de Baños"
+    codigoPostal = "34200"
+    provincia = "Palencia"
+    latitud = 41.9283
+    longitud = -4.4811
+}
+
+object "emp01 : Empleado" as empleado {
+    idEmpleado = 7
+    nombre = "Laura Gómez"
+    distanciaTrabajo = 12.40
+    diasPresenciales = 20
+}
+
+object "domicilioLaura : Direccion" as dirEmpleado {
+    idDireccion = 8
+    calle = "Calle Mayor"
+    numero = 34
+    ciudad = "Palencia"
+    codigoPostal = "34001"
+    provincia = "Palencia"
+    latitud = 42.0099
+    longitud = -4.5283
+}
+
+object "transporte : FactorEmision" as factorCoche {
+    idFactor = 5
+    nombre = "Coche gasolina"
+    unidad = "km"
+    valorFactor = 0.21
+    alcance = 3
+}
+
+object "electricidadAbril : ConsumoMensual" as consumo {
+    idConsumo = 22
+    cantidad = 1850.00
+    mes = 4
+    anio = 2025
+}
+
+object "factorElec : FactorEmision" as factorElec {
+    idFactor = 2
+    nombre = "Electricidad red española"
+    unidad = "kWh"
+    valorFactor = 0.19
+    alcance = 2
+}
+
+object "commutingAbril : CommutingEmpleado" as commuting {
+    distanciaDiariaKm = 12.40
+    diasPresencialesMes = 20
+    mes = 4
+    anio = 2025
+}
+
+' ========================= ENLACES =========================
+
+empresa --> dirEmpresa
+empresa *-- deptIT
+deptIT --> dirDepto
+deptIT *-- empleado
+empleado --> dirEmpleado
+empleado --> factorCoche : medioTransporte
+deptIT *-- consumo
+consumo --> factorElec
+empleado *-- commuting
+commuting --> factorCoche
+
+
+@enduml

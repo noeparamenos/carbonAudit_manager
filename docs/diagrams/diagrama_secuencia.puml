@@ -1,0 +1,66 @@
+@startuml Diagrama de Secuencia - Consultar Huella de Carbono
+
+skinparam sequenceArrowThickness 1.5
+skinparam participant {
+    BackgroundColor White
+    BorderColor #555
+}
+skinparam actor {
+    BorderColor #555
+}
+skinparam sequence {
+    LifeLineBorderColor #777
+    GroupBackgroundColor #F5F5F5
+    GroupBorderColor #AAAAAA
+}
+
+actor "Responsable" as Resp
+participant "Vista\n(JavaFX)" as UI
+participant "ServicioCalculoHuella" as Servicio
+participant "ConsumoMensualDAO" as ConsumoDAO
+participant "CommutingEmpleadoDAO" as CommutingDAO
+database "Base de Datos" as BD
+
+' ========================= FLUJO PRINCIPAL =========================
+
+Resp -> UI : selecciona departamento, mes y año
+activate UI
+
+UI -> Servicio : getHuellaTotalDepartamentoMes(departamento, mes, anio)
+activate Servicio
+
+' --- SCOPE 1 + 2: Consumos ---
+Servicio -> ConsumoDAO : getConsumosDepartamentoMes(idDept, mes, anio)
+activate ConsumoDAO
+    ConsumoDAO -> BD : SELECT consumos WHERE idDept, mes, anio
+    BD --> ConsumoDAO : List<ConsumoMensual>
+ConsumoDAO --> Servicio : List<ConsumoMensual>
+deactivate ConsumoDAO
+
+loop por cada ConsumoMensual
+    Servicio -> Servicio : consumo.calcularEmision()
+    note right : cantidad × valorFactor
+end
+
+' --- SCOPE 3: Commuting (condicional) ---
+opt departamento.incluirAlcance3 == true
+    Servicio -> CommutingDAO : getCommutingsDepartamentoMes(idDept, mes, anio)
+    activate CommutingDAO
+        CommutingDAO -> BD : SELECT commutings WHERE idDept, mes, anio
+        BD --> CommutingDAO : List<CommutingEmpleado>
+    CommutingDAO --> Servicio : List<CommutingEmpleado>
+    deactivate CommutingDAO
+
+    loop por cada CommutingEmpleado
+        Servicio -> Servicio : calcularEmisionCommuting(commuting)
+        note right : km × 2 × días × valorFactor
+    end
+end
+
+Servicio --> UI : totalEmisiones (BigDecimal, kgCO2e)
+deactivate Servicio
+
+UI --> Resp : muestra resultado en pantalla
+deactivate UI
+
+@enduml
