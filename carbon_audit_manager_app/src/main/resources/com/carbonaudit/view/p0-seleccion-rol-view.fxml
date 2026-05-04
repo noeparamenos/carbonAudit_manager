@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<!--
+    Nodo raíz: VBox apila sus hijos verticalmente.
+    - alignment="CENTER": centra el contenido horizontal y verticalmente.
+    - spacing:  separación en píxeles entre cada hijo.
+    - fx:controller: clase Java que gestiona los eventos de esta pantalla.
+    - stylesheets: hoja CSS que da estilo a los elementos (ver estilos.css).
+-->
+
+<VBox alignment="CENTER" prefHeight="520.0" prefWidth="700.0" spacing="30.0" styleClass="pantalla-seleccion"
+      xmlns="http://javafx.com/javafx/25"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.carbonaudit.controller.SeleccionRolController">
+
+    <!-- Referencia al CSS compartida -->
+    <stylesheets>
+        <URL value="@estilos.css" />
+    </stylesheets>
+
+    <padding>
+        <Insets bottom="30.0" left="60.0" right="60.0" top="50.0" />
+    </padding>
+
+    <!--
+        ImageView muestra una imagen.
+        - fitWidth: ancho máximo en píxeles.
+        - preserveRatio: mantiene proporciones originales al escalar.
+        - smooth="true": activa interpolación bilineal para evitar pixelado al escalar.
+    -->
+    <!-- fitWidth controla el tamaño -->
+    <ImageView fitWidth="140.0" pickOnBounds="true" preserveRatio="true">
+        <!-- @ ruta relativa al directorio de este FXML.-->
+        <image>
+            <Image url="@images/logo.png" />
+        </image>
+    </ImageView>
+
+
+    <!-- Nombre de la aplicación -->
+    <Label styleClass="titulo-app" text="CarbonAudit Manager" />
+
+    <!-- Texto de invitación al usuario -->
+    <Label styleClass="subtitulo" text="Selecciona tu perfil de acceso" />
+
+    <!--
+        HBox: coloca sus hijos en fila horizontal.
+        Contiene las dos tarjetas de selección de rol.
+    -->
+    <HBox alignment="CENTER" spacing="50.0">
+
+        <!--
+            Tarjeta Administrador.
+            - fx:id="tarjetaAdmin": permite al controlador referenciar este nodo.
+            - onMouseClicked:  método del controlador que se ejecuta al hacer clic.
+            - styleClass:  clase CSS que define su apariencia (y el efecto hover).
+        -->
+        <VBox fx:id="tarjetaAdmin" alignment="CENTER" onMouseClicked="#onAdministradorClick" spacing="12.0" styleClass="tarjeta">
+
+            <padding>
+                <Insets bottom="12.0" left="32.0" right="32.0" top="12.0" />
+            </padding>
+
+            <Label styleClass="tarjeta-titulo" text="Administrador" />
+            <Label styleClass="tarjeta-descripcion" text="Gestión completa de la empresa" wrapText="true" maxWidth="146.0" />
+        </VBox>
+
+        <!-- Tarjeta Responsable -->
+        <VBox fx:id="tarjetaResponsable" alignment="CENTER" onMouseClicked="#onResponsableClick" spacing="12.0" styleClass="tarjeta">
+
+            <padding>
+                <Insets bottom="12.0" left="32.0" right="32.0" top="12.0" />
+            </padding>
+
+            <Label styleClass="tarjeta-titulo" text="Responsable" />
+            <Label styleClass="tarjeta-descripcion" text="Gestión de tu departamento" wrapText="true" />
+        </VBox>
+
+    </HBox>
+
+    <!-- Versión de la aplicación, anclada visualmente al pie de pantalla -->
+    <Label styleClass="version" text="v1.0.0" />
+
+</VBox>

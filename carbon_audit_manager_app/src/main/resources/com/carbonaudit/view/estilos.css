@@ -1,0 +1,71 @@
+/*
+ * estilos.css — hoja de estilos global de CarbonAudit Manager.
+ *
+ * Paleta de color:
+ *   Verde oscuro   (títulos, bordes)
+ *   Verde medio    (bordes tarjeta, subtítulos)
+ *   Verde claro    (hover)
+ *   Fondo tarjeta #f4faf6  (blanco con tinte verde suave)
+ *   Fondo app     #eef6f1  (verde muy claro)
+ *
+ * En JavaFX las propiedades CSS llevan prefijo -fx-
+ * Ejemplo: color → -fx-text-fill, background → -fx-background-color
+ */
+
+/* ── Pantalla P0: selección de rol ─────────────────────────────────────── */
+
+.pantalla-seleccion {
+    -fx-background-color: #eef6f1;
+}
+
+.titulo-app {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1b3a2a;
+}
+
+.subtitulo {
+    -fx-font-size: 13px;
+    -fx-text-fill: #3a6b4a;
+}
+
+/* ── Tarjetas de selección de rol ───────────────────────────────────────── */
+
+.tarjeta {
+    -fx-background-color: #f4faf6;
+    -fx-border-color: #3a6b4a;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-pref-width: 210px;
+    -fx-pref-height: 108px;
+}
+
+/*
+ * :hover se aplica automáticamente al pasar el ratón.
+ */
+.tarjeta:hover {
+    -fx-background-color: #e6f4ec;
+    -fx-border-color: #5aab72;
+}
+
+.tarjeta-titulo {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1b3a2a;
+}
+
+.tarjeta-descripcion {
+    -fx-font-size: 12px;
+    -fx-text-fill: #6a9a7a;
+    -fx-text-alignment: center;
+    /* maxWidth se controla con el atributo maxWidth del Label en el FXML */
+}
+
+/* ── Pie de pantalla ────────────────────────────────────────────────────── */
+
+.version {
+    -fx-font-size: 11px;
+    -fx-text-fill: #b0ccb8;
+}

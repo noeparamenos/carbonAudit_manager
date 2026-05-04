@@ -42,19 +42,19 @@ en PR0 actúan como mecanismo de contexto:
 
 ## Visibilidad por rol
 
-| Pantalla                        | Administrador | Responsable |
-|---------------------------------|:-------------:|:-----------:|
-| P0 · Selección de rol           | ✅            | ✅          |
-| PA1 · Lista de empresas         | ✅            | ❌          |
-| PA2 · Tab Departamentos         | ✅            | ❌          |
-| PA2 · Tab Consumos (empresa)    | ✅            | ❌          |
-| PA2 · Tab Gráficos (empresa)    | ✅            | ❌          |
-| PA3 · Gestión departamento      | ✅            | ❌          |
-| PR0 · Selección responsable     | ❌            | ✅          |
-| PR1 · Tab Consumos mensuales    | ❌            | ✅          |
-| PR1 · Tab Trabajadores          | ❌            | ✅          |
-| PR1 · Tab Huella mensual        | ❌            | ✅          |
-| PR1 · Tab Gráficos              | ❌            | ✅          |
+| Pantalla                     | Administrador | Responsable |
+|------------------------------|---------------|-------------|
+| P0 · Selección de rol        | Sí            | Sí          |
+| PA1 · Lista de empresas      | Sí            | No          |
+| PA2 · Tab Departamentos      | Sí            | No          |
+| PA2 · Tab Consumos empresa   | Sí            | No          |
+| PA2 · Tab Gráficos empresa   | Sí            | No          |
+| PA3 · Gestión departamento   | Sí            | No          |
+| PR0 · Selección responsable  | No            | Sí          |
+| PR1 · Tab Consumos           | No            | Sí          |
+| PR1 · Tab Trabajadores       | No            | Sí          |
+| PR1 · Tab Huella mensual     | No            | Sí          |
+| PR1 · Tab Gráficos           | No            | Sí          |
 
 ## Reglas generales
 

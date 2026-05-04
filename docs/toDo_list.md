@@ -79,6 +79,8 @@ Creación de la UI con JavaFX y visualización de resultados.
     - [x] Documentar el mapa de navegación 
     - [x] Especificar cada pantalla: actores, objetivo, elementos y acciones (`screens.md`)
     - [ ] Crear wireframes de las pantallas principales
+    - [x] Ajustar tamaño y calidad del logo en P0
+    - [ ] Resolver centrado de ventana P0 en el primer arranque en frío (ver error 8)
   - **Implementación:**
     - [ ] Diseñar pantallas (`.fxml`) utilizando **Scene Builder**
       - [ ] P0 · Selección de rol
@@ -101,4 +103,11 @@ Refinado del software y preparación del proyecto final.
   - [ ] Pruebas de compatibilidad en el sistema operativo Linux.
   - [ ] Optimización de consultas SQL en PostgreSQL.
   - [ ] Finalizar la memoria del proyecto detallando la arquitectura y el cumplimiento de requerimientos.
-  - [ ] Empaquetado para distribución 
+  - [ ] Empaquetado para distribución
+  - **Sistema de autenticación (opcional, si queda margen):**
+    - [ ] Nueva tabla `usuarios` en BD (username, password hash, rol, referencia a empleado)
+    - [ ] Clase `Usuario` (POJO) y `UsuarioDAO`
+    - [ ] Pantalla de login (`login.fxml` + controlador)
+    - [ ] Singleton `Sesion` que almacena el usuario logado y su contexto
+    - [ ] Reemplazar P0 y PR0 por la sesión activa en la navegación
+    - [ ] Actualizar documentación: navegacion.puml, navigation_map.md, screens.md

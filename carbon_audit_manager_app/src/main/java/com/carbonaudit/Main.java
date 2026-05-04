@@ -16,7 +16,7 @@ public class Main extends Application {
 	public void start(Stage primaryStage) throws Exception {
 		// Cargar el archivo FXML desde resources
 		FXMLLoader loader = new FXMLLoader(
-			getClass().getResource("/com/carbonaudit/view/main-view.fxml")
+			getClass().getResource("/com/carbonaudit/view/p0-seleccion-rol-view.fxml")
 		);
 
 
@@ -26,6 +26,10 @@ public class Main extends Application {
 		// Configurar la ventana principal
 		primaryStage.setTitle("CarbonAudit Manager");
 		primaryStage.setScene(scene);
+
+		// Pantalla de inicio: tamaño fijo, no redimensionable
+		primaryStage.setResizable(false);
+
 		primaryStage.show();
 	}
 
