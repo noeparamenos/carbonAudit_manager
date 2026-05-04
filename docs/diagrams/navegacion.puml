@@ -1,0 +1,38 @@
+@startuml Navegación - CarbonAudit Manager
+
+skinparam state {
+    BackgroundColor White
+    BorderColor #555
+    ArrowColor #333
+}
+
+[*] --> P0 : Arranque de la app
+
+state "P0 · Selección de rol"          as P0
+state "PA1 · Lista de empresas"        as PA1
+state "PA3 · Gestión departamento"     as PA3
+state "PR0 · Selección responsable"    as PR0
+
+state "PA2 · Vista empresa" as PA2 {
+    state "Tab: Departamentos" as PA2_depts
+    state "Tab: Consumos"      as PA2_consumos
+    state "Tab: Gráficos"      as PA2_graficos
+}
+
+state "PR1 · Vista responsable" as PR1 {
+    state "Tab: Consumos mensuales" as PR1_consumos
+    state "Tab: Trabajadores"       as PR1_trabajadores
+    state "Tab: Huella mensual"     as PR1_huella
+    state "Tab: Gráficos"           as PR1_graficos
+}
+
+P0  --> PA1 : Rol Administrador
+P0  --> PR0 : Rol Responsable
+
+PA1 --> PA2 : clic en empresa
+
+PA2_depts --> PA3 : clic en departamento
+
+PR0 --> PR1 : responsable seleccionado
+
+@enduml

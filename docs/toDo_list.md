@@ -74,16 +74,24 @@ Desarrollo del Motor de Cálculo (Service) y la lógica de negocio
 
 ## Fase 3: Interfaz de Usuario y Dashboard 
 Creación de la UI con JavaFX y visualización de resultados.
-    - [ ] Diseño Frontend
-    - [ ] Diseñar pantallas (`.fxml`) utilizando **Scene Builder**.
-    - [ ] Crear formularios de entrada de datos para consumos de energía y desplazamientos.
-  - [ ] Visualización de Impacto:**
-    - [ ] Desarrollar un **Dashboard** gráfico que muestre el desglose de emisiones por departamentos
-    - [ ] Asegurar la visualización dinámica de los datos procesados en el Backend.
-    - [ ] Implementar la generación de resúmenes de datos para facilitar la toma de decisiones.
-- [ ] Validaciones de integridad en la UI
-    - [ ] Al borrar un Departamento: comprobar si tiene Empleados/Consumos asociados. Si los tiene, informar al usuario de que debe reasignarlos o eliminarlos antes de proceder.
-    - [ ] Al borrar un Empleado: comprobar si tiene registros de CommutingEmpleado asociados. Mismo comportamiento.
+  - **Diseño y planificación:**
+    - [x] Definir el flujo de navegación entre pantallas con un diagráma
+    - [x] Documentar el mapa de navegación 
+    - [x] Especificar cada pantalla: actores, objetivo, elementos y acciones (`screens.md`)
+    - [ ] Crear wireframes de las pantallas principales
+  - **Implementación:**
+    - [ ] Diseñar pantallas (`.fxml`) utilizando **Scene Builder**
+      - [ ] P0 · Selección de rol
+      - [ ] PA1 · Lista de empresas (Administrador)
+      - [ ] PA2 · Vista empresa — tabs: Departamentos, Consumos, Gráficos
+      - [ ] PA3 · Gestión de departamento (empleados + responsable)
+      - [ ] PR0 · Selección de responsable activo
+      - [ ] PR1 · Vista responsable — tabs: Consumos, Trabajadores, Huella, Gráficos
+    - [ ] Implementar controladores JavaFX para cada pantalla
+    - [ ] Crear formularios de alta/edición como paneles laterales deslizantes
+  - **Validaciones de integridad en la UI:**
+    - [ ] Al borrar un Departamento: comprobar si tiene Empleados/Consumos asociados.
+    - [ ] Al borrar un Empleado: comprobar si tiene registros de CommutingEmpleado asociados.
     - [ ] Al borrar una Empresa: comprobar si tiene Departamentos asociados.
 
 ---
