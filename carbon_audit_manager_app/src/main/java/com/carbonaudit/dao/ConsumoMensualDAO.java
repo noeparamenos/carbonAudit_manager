@@ -187,6 +187,61 @@ public class ConsumoMensualDAO implements DAO<ConsumoMensual, Integer> {
     }
 
     /**
+     * Recupera todos los consumos de una empresa para un período (mes y año).
+     * Hace un JOIN con DEPARTAMENTO para filtrar por id_empresa.
+     * Se usa en PA2 · Tab Consumos para mostrar el agregado de toda la empresa.
+     *
+     * @param idEmpresa ID de la empresa
+     * @param mes       Mes del período (1-12)
+     * @param anio      Año del período
+     * @return Lista de consumos de todos los departamentos de la empresa en ese período
+     */
+    public List<ConsumoMensual> getConsumosByEmpresaMes(int idEmpresa, int mes, int anio) {
+        List<ConsumoMensual> consumos = new ArrayList<>();
+        String sql = "SELECT cm.* FROM CONSUMO_MENSUAL cm " +
+                     "JOIN DEPARTAMENTO d ON cm.id_dept = d.id_departamento " +
+                     "WHERE d.id_empresa = ? AND cm.mes = ? AND cm.anio = ? " +
+                     "ORDER BY d.nombre, cm.id_factor";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, idEmpresa);
+            pstmt.setInt(2, mes);
+            pstmt.setInt(3, anio);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) consumos.add(mapResultSetToConsumo(rs));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return consumos;
+    }
+
+    /**
+     * Recupera todos los consumos de una empresa para un año completo (los 12 meses).
+     * Se usa en PA2 · Tab Consumos cuando el usuario activa "Ver año completo".
+     *
+     * @param idEmpresa ID de la empresa
+     * @param anio      Año del período
+     * @return Lista de consumos de todos los departamentos de la empresa en ese año
+     */
+    public List<ConsumoMensual> getConsumosByEmpresaAnio(int idEmpresa, int anio) {
+        List<ConsumoMensual> consumos = new ArrayList<>();
+        String sql = "SELECT cm.* FROM CONSUMO_MENSUAL cm " +
+                     "JOIN DEPARTAMENTO d ON cm.id_dept = d.id_departamento " +
+                     "WHERE d.id_empresa = ? AND cm.anio = ? " +
+                     "ORDER BY cm.mes, d.nombre, cm.id_factor";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, idEmpresa);
+            pstmt.setInt(2, anio);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) consumos.add(mapResultSetToConsumo(rs));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return consumos;
+    }
+
+    /**
      * Recupera todos los consumos de un departamento para un período específico (mes y año)
      *
      * @param idDepartamento ID del departamento

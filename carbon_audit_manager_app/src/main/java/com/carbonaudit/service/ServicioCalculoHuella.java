@@ -20,11 +20,12 @@ public class ServicioCalculoHuella {
     private final DepartamentoDAO departamentoDAO;
 
     /**
-     * Constructor que recibe la interfaz de geoService para poder usar distintas formas de calcular las distancias
+     * Constructor que recibe la interfaz de geoService para poder usar distintas APIs para calcular las distancias
      * @param geoService
      */
     public ServicioCalculoHuella(IServicioGeografico geoService) {
         this.geoService = geoService;
+        // Inicialización del resto de DAOs
         this.consumoDAO = new ConsumoMensualDAO();
         this.commutingDAO = new CommutingEmpleadoDAO();
         this.departamentoDAO = new DepartamentoDAO();
@@ -51,6 +52,8 @@ public class ServicioCalculoHuella {
 
 
 
+
+    // A revisar: si solo se puede asignar una vez
     /**
      * Calcula la distancia real entre la casa del empleado y su departamento de trabajo,
      * actualiza el campo km
@@ -73,7 +76,7 @@ public class ServicioCalculoHuella {
             geoService.completarCoordenadas(dirDepartamento);
         }
 
-        // Calculo y actualizacion de km al trabajo
+        // Cálculo y actualizacion de km al trabajo
         BigDecimal distanciaEnKm = geoService.calcularDistancia(dirEmpleado, dirDepartamento);
         empleado.setDistanciaTrabajo(distanciaEnKm);
     }

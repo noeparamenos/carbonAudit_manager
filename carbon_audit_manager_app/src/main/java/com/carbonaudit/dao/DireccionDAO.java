@@ -32,7 +32,7 @@ public class DireccionDAO implements DAO<Direccion, Integer> {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, direccion.getCalle());
-            pstmt.setInt(2, direccion.getNumero()); // <-- Nuevo campo añadido
+            pstmt.setInt(2, direccion.getNumero());
             pstmt.setString(3, direccion.getCiudad());
             pstmt.setString(4, direccion.getCodigoPostal());
             pstmt.setString(5, direccion.getProvincia());

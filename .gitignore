@@ -17,3 +17,5 @@ Thumbs.db
 
 # API keys
 *.env
+
+cd.md

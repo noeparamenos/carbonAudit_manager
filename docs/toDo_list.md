@@ -81,7 +81,7 @@ Creación de la UI con JavaFX y visualización de resultados.
     - [ ] Crear wireframes de las pantallas principales
       - [x] P0 · Selección de rol
       - [x] PA1 · Lista de empresas
-      - [ ] PA2 · Vista empresa
+      - [x] PA2 · Vista empresa
       - [ ] PA3 · Gestión de departamento
       - [ ] PR0 · Selección de responsable
       - [ ] PR1 · Vista responsable
@@ -91,7 +91,7 @@ Creación de la UI con JavaFX y visualización de resultados.
     - [ ] Diseñar pantallas (`.fxml`) y controladores
       - [x] P0 · Selección de rol
       - [x] PA1 · Lista de empresas — tabla, panel lateral alta empresa, navegación a PA2
-      - [ ] PA2 · Vista empresa — tabs: Departamentos, Consumos, Gráficos
+      - [x] PA2 · Vista empresa — tabs: Departamentos, Consumos, Gráficos (Gráficos: placeholder)
       - [ ] PA3 · Gestión de departamento (empleados + responsable)
       - [ ] PR0 · Selección de responsable activo
       - [ ] PR1 · Vista responsable — tabs: Consumos, Trabajadores, Huella, Gráficos

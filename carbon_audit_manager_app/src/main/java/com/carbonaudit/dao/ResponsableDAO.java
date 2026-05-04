@@ -172,6 +172,26 @@ public class ResponsableDAO implements DAO<Responsable, Integer> {
 
 
     /**
+     * Devuelve el responsable activo de un departamento (fecha_fin IS NULL).
+     * Un departamento solo puede tener un responsable activo simultáneamente.
+     *
+     * @param idDepartamento ID del departamento a consultar
+     * @return El Responsable activo, o vacío si no hay ninguno
+     */
+    public Optional<Responsable> findActivoByDepartamento(int idDepartamento) {
+        String sql = "SELECT * FROM RESPONSABLE WHERE id_dept = ? AND fecha_fin IS NULL LIMIT 1";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, idDepartamento);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) return Optional.of(mapResultSetToResponsable(rs));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Borra un registro de la Tabla Responsable
      * @param id del registro del historial a borrar
      */

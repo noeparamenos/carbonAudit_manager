@@ -208,8 +208,7 @@ public class PA1Controller {
             stage.sizeToScene();
 
         } catch (Exception e) {
-            // TODO: eliminar cuando PA2 esté implementada
-            System.err.println("PA2 no implementada aún.");
+            e.printStackTrace();
         }
     }
 

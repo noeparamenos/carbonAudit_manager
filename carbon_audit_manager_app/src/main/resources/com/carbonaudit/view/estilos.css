@@ -232,3 +232,117 @@
     -fx-text-fill: #3a6b4a;
     -fx-padding: 8px 0 2px 0;
 }
+
+/* ── Breadcrumb (PA2 y siguientes) ──────────────────────────────────────── */
+
+.topbar-sep {
+    -fx-font-size: 13px;
+    -fx-text-fill: #5a8a6a;
+}
+
+/* "Empresas" en el breadcrumb: actúa como enlace de vuelta */
+.topbar-breadcrumb-link {
+    -fx-font-size: 13px;
+    -fx-text-fill: #8ab89a;
+    -fx-cursor: hand;
+}
+
+.topbar-breadcrumb-link:hover {
+    -fx-text-fill: #e8f5e9;
+    -fx-underline: true;
+}
+
+/* Nombre de la empresa activa: texto plano, no clicable */
+.topbar-breadcrumb {
+    -fx-font-size: 13px;
+    -fx-text-fill: #e8f5e9;
+    -fx-font-weight: bold;
+}
+
+/* ── Cabecera de empresa (PA2) ───────────────────────────────────────────── */
+
+.cabecera-empresa {
+    -fx-background-color: white;
+    -fx-border-color: #d5d8dc;
+    -fx-border-width: 0 0 1px 0;
+    -fx-padding: 0 0 16px 0;
+}
+
+.empresa-nombre {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1b3a2a;
+}
+
+.empresa-info {
+    -fx-font-size: 13px;
+    -fx-text-fill: #6a9a7a;
+}
+
+/* Botón de acción destructiva (Eliminar) */
+.btn-peligro {
+    -fx-background-color: transparent;
+    -fx-text-fill: #c0392b;
+    -fx-border-color: #c0392b;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-padding: 8px 16px;
+}
+
+.btn-peligro:hover {
+    -fx-background-color: #fdecea;
+}
+
+/* ── TabPane ─────────────────────────────────────────────────────────────── */
+
+/*
+ * En JavaFX, los selectores de TabPane usan sintaxis específica.
+ * .tab-pane-verde es nuestra clase personalizada que aplica sobre el TabPane.
+ */
+.tab-pane-verde > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: #f5f7f5;
+    -fx-padding: 6px 20px;
+}
+
+.tab-pane-verde > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: white;
+}
+
+.tab-pane-verde > .tab-header-area > .headers-region > .tab .tab-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #3a6b4a;
+}
+
+.tab-pane-verde > .tab-header-area > .headers-region > .tab:selected .tab-label {
+    -fx-font-weight: bold;
+    -fx-text-fill: #1b3a2a;
+}
+
+.tab-pane-verde > .tab-header-area {
+    -fx-background-color: #f5f7f5;
+    -fx-border-color: #d5d8dc;
+    -fx-border-width: 0 0 1px 0;
+}
+
+.tab-pane-verde > .tab-content-area {
+    -fx-background-color: white;
+    -fx-padding: 0 0 0 0;
+}
+
+/* ── Checkbox "Año completo" ─────────────────────────────────────────────── */
+
+.chk-periodo {
+    -fx-font-size: 12px;
+    -fx-text-fill: #3a6b4a;
+}
+
+/* ── Total empresa (Tab Consumos) ────────────────────────────────────────── */
+
+.total-empresa {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1b3a2a;
+}

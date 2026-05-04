@@ -14,8 +14,8 @@ public class ConsumoMensual {
     private int anio;
 
     // RELACIONES COMPOSICION
-    private Departamento departamento;
-    private FactorEmision factorEmision;
+    private Departamento departamento; // Que es el responsable del consumo
+    private FactorEmision factorEmision; // ej. Gas, Electricidad...
 
     public ConsumoMensual() {}
 

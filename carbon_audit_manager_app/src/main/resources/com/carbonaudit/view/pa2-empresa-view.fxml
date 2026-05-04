@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<!--
+    PA2 · Vista empresa
+    Layout: BorderPane con topbar fija arriba y contenido central variable.
+    El contenido central es un HBox con la zona principal (izquierda)
+    y los paneles laterales (derecha, ocultos por defecto).
+-->
+<BorderPane prefWidth="1000.0" prefHeight="700.0"
+            styleClass="pantalla-interior"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.carbonaudit.controller.PA2Controller">
+
+    <stylesheets>
+        <URL value="@estilos.css"/>
+    </stylesheets>
+
+    <!-- =========== TOPBAR ========== -->
+    <!--
+        Breadcrumb: muestra la ruta de navegación.
+        "Empresas" es clicable y vuelve a PA1.
+        El separador " › " y el nombre de la empresa son etiquetas informativas.
+    -->
+    <top>
+        <HBox styleClass="topbar">
+            <Label text="CarbonAudit Manager" styleClass="topbar-titulo"/>
+            <Label text=" › " styleClass="topbar-sep"/>
+            <Label text="Empresas" styleClass="topbar-breadcrumb-link"
+                   onMouseClicked="#onVolverAPA1"/>
+            <Label text=" › " styleClass="topbar-sep"/>
+            <Label fx:id="lblBreadcrumb" text="" styleClass="topbar-breadcrumb"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="Administrador" styleClass="topbar-rol"/>
+        </HBox>
+    </top>
+
+    <!-- ==================== CONTENIDO CENTRAL ===================== -->
+    <center>
+        <HBox>
+
+            <!-- Zona principal: ocupa todo el ancho libre -->
+            <VBox HBox.hgrow="ALWAYS" styleClass="zona-principal">
+                <padding>
+                    <Insets top="24.0" right="24.0" bottom="24.0" left="24.0"/>
+                </padding>
+
+                <!-- ── Cabecera de empresa ──────────────────────────────── -->
+                <!--
+                    Muestra el nombre, CIF y ciudad de la empresa activa,
+                    junto con los botones de editar y eliminar.
+                    Debajo, el selector de período que persiste entre tabs.
+                -->
+                <VBox styleClass="cabecera-empresa" spacing="10.0">
+                    <HBox alignment="CENTER_LEFT" spacing="12.0">
+                        <VBox spacing="3.0" HBox.hgrow="ALWAYS">
+                            <Label fx:id="lblNombreEmpresa" text="" styleClass="empresa-nombre"/>
+                            <Label fx:id="lblInfoEmpresa"   text="" styleClass="empresa-info"/>
+                        </VBox>
+                        <Button text="Editar"   styleClass="btn-secundario" onAction="#onEditarEmpresa"/>
+                        <Button text="Eliminar" styleClass="btn-peligro"    onAction="#onEliminarEmpresa"/>
+                    </HBox>
+
+                    <!-- Selector de período (mes y año). Compartido entre todos los tabs. -->
+                    <HBox alignment="CENTER_LEFT" spacing="8.0">
+                        <Label text="Período:" styleClass="form-label"/>
+                        <!--
+                            combMes se deshabilita cuando el usuario marca "Año completo".
+                            combAnio siempre está activo.
+                        -->
+                        <ComboBox fx:id="combMes"  prefWidth="140.0"/>
+                        <ComboBox fx:id="combAnio" prefWidth="85.0"/>
+                        <CheckBox fx:id="chkAnioCompleto" text="Año completo"
+                                  styleClass="chk-periodo" onAction="#onToggleAnioCompleto"/>
+                        <Label text="|" styleClass="topbar-sep"/>
+                        <!--
+                            Cuando está marcado, el total incluye las emisiones de commuting
+                            (Alcance 3) calculadas por ServicioCalculoHuella.
+                            La tabla siempre muestra solo los registros de ConsumoMensual.
+                        -->
+                        <CheckBox fx:id="chkIncluirCommuting" text="Incluir commuting (Alcance 3)"
+                                  styleClass="chk-periodo" onAction="#onToggleCommuting"/>
+                    </HBox>
+                </VBox>
+
+                <VBox.margin>
+                    <Insets bottom="16.0"/>
+                </VBox.margin>
+
+                <!-- ── TabPane ──────────────────────────────────────────── -->
+                <!--
+                    TabPane: contenedor de tabs. Cada Tab tiene un contenido distinto.
+                    closable="false": el usuario no puede cerrar los tabs.
+                    El controlador escucha el cambio de tab para cargar datos bajo demanda.
+                -->
+                <TabPane fx:id="tabPane" VBox.vgrow="ALWAYS" styleClass="tab-pane-verde">
+                    <tabs>
+
+                        <!-- ── Tab: Departamentos ───────────────────────── -->
+                        <Tab fx:id="tabDepartamentos" text="Departamentos" closable="false">
+                            <content>
+                                <VBox spacing="12.0">
+                                    <padding>
+                                        <Insets top="16.0"/>
+                                    </padding>
+
+                                    <!-- Botón alineado a la derecha -->
+                                    <HBox alignment="CENTER_LEFT">
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <Button text="+ Nuevo departamento" styleClass="btn-primario"
+                                                onAction="#onNuevoDepartamento"/>
+                                    </HBox>
+
+                                    <TableView fx:id="tablaDepartamentos" VBox.vgrow="ALWAYS"
+                                               styleClass="tabla">
+                                        <placeholder>
+                                            <Label text="No hay departamentos registrados."
+                                                   styleClass="tabla-placeholder"/>
+                                        </placeholder>
+                                        <columns>
+                                            <TableColumn fx:id="colDeptNombre"
+                                                         text="Nombre"             prefWidth="220.0"/>
+                                            <TableColumn fx:id="colDeptLocalidad"
+                                                         text="Localidad"          prefWidth="140.0"/>
+                                            <TableColumn fx:id="colDeptEmpleados"
+                                                         text="Nº empleados"       prefWidth="110.0"/>
+                                            <TableColumn fx:id="colDeptResponsable"
+                                                         text="Responsable activo" prefWidth="180.0"/>
+                                        </columns>
+                                    </TableView>
+
+                                    <Label text="Haz clic en un departamento para gestionar sus empleados y responsable."
+                                           styleClass="texto-ayuda"/>
+                                </VBox>
+                            </content>
+                        </Tab>
+
+                        <!-- ── Tab: Consumos ────────────────────────────── -->
+                        <Tab fx:id="tabConsumos" text="Consumos" closable="false">
+                            <content>
+                                <VBox spacing="12.0">
+                                    <padding>
+                                        <Insets top="16.0"/>
+                                    </padding>
+
+                                    <HBox alignment="CENTER_LEFT">
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <Button text="Exportar CSV" styleClass="btn-secundario"
+                                                onAction="#onExportarCSV"/>
+                                    </HBox>
+
+                                    <!--
+                                        Los datos se cargan al seleccionar este tab o al cambiar
+                                        el período. No se cargan en initialize() para evitar
+                                        consultas innecesarias si el usuario no visita este tab.
+                                    -->
+                                    <TableView fx:id="tablaConsumos" VBox.vgrow="ALWAYS"
+                                               styleClass="tabla">
+                                        <placeholder>
+                                            <Label text="No hay consumos registrados para el período seleccionado."
+                                                   styleClass="tabla-placeholder"/>
+                                        </placeholder>
+                                        <columns>
+                                            <TableColumn fx:id="colConsDept"     text="Departamento"      prefWidth="160.0"/>
+                                            <TableColumn fx:id="colConsRecurso"  text="Recurso"           prefWidth="150.0"/>
+                                            <TableColumn fx:id="colConsCantidad" text="Cantidad"          prefWidth="90.0"/>
+                                            <TableColumn fx:id="colConsUnidad"   text="Unidad"            prefWidth="80.0"/>
+                                            <TableColumn fx:id="colConsAlcance"  text="Alcance"           prefWidth="80.0"/>
+                                            <TableColumn fx:id="colConsEmision"  text="Emisión CO₂e (kg)" prefWidth="140.0"/>
+                                        </columns>
+                                    </TableView>
+
+                                    <!-- Total de la empresa para el período visible -->
+                                    <HBox alignment="CENTER_RIGHT" spacing="6.0">
+                                        <Label text="Total empresa:" styleClass="form-label"/>
+                                        <Label fx:id="lblTotalEmpresa" text="—" styleClass="total-empresa"/>
+                                    </HBox>
+                                </VBox>
+                            </content>
+                        </Tab>
+
+                        <!-- ── Tab: Gráficos (placeholder) ──────────────── -->
+                        <Tab fx:id="tabGraficos" text="Gráficos" closable="false">
+                            <content>
+                                <VBox alignment="CENTER" spacing="16.0">
+                                    <Label text="Los gráficos estarán disponibles próximamente."
+                                           styleClass="tabla-placeholder"/>
+                                </VBox>
+                            </content>
+                        </Tab>
+
+                    </tabs>
+                </TabPane>
+
+            </VBox>
+
+            <!-- ── PANEL LATERAL: Nuevo departamento ────────────────────── -->
+            <!--
+                Los campos de dirección se pre-rellenan con los datos de la empresa.
+                El usuario puede modificarlos si el departamento está en otra ubicación.
+                Al guardar se crea una Dirección nueva e independiente para el departamento.
+            -->
+            <VBox fx:id="panelDpto" managed="false" visible="false"
+                  styleClass="panel-lateral" spacing="14.0">
+                <HBox alignment="CENTER_LEFT" spacing="8.0">
+                    <Label fx:id="panelDptoTitulo" text="Nuevo departamento" styleClass="panel-titulo"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Cerrar" styleClass="btn-cerrar" onAction="#onCancelarDpto"/>
+                </HBox>
+                <Separator/>
+
+                <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="scroll-formulario">
+                    <GridPane hgap="10.0" vgap="10.0">
+                        <padding>
+                            <Insets top="4.0" right="4.0" bottom="4.0" left="4.0"/>
+                        </padding>
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="80.0" prefWidth="80.0"/>
+                            <ColumnConstraints hgrow="ALWAYS"/>
+                        </columnConstraints>
+
+                        <Label text="Nombre *" styleClass="form-label"
+                               GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campDptoNombre" promptText="Ej: Logística"
+                                   GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                        <Label text="Ubicación" styleClass="form-seccion"
+                               GridPane.rowIndex="1" GridPane.columnIndex="0"
+                               GridPane.columnSpan="2"/>
+
+                        <Label text="Calle *" styleClass="form-label"
+                               GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campDptoCalle"
+                                   GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                        <Label text="Número *" styleClass="form-label"
+                               GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campDptoNumero"
+                                   GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+                        <Label text="Ciudad *" styleClass="form-label"
+                               GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campDptoCiudad"
+                                   GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+                        <Label text="C. Postal *" styleClass="form-label"
+                               GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campDptoCp"
+                                   GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+
+                        <Label text="Provincia" styleClass="form-label"
+                               GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campDptoProvincia"
+                                   GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+                    </GridPane>
+                </ScrollPane>
+
+                <HBox spacing="10.0">
+                    <Button text="Guardar"  styleClass="btn-primario"   onAction="#onGuardarDpto"/>
+                    <Button text="Cancelar" styleClass="btn-secundario" onAction="#onCancelarDpto"/>
+                </HBox>
+            </VBox>
+
+            <!-- ── PANEL LATERAL: Editar empresa ────────────────────────── -->
+            <!--
+                Mismo formulario que PA1 pero con los campos pre-rellenados.
+                El controlador los rellena en onEditarEmpresa().
+            -->
+            <VBox fx:id="panelEditEmpresa" managed="false" visible="false"
+                  styleClass="panel-lateral" spacing="14.0">
+                <HBox alignment="CENTER_LEFT" spacing="8.0">
+                    <Label text="Editar empresa" styleClass="panel-titulo"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Cerrar" styleClass="btn-cerrar" onAction="#onCancelarEditEmpresa"/>
+                </HBox>
+                <Separator/>
+
+                <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="scroll-formulario">
+                    <GridPane hgap="10.0" vgap="10.0">
+                        <padding>
+                            <Insets top="4.0" right="4.0" bottom="4.0" left="4.0"/>
+                        </padding>
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="90.0" prefWidth="90.0"/>
+                            <ColumnConstraints hgrow="ALWAYS"/>
+                        </columnConstraints>
+
+                        <Label text="Nombre *"  styleClass="form-label" GridPane.rowIndex="0"  GridPane.columnIndex="0"/>
+                        <TextField fx:id="editNombre"   GridPane.rowIndex="0"  GridPane.columnIndex="1"/>
+
+                        <Label text="CIF *"     styleClass="form-label" GridPane.rowIndex="1"  GridPane.columnIndex="0"/>
+                        <TextField fx:id="editCif"      GridPane.rowIndex="1"  GridPane.columnIndex="1"/>
+
+                        <Label text="Teléfono"  styleClass="form-label" GridPane.rowIndex="2"  GridPane.columnIndex="0"/>
+                        <TextField fx:id="editTelefono" GridPane.rowIndex="2"  GridPane.columnIndex="1"/>
+
+                        <Label text="Email"     styleClass="form-label" GridPane.rowIndex="3"  GridPane.columnIndex="0"/>
+                        <TextField fx:id="editEmail"    GridPane.rowIndex="3"  GridPane.columnIndex="1"/>
+
+                        <Label text="Sector"    styleClass="form-label" GridPane.rowIndex="4"  GridPane.columnIndex="0"/>
+                        <TextField fx:id="editSector"   GridPane.rowIndex="4"  GridPane.columnIndex="1"/>
+
+                        <Label text="Dirección" styleClass="form-seccion"
+                               GridPane.rowIndex="5" GridPane.columnIndex="0" GridPane.columnSpan="2"/>
+
+                        <Label text="Calle *"   styleClass="form-label" GridPane.rowIndex="6"  GridPane.columnIndex="0"/>
+                        <TextField fx:id="editCalle"    GridPane.rowIndex="6"  GridPane.columnIndex="1"/>
+
+                        <Label text="Número *"  styleClass="form-label" GridPane.rowIndex="7"  GridPane.columnIndex="0"/>
+                        <TextField fx:id="editNumero"   GridPane.rowIndex="7"  GridPane.columnIndex="1"/>
+
+                        <Label text="Ciudad *"  styleClass="form-label" GridPane.rowIndex="8"  GridPane.columnIndex="0"/>
+                        <TextField fx:id="editCiudad"   GridPane.rowIndex="8"  GridPane.columnIndex="1"/>
+
+                        <Label text="C. Postal *" styleClass="form-label" GridPane.rowIndex="9"  GridPane.columnIndex="0"/>
+                        <TextField fx:id="editCp"       GridPane.rowIndex="9"  GridPane.columnIndex="1"/>
+
+                        <Label text="Provincia *" styleClass="form-label" GridPane.rowIndex="10" GridPane.columnIndex="0"/>
+                        <TextField fx:id="editProvincia" GridPane.rowIndex="10" GridPane.columnIndex="1"/>
+                    </GridPane>
+                </ScrollPane>
+
+                <HBox spacing="10.0">
+                    <Button text="Guardar"  styleClass="btn-primario"   onAction="#onGuardarEditEmpresa"/>
+                    <Button text="Cancelar" styleClass="btn-secundario" onAction="#onCancelarEditEmpresa"/>
+                </HBox>
+            </VBox>
+
+        </HBox>
+    </center>
+
+</BorderPane>
