@@ -69,3 +69,166 @@
     -fx-font-size: 11px;
     -fx-text-fill: #b0ccb8;
 }
+
+/* ══ PANTALLAS INTERIORES (PA1, PA2, PA3, PR0, PR1) ═════════════════════ */
+
+.pantalla-interior {
+    -fx-background-color: #f5f7f5;
+}
+
+/* ── Topbar ─────────────────────────────────────────────────────────────── */
+
+.topbar {
+    -fx-background-color: #1b3a2a;
+    -fx-padding: 12px 20px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-spacing: 16px;
+}
+
+.topbar-titulo {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #e8f5e9;
+}
+
+.topbar-rol {
+    -fx-font-size: 12px;
+    -fx-text-fill: #8ab89a;
+}
+
+/* ── Zona principal ─────────────────────────────────────────────────────── */
+
+.zona-principal {
+    -fx-background-color: #f5f7f5;
+}
+
+.seccion-titulo {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1b3a2a;
+}
+
+/* ── Botones ────────────────────────────────────────────────────────────── */
+
+.btn-primario {
+    -fx-background-color: #3a6b4a;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-padding: 8px 16px;
+}
+
+.btn-primario:hover {
+    -fx-background-color: #2d5a3d;
+}
+
+.btn-secundario {
+    -fx-background-color: transparent;
+    -fx-text-fill: #3a6b4a;
+    -fx-border-color: #3a6b4a;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-padding: 8px 16px;
+}
+
+.btn-secundario:hover {
+    -fx-background-color: #eef6f1;
+}
+
+.btn-cerrar {
+    -fx-background-color: transparent;
+    -fx-text-fill: #7f8c8d;
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+    -fx-padding: 4px 8px;
+}
+
+.btn-cerrar:hover {
+    -fx-text-fill: #c0392b;
+}
+
+/* ── TableView ──────────────────────────────────────────────────────────── */
+
+.tabla {
+    -fx-background-color: white;
+    -fx-border-color: #d5d8dc;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+
+.tabla .column-header {
+    -fx-background-color: #eef6f1;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-text-fill: #1b3a2a;
+}
+
+.tabla .table-row-cell {
+    -fx-border-color: transparent;
+    -fx-table-cell-border-color: #f0f0f0;
+}
+
+.tabla .table-row-cell:odd {
+    -fx-background-color: #fafcfa;
+}
+
+.tabla .table-row-cell:hover {
+    -fx-background-color: #e6f4ec;
+    -fx-cursor: hand;
+}
+
+.tabla .table-row-cell:selected {
+    -fx-background-color: #c8e6d5;
+}
+
+.tabla-placeholder {
+    -fx-text-fill: #95a5a6;
+    -fx-font-size: 13px;
+}
+
+.texto-ayuda {
+    -fx-font-size: 11px;
+    -fx-text-fill: #b0bcb4;
+    -fx-padding: 4px 0 0 0;
+}
+
+/* ── Panel lateral ──────────────────────────────────────────────────────── */
+
+.panel-lateral {
+    -fx-background-color: white;
+    -fx-border-color: #d5d8dc;
+    -fx-border-width: 0 0 0 1px;
+    -fx-pref-width: 300px;
+    -fx-padding: 20px;
+}
+
+.panel-titulo {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1b3a2a;
+}
+
+.scroll-formulario {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+/* ── Formularios ────────────────────────────────────────────────────────── */
+
+.form-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #555;
+    -fx-alignment: CENTER_RIGHT;
+}
+
+.form-seccion {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #3a6b4a;
+    -fx-padding: 8px 0 2px 0;
+}

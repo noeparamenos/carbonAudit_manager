@@ -79,17 +79,23 @@ Creación de la UI con JavaFX y visualización de resultados.
     - [x] Documentar el mapa de navegación 
     - [x] Especificar cada pantalla: actores, objetivo, elementos y acciones (`screens.md`)
     - [ ] Crear wireframes de las pantallas principales
+      - [x] P0 · Selección de rol
+      - [x] PA1 · Lista de empresas
+      - [ ] PA2 · Vista empresa
+      - [ ] PA3 · Gestión de departamento
+      - [ ] PR0 · Selección de responsable
+      - [ ] PR1 · Vista responsable
     - [x] Ajustar tamaño y calidad del logo en P0
     - [ ] Resolver centrado de ventana P0 en el primer arranque en frío (ver error 8)
   - **Implementación:**
-    - [ ] Diseñar pantallas (`.fxml`) utilizando **Scene Builder**
-      - [ ] P0 · Selección de rol
-      - [ ] PA1 · Lista de empresas (Administrador)
+    - [ ] Diseñar pantallas (`.fxml`) y controladores
+      - [x] P0 · Selección de rol
+      - [x] PA1 · Lista de empresas — tabla, panel lateral alta empresa, navegación a PA2
       - [ ] PA2 · Vista empresa — tabs: Departamentos, Consumos, Gráficos
       - [ ] PA3 · Gestión de departamento (empleados + responsable)
       - [ ] PR0 · Selección de responsable activo
       - [ ] PR1 · Vista responsable — tabs: Consumos, Trabajadores, Huella, Gráficos
-    - [ ] Implementar controladores JavaFX para cada pantalla
+    - [ ] Edición y borrado de empresas (desde PA2)
     - [ ] Crear formularios de alta/edición como paneles laterales deslizantes
   - **Validaciones de integridad en la UI:**
     - [ ] Al borrar un Departamento: comprobar si tiene Empleados/Consumos asociados.

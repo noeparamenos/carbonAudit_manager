@@ -81,11 +81,16 @@ public class SeleccionRolController {
 
             // Subimos por el árbol: nodo origen → escena → ventana (Stage)
             Stage stage = (Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow();
+
+            // Las pantallas interiores son redimensionables (P0 era fija)
+            stage.setResizable(true);
             stage.setScene(nuevaEscena);
+            stage.sizeToScene();
+            stage.centerOnScreen();
 
         } catch (Exception e) {
-            // TODO: sustituir por navegación real cuando PA1 y PR0 estén implementados
-            System.err.println("Pantalla no implementada aún: " + rutaFxml);
+            System.err.println("Error cargando: " + rutaFxml);
+            e.printStackTrace();
         }
     }
 }

@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<!--
+    PA1 · Lista de empresas (cabecera fija + contenido central variable)
+    Layout BorderPane: divide la pantalla en zonas (top, center, bottom...).
+-->
+<BorderPane prefWidth="900.0" prefHeight="620.0"
+            styleClass="pantalla-interior"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.carbonaudit.controller.PA1Controller">
+
+    <stylesheets>
+        <URL value="@estilos.css"/>
+    </stylesheets>
+
+    <!-- =========== TOPBAR ========= -->
+    <!--
+        HBox.hgrow="ALWAYS": espaciador flexible:
+        empuja el Label "Administrador" hacia la derecha.
+    -->
+    <top>
+        <HBox styleClass="topbar">
+            <Label text="CarbonAudit Manager" styleClass="topbar-titulo"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="Administrador" styleClass="topbar-rol"/>
+        </HBox>
+    </top>
+
+    <!-- ==================== CONTENIDO CENTRAL =====================-->
+    <center>
+        <!--
+            HBox agrupa la zona principal (izq) y el panel lateral (dcha).
+            Que empieza oculto; se muestra al pulsar "Nueva empresa".
+        -->
+        <HBox>
+
+            <!-- Zona principal: ocupa todo el espacio horizontal disponible -->
+            <VBox HBox.hgrow="ALWAYS" styleClass="zona-principal">
+                <padding>
+                    <Insets top="24.0" right="24.0" bottom="24.0" left="24.0"/>
+                </padding>
+
+                <!-- Cabecera de sección: título a la izquierda, botón a la derecha -->
+                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                    <Label text="Empresas" styleClass="seccion-titulo"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="+ Nueva empresa" styleClass="btn-primario"
+                            onAction="#onNuevaEmpresa"/>
+                </HBox>
+
+                <VBox.margin>
+                    <Insets bottom="16.0"/>
+                </VBox.margin>
+
+                <!--
+                    TableView: componente principal de esta pantalla.
+                    - VBox.vgrow="ALWAYS" → ocupa todo el alto restante.
+                    - fx:id permite al controlador acceder a la tabla y sus columnas.
+                    - columnResizePolicy="CONSTRAINED" → las columnas se reparten el ancho.
+                -->
+                <TableView fx:id="tablaEmpresas" VBox.vgrow="ALWAYS"
+                           styleClass="tabla">
+
+                    <placeholder>
+                        <Label text="No hay empresas registradas." styleClass="tabla-placeholder"/>
+                    </placeholder>
+
+                    <columns>
+                        <TableColumn fx:id="colNombre"  text="Nombre social" prefWidth="300.0"/>
+                        <TableColumn fx:id="colCif"     text="CIF"           prefWidth="120.0"/>
+                        <TableColumn fx:id="colCiudad"  text="Ciudad"        prefWidth="160.0"/>
+                        <TableColumn fx:id="colSector"  text="Sector"        prefWidth="140.0"/>
+                    </columns>
+                </TableView>
+
+                <Label text="Haz clic en una empresa para acceder a sus departamentos y consumos."
+                       styleClass="texto-ayuda"/>
+
+            </VBox>
+
+            <!-- ── PANEL LATERAL ──────────────────────────────────────── -->
+            <!--
+                managed="false" + visible="false": el panel no ocupa espacio
+                en el layout cuando está oculto. Al mostrarlo, el controlador
+                activa ambos atributos a true.
+            -->
+            <VBox fx:id="panelLateral" managed="false" visible="false"
+                  styleClass="panel-lateral" spacing="14.0">
+
+                <!-- Cabecera del panel -->
+                <HBox alignment="CENTER_LEFT" spacing="8.0">
+                    <Label fx:id="panelTitulo" text="Nueva empresa" styleClass="panel-titulo"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Cerrar" styleClass="btn-cerrar" onAction="#onCancelar"/>
+                </HBox>
+
+                <Separator/>
+
+                <!--
+                    ScrollPane envuelve el formulario para que sea desplazable
+                    si la ventana es pequeña. fitToWidth="true" hace que el
+                    contenido interior ocupe todo el ancho del scroll.
+                -->
+                <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                            styleClass="scroll-formulario">
+                    <!--
+                        GridPane: contenedor de formularios por excelencia.
+                        Organiza los elementos en filas y columnas.
+                        hgap/vgap: separación horizontal y vertical entre celdas.
+                    -->
+                    <GridPane hgap="10.0" vgap="10.0">
+                        <padding>
+                            <Insets top="4.0" right="4.0" bottom="4.0" left="4.0"/>
+                        </padding>
+
+                        <!-- Columna 0: etiquetas (ancho fijo) -->
+                        <!-- Columna 1: campos (crece para ocupar el resto) -->
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="90.0" prefWidth="90.0"/>
+                            <ColumnConstraints hgrow="ALWAYS"/>
+                        </columnConstraints>
+
+                        <!-- Fila 0: Nombre social -->
+                        <Label text="Nombre *" styleClass="form-label"
+                               GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campNombre" promptText="Nombre social"
+                                   GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                        <!-- Fila 1: CIF -->
+                        <Label text="CIF *" styleClass="form-label"
+                               GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campCif" promptText="B12345678"
+                                   GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                        <!-- Fila 2: Teléfono -->
+                        <Label text="Teléfono" styleClass="form-label"
+                               GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campTelefono" promptText="600 000 000"
+                                   GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                        <!-- Fila 3: Email -->
+                        <Label text="Email" styleClass="form-label"
+                               GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campEmail" promptText="empresa@correo.com"
+                                   GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+                        <!-- Fila 4: Sector -->
+                        <Label text="Sector" styleClass="form-label"
+                               GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campSector" promptText="Tecnología, Industria..."
+                                   GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+                        <!-- Separador de sección: ocupa las dos columnas -->
+                        <Label text="Dirección" styleClass="form-seccion"
+                               GridPane.rowIndex="5" GridPane.columnIndex="0"
+                               GridPane.columnSpan="2"/>
+
+                        <!-- Fila 6: Calle -->
+                        <Label text="Calle *" styleClass="form-label"
+                               GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campCalle" promptText="Calle Mayor"
+                                   GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+
+                        <!-- Fila 7: Número -->
+                        <Label text="Número *" styleClass="form-label"
+                               GridPane.rowIndex="7" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campNumero" promptText="12"
+                                   GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+
+                        <!-- Fila 8: Ciudad -->
+                        <Label text="Ciudad *" styleClass="form-label"
+                               GridPane.rowIndex="8" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campCiudad" promptText="Madrid"
+                                   GridPane.rowIndex="8" GridPane.columnIndex="1"/>
+
+                        <!-- Fila 9: Código postal -->
+                        <Label text="C. Postal *" styleClass="form-label"
+                               GridPane.rowIndex="9" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campCp" promptText="28001"
+                                   GridPane.rowIndex="9" GridPane.columnIndex="1"/>
+
+                        <!-- Fila 10: Provincia -->
+                        <Label text="Provincia *" styleClass="form-label"
+                               GridPane.rowIndex="10" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campProvincia" promptText="Madrid"
+                                   GridPane.rowIndex="10" GridPane.columnIndex="1"/>
+
+                    </GridPane>
+                </ScrollPane>
+
+                <!-- Botones de acción del formulario -->
+                <HBox spacing="10.0">
+                    <Button text="Guardar" styleClass="btn-primario" onAction="#onGuardar"/>
+                    <Button text="Cancelar" styleClass="btn-secundario" onAction="#onCancelar"/>
+                </HBox>
+
+            </VBox>
+
+        </HBox>
+    </center>
+
+</BorderPane>
