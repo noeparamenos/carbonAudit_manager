@@ -60,11 +60,14 @@ CREATE TABLE EMPLEADO
 (
     id_empleado       SERIAL PRIMARY KEY,
     nombre            VARCHAR(100) NOT NULL,
+    fecha_alta        DATE         NOT NULL DEFAULT CURRENT_DATE,
+    fecha_baja        DATE,
     distancia_trabajo DECIMAL(6, 2),
     medio_transporte  INT          NOT NULL REFERENCES FACTOR_EMISION (id_factor),
     dias_presenciales INT          NOT NULL CHECK ( dias_presenciales BETWEEN 1 AND 31) DEFAULT 20,
     id_direccion      INT          NOT NULL REFERENCES DIRECCION (id_direccion),
-    id_dept           INT          NOT NULL REFERENCES DEPARTAMENTO (id_departamento)
+    id_dept           INT          NOT NULL REFERENCES DEPARTAMENTO (id_departamento),
+    CONSTRAINT empleado_fechas_check CHECK (fecha_baja IS NULL OR fecha_baja >= fecha_alta)
 );
 
 
