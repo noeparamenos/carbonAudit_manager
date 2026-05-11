@@ -4,6 +4,7 @@ import com.carbonaudit.dao.*;
 import com.carbonaudit.model.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Optional;
 
 public class MainTestDao {
@@ -69,6 +70,8 @@ public class MainTestDao {
             empleado.setDiasPresenciales(20);
             empleado = empleadoDAO.create(empleado);
             System.out.println("Empleado "+empleado.getNombre()+" creado con id: "+empleado.getIdEmpleado());
+            System.out.println("  · Fecha alta: " + empleado.getFechaAlta());
+            System.out.println("  · ¿Activo?:   " + empleado.isActivo());
 
 
             // TEST: Forzar error de validación (Mes inexistente)
@@ -81,7 +84,16 @@ public class MainTestDao {
                 System.out.println("El validador funciona: " + e.getMessage());
             }
 
-            // Borrado
+            // Dar de baja
+            System.out.println("Dando de baja al empleado:");
+            empleadoDAO.darDeBaja(empleado.getIdEmpleado(), LocalDate.now());
+            Optional<Empleado> recuperado = empleadoDAO.findById(empleado.getIdEmpleado());
+            recuperado.ifPresent(e -> {
+                System.out.println("  · Fecha baja: " + e.getFechaBaja());
+                System.out.println("  · ¿Activo?:   " + e.isActivo()); // debe mostrar false
+            });
+
+            // Borrado (limpieza del test)
 
             empleadoDAO.delete(empleado.getIdEmpleado());
             factorDAO.delete(factorEmision.getIdFactor());

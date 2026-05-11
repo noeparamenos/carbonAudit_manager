@@ -105,6 +105,10 @@ Se utiliza para:
 * análisis de teletrabajo
 * evolución del transporte sostenible
 
+> **Nota — Soft delete en EMPLEADO:**
+> Los empleados no se borran de la BD para guardar su historial
+
+
 ---
 
 ### Factores de Emisión → Commuting

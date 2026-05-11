@@ -45,11 +45,13 @@ erDiagram
     EMPLEADO {
         int id_empleado PK
         varchar nombre "NN"
+        date fecha_alta "NN DEFAULT TODAY"
+        date fecha_baja "NULL = activo"
         decimal distancia_trabajo
         int medio_transporte FK "NN"
         int dias_presenciales "NN"
         int id_direccion FK "NN"
-        int id_dept FK
+        int id_dept FK "NN"
     }
 
     RESPONSABLE {

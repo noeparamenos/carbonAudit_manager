@@ -57,17 +57,21 @@
 ## 3. Empleado
 
 - Representa a los empleados de la empresa.
-  - Sus datos se utilizan principalmente para cálculos de movilidad y asignación de responsabilidades dentro del sistema.
+- Sus datos se utilizan para cálculos de movilidad y asignación de responsabilidades.
+- Implementa **soft delete**: al causar baja se registra `fecha_baja` en lugar de borrar el registro, preservando el historial de commuting y mandatos para auditoría.
+- CHECK: `fecha_baja >= fecha_alta` (no puede darse de baja antes de entrar).
 
-| Campo             | Tipo         | Restricciones                                   | Utilidad                                 |
-|-------------------|--------------|-------------------------------------------------|------------------------------------------|
-| id_empleado       | SERIAL       | PK                                              | Identificador único                      |
-| nombre            | VARCHAR(100) | NOT NULL                                        | Nombre del trabajador                    |
-| distancia_trabajo | DECIMAL(6,2) |                                                 | Distancia al trabajo (calculada via API) |
-| medio_transporte  | INT          | FK -> Factores de emisison (id_factor) NOT NULL | Medio de desplazamiento a la oficina     |
-| dias_presenciales | INT          | NOT NULL DEFAULT (20)                           | Total de dias que se desplaza al mes     |
-| id_direccion      | INT          | FK -> Direccion(id_direccion)  NOT NULL         | Dirección de residencia                  |
-| id_dept           | INT          | FK -> Departamento(id_departamento) NOT NULL    | Departamento actual                      |
+| Campo             | Tipo         | Restricciones                                   | Utilidad                                              |
+|-------------------|--------------|-------------------------------------------------|-------------------------------------------------------|
+| id_empleado       | SERIAL       | PK                                              | Identificador único                                   |
+| nombre            | VARCHAR(100) | NOT NULL                                        | Nombre del trabajador                                 |
+| fecha_alta        | DATE         | NOT NULL DEFAULT CURRENT_DATE                   | Fecha de incorporación a la empresa                   |
+| fecha_baja        | DATE         |                                                 | Fecha de baja (NULL = empleado activo)                |
+| distancia_trabajo | DECIMAL(6,2) |                                                 | Distancia al trabajo en km (calculada via API)        |
+| medio_transporte  | INT          | FK → FactorEmision(id_factor) NOT NULL          | Medio de desplazamiento habitual (FactorEmision alc.3)|
+| dias_presenciales | INT          | NOT NULL DEFAULT 20 CHECK (1..31)               | Días al mes que se desplaza al trabajo                |
+| id_direccion      | INT          | FK → Direccion(id_direccion) NOT NULL           | Dirección de residencia                               |
+| id_dept           | INT          | FK → Departamento(id_departamento) NOT NULL     | Departamento al que pertenece                         |
 
 ---
 

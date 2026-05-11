@@ -3,6 +3,7 @@ package com.carbonaudit.dao;
 import com.carbonaudit.model.Empleado;
 import com.carbonaudit.model.Direccion;
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -30,24 +31,22 @@ public class EmpleadoDAO implements DAO<Empleado, Integer> {
         }
 
         // INSERCION del empleado
-        String sql = "INSERT INTO EMPLEADO (nombre, distancia_trabajo, medio_transporte, dias_presenciales, id_direccion, id_dept) VALUES (?, ?, ?, ?, ?, ?) RETURNING id_empleado";
+        String sql = "INSERT INTO EMPLEADO (nombre, fecha_alta, distancia_trabajo, medio_transporte, dias_presenciales, id_direccion, id_dept) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id_empleado";
 
         try (Connection conn = DatabaseManager.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, empleado.getNombre());
-            // distancia_trabajo puede ser NULL (se calcula via API después)
+            pstmt.setDate(2, Date.valueOf(empleado.getFechaAlta()));
             if (empleado.getDistanciaTrabajo() != null) {
-                pstmt.setBigDecimal(2, empleado.getDistanciaTrabajo());
+                pstmt.setBigDecimal(3, empleado.getDistanciaTrabajo());
             } else {
-                pstmt.setNull(2, Types.DECIMAL);
+                pstmt.setNull(3, Types.DECIMAL);
             }
-
-            // Ya no comprobamos nulos aquí porque la validación inicial y la BD no lo permiten
-            pstmt.setInt(3, empleado.getMedioTransporte().getIdFactor());
-            pstmt.setInt(4, empleado.getDiasPresenciales());
-            pstmt.setInt(5, empleado.getDireccion().getIdDireccion());
-            pstmt.setInt(6, empleado.getDepartamento().getIdDepartamento());
+            pstmt.setInt(4, empleado.getMedioTransporte().getIdFactor());
+            pstmt.setInt(5, empleado.getDiasPresenciales());
+            pstmt.setInt(6, empleado.getDireccion().getIdDireccion());
+            pstmt.setInt(7, empleado.getDepartamento().getIdDepartamento());
 
             ResultSet rs = pstmt.executeQuery();
 
@@ -64,8 +63,11 @@ public class EmpleadoDAO implements DAO<Empleado, Integer> {
         if (empleado.getNombre() == null || empleado.getNombre().isEmpty()) {
             throw new IllegalArgumentException("El nombre del empleado es obligatorio.");
         }
+        if (empleado.getFechaAlta() == null) {
+            throw new IllegalArgumentException("La fecha de alta es obligatoria.");
+        }
         if (empleado.getDireccion() == null) {
-            throw new IllegalArgumentException("La dirección de residencia es obligatoria");
+            throw new IllegalArgumentException("La dirección de residencia es obligatoria.");
         }
         if (empleado.getMedioTransporte() == null) {
             throw new IllegalArgumentException("El medio de transporte es obligatorio para el cálculo de movilidad.");
@@ -73,7 +75,6 @@ public class EmpleadoDAO implements DAO<Empleado, Integer> {
         if (empleado.getDepartamento() == null || empleado.getDepartamento().getIdDepartamento() == 0) {
             throw new IllegalArgumentException("El departamento es obligatorio.");
         }
-
     }
 
     /**
@@ -86,6 +87,9 @@ public class EmpleadoDAO implements DAO<Empleado, Integer> {
         Empleado emp = new Empleado();
         emp.setIdEmpleado(rs.getInt("id_empleado"));
         emp.setNombre(rs.getString("nombre"));
+        emp.setFechaAlta(rs.getDate("fecha_alta").toLocalDate());
+        Date fechaBajaSql = rs.getDate("fecha_baja");
+        if (!rs.wasNull()) emp.setFechaBaja(fechaBajaSql.toLocalDate());
         emp.setDistanciaTrabajo(rs.getBigDecimal("distancia_trabajo"));
         emp.setDiasPresenciales(rs.getInt("dias_presenciales"));
 
@@ -117,17 +121,18 @@ public class EmpleadoDAO implements DAO<Empleado, Integer> {
             direccionDAO.update(empleado.getDireccion());
         }
 
-        String sql = "UPDATE EMPLEADO SET nombre=?, distancia_trabajo=?, medio_transporte=?, dias_presenciales=?, id_direccion=?, id_dept=? WHERE id_empleado=?";
+        String sql = "UPDATE EMPLEADO SET nombre=?, fecha_alta=?, distancia_trabajo=?, medio_transporte=?, dias_presenciales=?, id_direccion=?, id_dept=? WHERE id_empleado=?";
         try (Connection conn = DatabaseManager.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, empleado.getNombre());
-            pstmt.setObject(2, empleado.getDistanciaTrabajo(), java.sql.Types.DECIMAL);
-            pstmt.setInt(3, empleado.getMedioTransporte().getIdFactor());
-            pstmt.setInt(4, empleado.getDiasPresenciales());
-            pstmt.setInt(5, empleado.getDireccion().getIdDireccion());
-            pstmt.setInt(6, empleado.getDepartamento().getIdDepartamento());
-            pstmt.setInt(7, empleado.getIdEmpleado()); // PK del empleado a actualziar
+            pstmt.setDate(2, Date.valueOf(empleado.getFechaAlta()));
+            pstmt.setObject(3, empleado.getDistanciaTrabajo(), java.sql.Types.DECIMAL);
+            pstmt.setInt(4, empleado.getMedioTransporte().getIdFactor());
+            pstmt.setInt(5, empleado.getDiasPresenciales());
+            pstmt.setInt(6, empleado.getDireccion().getIdDireccion());
+            pstmt.setInt(7, empleado.getDepartamento().getIdDepartamento());
+            pstmt.setInt(8, empleado.getIdEmpleado());
 
             pstmt.executeUpdate(); // Actualización de datos
         } catch (SQLException e) { // Atrapa el error que lanza el mapeado
@@ -171,8 +176,29 @@ public class EmpleadoDAO implements DAO<Empleado, Integer> {
     }
 
     /**
-     * Borra un emplado de la BD
-     * @param id del emplado a borrar
+     * Cuenta cuántos empleados pertenecen a un departamento concreto.
+     * Se usa en PA2 para mostrar la columna "Nº empleados" de la tabla.
+     *
+     * @param idDepartamento ID del departamento
+     * @return Número de empleados en ese departamento
+     */
+    public int countByDepartamento(int idDepartamento) {
+        String sql = "SELECT COUNT(*) FROM EMPLEADO WHERE id_dept = ? AND fecha_baja IS NULL";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, idDepartamento);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) return rs.getInt(1);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    /**
+     * Borra un empleado de la BD.
+     * Solo usar cuando el empleado no tenga historial (commuting, responsable).
+     * En la mayoría de casos usar darDeBaja() en su lugar.
      */
     @Override
     public void delete(Integer id) {
@@ -180,6 +206,41 @@ public class EmpleadoDAO implements DAO<Empleado, Integer> {
         try (Connection conn = DatabaseManager.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    /**
+     * Devuelve los empleados activos (fecha_baja IS NULL) de un departamento.
+     *
+     * @param idDepartamento ID del departamento
+     * @return lista de empleados activos ordenada por nombre
+     */
+    public List<Empleado> findAllByDepartamento(int idDepartamento) {
+        List<Empleado> lista = new ArrayList<>();
+        String sql = "SELECT * FROM EMPLEADO WHERE id_dept = ? AND fecha_baja IS NULL ORDER BY nombre";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, idDepartamento);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) lista.add(mapResultSetToEmpleado(rs));
+        } catch (SQLException e) { e.printStackTrace(); }
+        return lista;
+    }
+
+    /**
+     * Marca un empleado como dado de baja.
+     * Soft Delete: Sus registros de commuting y responsabilidad se conservan para auditoría.
+     *
+     * @param idEmpleado ID del empleado que causa baja
+     * @param fechaBaja  fecha efectiva de la baja
+     */
+    public void darDeBaja(int idEmpleado, LocalDate fechaBaja) {
+        String sql = "UPDATE EMPLEADO SET fecha_baja = ? WHERE id_empleado = ?";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setDate(1, Date.valueOf(fechaBaja));
+            pstmt.setInt(2, idEmpleado);
             pstmt.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }

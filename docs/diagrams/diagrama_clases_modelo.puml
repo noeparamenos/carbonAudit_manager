@@ -1,0 +1,103 @@
+@startuml Diagrama de Clases - Modelo
+
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor White
+    BorderColor #555
+    ArrowColor #333
+}
+skinparam package {
+    BackgroundColor #FAFAFA
+}
+
+package "com.carbonaudit.model" {
+
+    class Direccion {
+        - idDireccion : int
+        - calle : String
+        - numero : int
+        - ciudad : String
+        - codigoPostal : String
+        - provincia : String
+        - latitud : BigDecimal
+        - longitud : BigDecimal
+    }
+
+    class Empresa {
+        - idEmpresa : int
+        - nombreSocial : String
+        - cif : String
+        - telefono : String
+        - email : String
+        - sector : String
+    }
+
+    class Departamento {
+        - idDepartamento : int
+        - nombre : String
+        - descripcion : String
+        - incluirAlcance3 : boolean
+    }
+
+    class Empleado {
+        - idEmpleado : int
+        - nombre : String
+        - fechaAlta : LocalDate
+        - fechaBaja : LocalDate
+        - distanciaTrabajo : BigDecimal
+        - diasPresenciales : int
+        + isActivo() : boolean
+    }
+
+    class Responsable {
+        - idAsignacion : int
+        - fechaInicio : LocalDate
+        - fechaFin : LocalDate
+        + isActivo() : boolean
+    }
+
+    class ConsumoMensual {
+        - idConsumo : int
+        - cantidad : BigDecimal
+        - mes : int
+        - anio : int
+        + calcularEmision() : BigDecimal
+    }
+
+    class CommutingEmpleado {
+        - distanciaDiariaKm : BigDecimal
+        - diasPresencialesMes : int
+        - mes : int
+        - anio : int
+    }
+
+    class FactorEmision {
+        - idFactor : int
+        - nombre : String
+        - unidad : String
+        - valorFactor : BigDecimal
+        - alcance : int
+    }
+}
+
+' Composición: el hijo no existe sin el padre
+Empresa        "1"   *-- "1..*" Departamento
+Departamento   "1"   *-- "0..*" Empleado
+Departamento   "1"   *-- "0..*" ConsumoMensual
+Empleado       "1"   *-- "0..*" CommutingEmpleado
+
+' Asociación: Direccion es un objeto compartido
+Empresa        "1..*" --> "1"   Direccion
+Departamento   "1..*" --> "1"   Direccion
+Empleado       "1..*" --> "1"   Direccion
+
+' Asociaciones a FactorEmision
+Empleado       "1..*" --> "1"   FactorEmision : medioTransporte
+ConsumoMensual "0..*" --> "1"   FactorEmision
+CommutingEmpleado "0..*" --> "1" FactorEmision
+
+' Responsable referencia Departamento y Empleado
+Responsable "0..*" --> "1" Departamento
+Responsable "0..*" --> "1" Empleado
+
+@enduml

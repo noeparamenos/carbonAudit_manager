@@ -1,0 +1,87 @@
+@startuml Diagrama de Clases - DAO y Servicio
+
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor White
+    BorderColor #555
+    ArrowColor #333
+}
+skinparam package {
+    BackgroundColor #FAFAFA
+}
+
+' ── Capa DAO ──────────────────────────────────────────────────────
+package "com.carbonaudit.dao" {
+
+    interface "DAO<T, K>" as DAO {
+        + create(entity: T) : T
+        + findById(id: K) : Optional<T>
+        + findAll() : List<T>
+        + update(entity: T) : void
+        + delete(id: K) : void
+    }
+
+    class DatabaseManager <<Singleton>> {
+        - instance : DatabaseManager
+        + getInstance() : DatabaseManager
+        + getConnection() : Connection
+    }
+
+    class EmpresaDAO
+    class DireccionDAO
+    class FactorEmisionDAO
+    class ResponsableDAO
+    class EmpleadoDAO
+    class DepartamentoDAO {
+        + findAllByEmpresa(idEmpresa) : List
+    }
+    class ConsumoMensualDAO {
+        + getConsumosDepartamentoMes(idDept, mes, anio) : List
+    }
+    class CommutingEmpleadoDAO {
+        + getCommutingsDepartamentoMes(idDept, mes, anio) : List
+    }
+}
+
+' Implementaciones de la interfaz genérica
+EmpresaDAO          ..|> DAO
+DepartamentoDAO     ..|> DAO
+EmpleadoDAO         ..|> DAO
+ConsumoMensualDAO   ..|> DAO
+CommutingEmpleadoDAO ..|> DAO
+FactorEmisionDAO    ..|> DAO
+DireccionDAO        ..|> DAO
+ResponsableDAO      ..|> DAO
+
+' Todos los DAOs usan DatabaseManager
+DAO ..> DatabaseManager : usa
+
+' ── Capa Servicio ─────────────────────────────────────────────────
+package "com.carbonaudit.service" {
+
+    interface IServicioGeografico {
+        + completarCoordenadas(dir: Direccion) : void
+        + calcularDistancia(origen: Direccion, destino: Direccion) : BigDecimal
+    }
+
+    class ServicioGeograficoORS implements IServicioGeografico
+
+    class ServicioCalculoHuella {
+        + asignarDistanciaTrabajo(emp: Empleado) : void
+        + getCommutingMensual(emp: Empleado) : BigDecimal
+        + getHuellaTotalDepartamentoMes(dept, mes, anio) : BigDecimal
+        + getHuellaTotalEmpresaMes(empresa, mes, anio) : BigDecimal
+        + getHuellaPorScope(dept, mes, anio) : Map
+        + getHuellaAnualDepartamento(dept, anio) : BigDecimal
+        + getHuellaAnualEmpresa(empresa, anio) : BigDecimal
+        + getVariacionMensual(dept, mes, anio) : BigDecimal
+    }
+}
+
+' Dependencias del servicio de cálculo
+ServicioCalculoHuella --> IServicioGeografico
+ServicioCalculoHuella ..> ConsumoMensualDAO    : usa
+ServicioCalculoHuella ..> CommutingEmpleadoDAO : usa
+ServicioCalculoHuella ..> DepartamentoDAO      : usa
+
+@enduml

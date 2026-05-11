@@ -163,4 +163,23 @@ public class FactorEmisionDAO implements DAO<FactorEmision, Integer> {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Devuelve todos los factores de un alcance GHG específico.
+     * Útil para poblar el ComboBox de medios de transporte (alcance=3) en formularios de empleado.
+     *
+     * @param alcance 1 (directo), 2 (energía) o 3 (otros indirectos / commuting)
+     * @return lista de factores del alcance indicado
+     */
+    public List<FactorEmision> findByAlcance(int alcance) {
+        List<FactorEmision> lista = new ArrayList<>();
+        String sql = "SELECT * FROM FACTOR_EMISION WHERE alcance = ? ORDER BY nombre";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, alcance);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) lista.add(mapResultSetToFactor(rs));
+        } catch (SQLException e) { e.printStackTrace(); }
+        return lista;
+    }
 }
