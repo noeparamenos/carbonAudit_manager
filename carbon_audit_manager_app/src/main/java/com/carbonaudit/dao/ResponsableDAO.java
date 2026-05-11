@@ -9,8 +9,7 @@ import java.util.Optional;
 
 /**
  * DAO para la gestión del historial de Responsables de Sostenibilidad.
- * Implementa la lógica para manejar periodos de responsabilidad (fechas)
- * y la composición con Departamento y Empleado.
+ * Lógica para manejar periodos de responsabilidad (fechas)
  */
 public class ResponsableDAO implements DAO<Responsable, Integer> {
 
@@ -186,5 +185,24 @@ public class ResponsableDAO implements DAO<Responsable, Integer> {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Devuelve el historial completo de responsables de un departamento,
+     * ordenado del más reciente al más antiguo.
+     *
+     * @param idDepartamento ID del departamento
+     * @return lista de todos los mandatos (activos e históricos)
+     */
+    public List<Responsable> findAllByDepartamento(int idDepartamento) {
+        List<Responsable> lista = new ArrayList<>();
+        String sql = "SELECT * FROM RESPONSABLE WHERE id_dept = ? ORDER BY fecha_inicio DESC";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, idDepartamento);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) lista.add(mapResultSetToResponsable(rs));
+        } catch (SQLException e) { e.printStackTrace(); }
+        return lista;
     }
 }

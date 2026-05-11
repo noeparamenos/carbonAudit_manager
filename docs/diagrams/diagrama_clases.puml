@@ -44,8 +44,11 @@ package "com.carbonaudit.model" {
     class Empleado {
         - idEmpleado : int
         - nombre : String
+        - fechaAlta : LocalDate
+        - fechaBaja : LocalDate
         - distanciaTrabajo : BigDecimal
         - diasPresenciales : int
+        + isActivo() : boolean
     }
 
     class Responsable {
@@ -116,7 +119,17 @@ package "com.carbonaudit.dao" {
     class DireccionDAO
     class FactorEmisionDAO
     class ResponsableDAO
-    class EmpleadoDAO
+    class EmpleadoDAO {
+        + findAllByDepartamento(idDept) : List
+        + darDeBaja(idEmpleado, fechaBaja) : void
+    }
+    class ResponsableDAO {
+        + findActivoByDepartamento(idDept) : Optional
+        + findAllByDepartamento(idDept) : List
+    }
+    class FactorEmisionDAO {
+        + findByAlcance(alcance) : List
+    }
     class DepartamentoDAO {
         + findAllByEmpresa(idEmpresa) : List
     }
