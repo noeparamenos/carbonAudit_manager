@@ -91,7 +91,8 @@
                 activa ambos atributos a true.
             -->
             <VBox fx:id="panelLateral" managed="false" visible="false"
-                  styleClass="panel-lateral" spacing="14.0">
+                  styleClass="panel-lateral" spacing="14.0"
+                  prefWidth="380.0" minWidth="380.0">
 
                 <!-- Cabecera del panel -->
                 <HBox alignment="CENTER_LEFT" spacing="8.0">

@@ -54,6 +54,8 @@ object "oficinasIT : Direccion" as dirDepto {
 object "emp01 : Empleado" as empleado {
     idEmpleado = 7
     nombre = "Laura Gómez"
+    fechaAlta = 2023-03-01
+    fechaBaja = null
     distanciaTrabajo = 12.40
     diasPresenciales = 20
 }

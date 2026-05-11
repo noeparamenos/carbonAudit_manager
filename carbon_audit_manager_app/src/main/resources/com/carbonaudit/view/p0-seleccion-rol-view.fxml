@@ -31,10 +31,9 @@
     </padding>
 
     <!--
-        ImageView muestra una imagen.
         - fitWidth: ancho máximo en píxeles.
         - preserveRatio: mantiene proporciones originales al escalar.
-        - smooth="true": activa interpolación bilineal para evitar pixelado al escalar.
+        - smooth="true": para evitar pixelado al escalar.
     -->
     <!-- fitWidth controla el tamaño -->
     <ImageView fitWidth="140.0" pickOnBounds="true" preserveRatio="true">
@@ -60,8 +59,7 @@
         <!--
             Tarjeta Administrador.
             - fx:id="tarjetaAdmin": permite al controlador referenciar este nodo.
-            - onMouseClicked:  método del controlador que se ejecuta al hacer clic.
-            - styleClass:  clase CSS que define su apariencia (y el efecto hover).
+            - onMouseClicked: métod del controlador que se ejecuta al hacer clic.
         -->
         <VBox fx:id="tarjetaAdmin" alignment="CENTER" onMouseClicked="#onAdministradorClick" spacing="12.0" styleClass="tarjeta">
 

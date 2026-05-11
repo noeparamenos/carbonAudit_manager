@@ -33,21 +33,17 @@ public class SeleccionRolController {
     private VBox tarjetaResponsable;
 
     /**
-     * initialize() es llamado por JavaFX justo después de cargar el FXML
-     * y de inyectar todos los @FXML. Es el lugar correcto para configurar
-     * el estado inicial de la pantalla.
+     * Métod llamado por JavaFX justo después de cargar el FXML
+     * y de inyectar todos los @FXML.
+     * Configura el estado inicial de la pantalla.
      */
     @FXML
     public void initialize() {
         // En esta pantalla no hay estado inicial que preparar.
-        // El efecto hover de las tarjetas se gestiona directamente en CSS (:hover),
-        // por lo que no necesitamos código Java para ello.
     }
 
     /**
-     * Se ejecuta al hacer clic en la tarjeta "Administrador".
-     * El parámetro MouseEvent contiene información sobre el clic
-     * (posición, botón pulsado, nodo origen...).
+     * Clic en "Administrador".
      */
     @FXML
     private void onAdministradorClick(MouseEvent event) {
@@ -55,7 +51,7 @@ public class SeleccionRolController {
     }
 
     /**
-     * Se ejecuta al hacer clic en la tarjeta "Responsable".
+     * Clic en "Responsable".
      */
     @FXML
     private void onResponsableClick(MouseEvent event) {
@@ -65,11 +61,10 @@ public class SeleccionRolController {
     /**
      * Cambia la escena activa cargando un nuevo FXML.
      *
-     * Flujo de navegación en JavaFX:
      *   1. FXMLLoader lee el archivo .fxml y construye el árbol de nodos.
      *   2. Se crea una nueva Scene con ese árbol.
      *   3. Se obtiene el Stage (ventana) actual desde el nodo que disparó el evento.
-     *   4. Se asigna la nueva Scene al Stage → la ventana muestra la nueva pantalla.
+     *   4. Se asigna la nueva Scene al Stage: la ventana muestra la nueva pantalla.
      *
      * @param rutaFxml ruta al archivo FXML dentro de resources (debe empezar por /)
      * @param event    evento del ratón, necesario para obtener la referencia al Stage

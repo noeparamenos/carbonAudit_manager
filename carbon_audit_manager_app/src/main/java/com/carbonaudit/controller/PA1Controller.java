@@ -39,7 +39,7 @@ public class PA1Controller {
 
     @FXML private VBox panelLateral;
 
-    // ── Campos del formulario ────────────────────────────────────────────
+    // ===== Campos del formulario nueva Empresa
 
     @FXML private TextField campNombre;
     @FXML private TextField campCif;
@@ -52,18 +52,17 @@ public class PA1Controller {
     @FXML private TextField campCp;
     @FXML private TextField campProvincia;
 
-    // ── DAO y datos ──────────────────────────────────────────────────────
+    // ===== DAO y datos =======================
 
     private final EmpresaDAO empresaDAO = new EmpresaDAO();
 
     /*
-     * ObservableList: lista especial de JavaFX que notifica a la TableView
-     * automáticamente cuando se añaden o eliminan elementos. Es el "modelo"
-     * de la tabla — no hace falta refrescarla manualmente.
+     * ObservableList: lista que notifica a la TableView cuando se añaden o eliminan elementos.
+     * — no hace falta refrescarla manualmente.
      */
     private final ObservableList<Empresa> listaEmpresas = FXCollections.observableArrayList();
 
-    // ── Inicialización ───────────────────────────────────────────────────
+    // =========== Inicialización ==============
 
     @FXML
     public void initialize() {
@@ -83,8 +82,8 @@ public class PA1Controller {
      * SimpleStringProperty envuelve un String en un ObservableValue.
      */
     private void configurarColumnas() {
-        colNombre.setCellValueFactory(data ->
-                new SimpleStringProperty(data.getValue().getNombreSocial()));
+        colNombre.setCellValueFactory(data -> //Recibe una empresa
+                new SimpleStringProperty(data.getValue().getNombreSocial())); //extrae el campo para la columna
 
         colCif.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().getCif()));
@@ -97,22 +96,23 @@ public class PA1Controller {
 
         colSector.setCellValueFactory(data -> {
             String sector = data.getValue().getSector();
-            return new SimpleStringProperty(sector != null ? sector : "");
+            return new SimpleStringProperty(sector != null ? sector : "Sin sector");
         });
     }
 
     /**
-     * Configura la navegación a PA2 al hacer doble clic en una fila.
+     * Navegación a PA2 al hacer doble clic en una fila.
      *
      * setRowFactory permite personalizar cada fila de la tabla.
-     * Aquí añadimos un listener de doble clic a cada fila generada.
+     * Aquí añadimos un listener de clic a cada fila generada.
      */
     private void configurarClicEnFila() {
+
         tablaEmpresas.setRowFactory(tv -> {
-            TableRow<Empresa> fila = new TableRow<>();
-            fila.setOnMouseClicked(event -> {
+            TableRow<Empresa> fila = new TableRow<>(); //crear la fila vacia
+            fila.setOnMouseClicked(event -> { //listener para la fila
                 if (event.getClickCount() == 1 && !fila.isEmpty()) {
-                    navegarAPA2(fila.getItem());
+                    navegarAPA2(fila.getItem());//pasa el objeto empresa a la siguiente pantalla
                 }
             });
             return fila;
@@ -146,7 +146,7 @@ public class PA1Controller {
      */
     @FXML
     private void onGuardar() {
-        if (!formularioValido()) return;
+        if (!formularioValido()) return; // si faltan datos no se guarda
 
         try {
             Direccion dir = new Direccion();
@@ -164,7 +164,7 @@ public class PA1Controller {
             empresa.setSector(campSector.getText().trim());
             empresa.setDireccion(dir);
 
-            empresaDAO.create(empresa);
+            empresaDAO.create(empresa); //Internamente se vuelven a comprobar los datos
 
             // Refrescar la tabla con los datos actualizados de BD
             cargarEmpresas();
@@ -183,7 +183,7 @@ public class PA1Controller {
         cerrarPanel();
     }
 
-    // ── Navegación ───────────────────────────────────────────────────────
+    // ================ Navegación =========
 
     /**
      * Navega a PA2 pasando la empresa seleccionada al controlador destino.
@@ -191,7 +191,7 @@ public class PA1Controller {
      * Patrón de paso de datos entre controladores en JavaFX:
      *   1. Cargar el FXML con FXMLLoader (no instanciar el controlador a mano).
      *   2. Obtener el controlador con loader.getController().
-     *   3. Llamar a un método setter en el controlador destino ANTES de mostrar la escena.
+     *   3. Llamar a un métod setter en el controlador destino ANTES de mostrar la escena.
      */
     private void navegarAPA2(Empresa empresa) {
         try {
@@ -203,6 +203,7 @@ public class PA1Controller {
             PA2Controller pa2 = loader.getController();
             pa2.setEmpresa(empresa);
 
+            //Mostramos la ventana
             Stage stage = (Stage) tablaEmpresas.getScene().getWindow();
             stage.setScene(escena);
             stage.sizeToScene();
@@ -212,7 +213,7 @@ public class PA1Controller {
         }
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────
+    // ============ Helpers =======================
 
     /** Valida que los campos obligatorios no estén vacíos. */
     private boolean formularioValido() {

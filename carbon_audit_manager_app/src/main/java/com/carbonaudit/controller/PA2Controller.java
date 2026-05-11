@@ -25,7 +25,7 @@ import java.util.Optional;
 /**
  * Controlador de PA2 · Vista empresa.
  *
- * Responsabilidades:
+ * Realiza:
  *   - Mostrar la cabecera de la empresa (nombre, CIF, ciudad).
  *   - Gestionar el selector de período (mes/año) compartido entre tabs.
  *   - Tab Departamentos: listar departamentos, nuevo dpto., navegar a PA3.
@@ -57,7 +57,7 @@ public class PA2Controller {
     @FXML private Tab     tabDepartamentos;
     @FXML private Tab     tabConsumos;
 
-    // ── Tab Departamentos ─────────────────────────────────────────────────
+    // ========= Tab Departamentos ==========================
 
     @FXML private TableView<Departamento>        tablaDepartamentos;
     @FXML private TableColumn<Departamento, String> colDeptNombre;
@@ -74,7 +74,7 @@ public class PA2Controller {
     @FXML private TextField campDptoCp;
     @FXML private TextField campDptoProvincia;
 
-    // ── Tab Consumos ──────────────────────────────────────────────────────
+    // ================== Tab Consumos ======================
 
     @FXML private TableView<ConsumoMensual>        tablaConsumos;
     @FXML private TableColumn<ConsumoMensual, String> colConsDept;
@@ -85,7 +85,7 @@ public class PA2Controller {
     @FXML private TableColumn<ConsumoMensual, String> colConsEmision;
     @FXML private Label lblTotalEmpresa;
 
-    // ── Panel editar empresa ──────────────────────────────────────────────
+    // ========= Panel editar empresa =========
 
     @FXML private VBox      panelEditEmpresa;
     @FXML private TextField editNombre;
@@ -99,7 +99,7 @@ public class PA2Controller {
     @FXML private TextField editCp;
     @FXML private TextField editProvincia;
 
-    // ── DAOs ──────────────────────────────────────────────────────────────
+    // ========= DAOs ==========
 
     private final EmpresaDAO        empresaDAO      = new EmpresaDAO();
     private final DepartamentoDAO   departamentoDAO = new DepartamentoDAO();
@@ -119,8 +119,8 @@ public class PA2Controller {
     private Empresa empresa;
 
     /*
-     * Nombres de los meses en español. El índice 0 corresponde a enero (mes 1).
-     * Se usa para poblar el ComboBox y para convertir índice ↔ número de mes.
+     * Nombres de los meses en español. 0 = Enero
+     * Para el ComboBox y para convertir índice ↔ número de mes.
      */
     private static final String[] NOMBRES_MESES = {
         "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -132,13 +132,14 @@ public class PA2Controller {
 
     // ── Inicialización ─────────────────────────────────────────────────────
 
+    /**
+     * Se ejecuta automáticamente cuando JavaFX termina de cargar el FXML.
+     * En este punto 'empresa' aún es null — se asigna después en setEmpresa().
+     * Solo se configuran las partes estáticas que no dependen de la empresa.
+     */
     @FXML
     public void initialize() {
-        /*
-         * initialize() se ejecuta cuando JavaFX termina de cargar el FXML.
-         * En este punto 'empresa' aún es null (se asigna después en setEmpresa).
-         * Solo configuramos las partes estáticas que no dependen de la empresa.
-         */
+
         configurarSelectorPeriodo();
         configurarColumnasDepartamentos();
         configurarColumnasConsumos();
@@ -149,7 +150,7 @@ public class PA2Controller {
     /**
      * Recibe la empresa seleccionada desde PA1 y actualiza toda la pantalla.
      *
-     * Patrón habitual en JavaFX: el controlador origen llama a este método
+     * El controlador origen llama a este método
      * DESPUÉS de cargar el FXML (loader.getController()) y ANTES de mostrar
      * la escena, para pasar datos al controlador destino.
      */
@@ -159,13 +160,18 @@ public class PA2Controller {
         cargarDepartamentos();
     }
 
-    // ── Configuración inicial ──────────────────────────────────────────────
+    // ============== Configuración inicial ================
 
+    /**
+     * Rellena los ComboBox de mes y año con los valores posibles y selecciona el período actual.
+     * Registra los listeners que recargan la pestaña activa al cambiar el período.
+     */
     private void configurarSelectorPeriodo() {
         combMes.getItems().addAll(NOMBRES_MESES);
-        // Seleccionar el mes actual (getMonthValue() devuelve 1-12; el índice es 0-based)
+        // Seleccionar el mes actual (getMonthValue() devuelve 1-12; el índice emieza en 0)
         combMes.getSelectionModel().select(LocalDate.now().getMonthValue() - 1);
 
+        // Se muestran solo los 4 ultimos años
         int anioActual = LocalDate.now().getYear();
         for (int a = anioActual; a >= anioActual - 4; a--) {
             combAnio.getItems().add(a);
@@ -177,28 +183,27 @@ public class PA2Controller {
         combAnio.setOnAction(e -> refrescarTabActiva());
     }
 
+    /**
+     * Asocia cada columna de la tabla de departamentos con el campo del objeto que debe mostrar.
+     * La columna de empleados y la de responsable activo lanzan consultas a BD por cada fila.
+     */
     private void configurarColumnasDepartamentos() {
         tablaDepartamentos.setColumnResizePolicy(
                 TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
-        colDeptNombre.setCellValueFactory(data ->
-                new SimpleStringProperty(data.getValue().getNombre()));
+        colDeptNombre.setCellValueFactory(data -> //recibe el dept de la fila
+                new SimpleStringProperty(data.getValue().getNombre())); // devuelve su nombre
 
         colDeptLocalidad.setCellValueFactory(data -> {
             Direccion dir = data.getValue().getDireccion();
             return new SimpleStringProperty(dir != null ? dir.getCiudad() : "—");
         });
 
-        /*
-         * countByDepartamento lanza una consulta COUNT(*) por cada fila.
-         * Aceptable para una lista de departamentos de tamaño razonable.
-         * Si la empresa tiene muchos departamentos, habría que optimizar con una
-         * consulta agregada que traiga todos los conteos de una sola vez.
-         */
+        // countByDepartamento() lanza una consulta COUNT(*) por cada fila
         colDeptEmpleados.setCellValueFactory(data -> {
             int count = empleadoDAO.countByDepartamento(
                     data.getValue().getIdDepartamento());
-            return new SimpleStringProperty(String.valueOf(count));
+            return new SimpleStringProperty(String.valueOf(count)); // Total de empleados en el Departamento
         });
 
         colDeptResponsable.setCellValueFactory(data -> {
@@ -210,6 +215,10 @@ public class PA2Controller {
         });
     }
 
+    /**
+     * Asocia cada columna de la tabla de consumos con el campo del objeto que debe mostrar.
+     * La emisión se calcula en el momento con calcularEmision() (cantidad × factor).
+     */
     private void configurarColumnasConsumos() {
         tablaConsumos.setColumnResizePolicy(
                 TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
@@ -236,7 +245,7 @@ public class PA2Controller {
     }
 
     /**
-     * Configura la navegación a PA3 con un solo clic en la fila del departamento.
+     * Configura la navegación a PA3 con un clic en la fila del departamento.
      */
     private void configurarClicEnFila() {
         tablaDepartamentos.setRowFactory(tv -> {
@@ -264,6 +273,7 @@ public class PA2Controller {
 
     // ── Carga de datos ─────────────────────────────────────────────────────
 
+    /** Actualiza los labels de cabecera con los datos de la empresa activa. */
     private void actualizarCabecera() {
         lblBreadcrumb.setText(empresa.getNombreSocial());
         lblNombreEmpresa.setText(empresa.getNombreSocial());
@@ -272,12 +282,18 @@ public class PA2Controller {
         lblInfoEmpresa.setText("CIF: " + empresa.getCif() + "  ·  " + ciudad);
     }
 
+    /** Consulta todos los departamentos de la empresa activa y los muestra en la tabla. */
     private void cargarDepartamentos() {
         listaDepartamentos.setAll(
                 departamentoDAO.findAllByEmpresa(empresa.getIdEmpresa()));
         tablaDepartamentos.setItems(listaDepartamentos);
     }
 
+    /**
+     * Carga los consumos según el período y las opciones activas.
+     * Si "Año completo" está marcado, consulta los 12 meses; si no, solo el mes seleccionado.
+     * Si "Incluir commuting" está marcado, el total incluye Alcance 3 vía ServicioCalculoHuella.
+     */
     private void cargarConsumos() {
         if (empresa == null) return;
 
@@ -285,17 +301,19 @@ public class PA2Controller {
         List<ConsumoMensual> consumos;
         BigDecimal total;
 
+        // Calculo anualizado
         if (chkAnioCompleto.isSelected()) {
             consumos = consumoDAO.getConsumosByEmpresaAnio(empresa.getIdEmpresa(), anio);
 
             if (chkIncluirCommuting.isSelected()) {
                 // getHuellaAnualEmpresa suma Scope 1+2+3 (12 meses) para toda la empresa
                 total = servicioHuella.getHuellaAnualEmpresa(empresa, anio);
-            } else {
+            } else { // Sin commuting
                 total = consumos.stream()
                         .map(ConsumoMensual::calcularEmision)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
             }
+            // Calculo mensual
         } else {
             int mes = combMes.getSelectionModel().getSelectedIndex() + 1;
             consumos = consumoDAO.getConsumosByEmpresaMes(empresa.getIdEmpresa(), mes, anio);
@@ -315,6 +333,7 @@ public class PA2Controller {
         lblTotalEmpresa.setText(String.format("%.2f kg CO₂e", total));
     }
 
+    /** Activa o desactiva el modo año completo y deshabilita el combo de mes en consecuencia. */
     @FXML
     private void onToggleAnioCompleto() {
         combMes.setDisable(chkAnioCompleto.isSelected());
@@ -323,6 +342,7 @@ public class PA2Controller {
         }
     }
 
+    /** Recalcula el total de la pestaña Consumos al marcar o desmarcar "Incluir commuting". */
     @FXML
     private void onToggleCommuting() {
         if (tabPane.getSelectionModel().getSelectedItem() == tabConsumos) {
@@ -330,6 +350,7 @@ public class PA2Controller {
         }
     }
 
+    /** Recarga los datos de la pestaña activa al cambiar el selector de período. */
     private void refrescarTabActiva() {
         if (empresa == null) return;
         Tab activa = tabPane.getSelectionModel().getSelectedItem();
@@ -337,8 +358,12 @@ public class PA2Controller {
         // Gráficos: pendiente de implementar en una fase posterior
     }
 
-    // ── Panel lateral: Nuevo departamento ─────────────────────────────────
+    // =========== Panel lateral: NUEVO DEPARTAMENTO =======================
 
+    /**
+     * Abre el panel lateral de nuevo departamento con los campos de dirección
+     * pre-rellenos con los datos de la empresa activa como punto de partida.
+     */
     @FXML
     private void onNuevoDepartamento() {
         // Pre-rellenar con la dirección de la empresa como punto de partida
