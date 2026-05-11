@@ -6,6 +6,7 @@ import com.carbonaudit.service.external.IServicioGeografico;
 import com.carbonaudit.service.external.ServicioGeograficoORS;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public class TestServicioCalculoCommuting {
     public static void main(String[] args) {
@@ -34,7 +35,7 @@ public class TestServicioCalculoCommuting {
 
             factorEmision = new FactorEmision("Coche Gasolina Medio", "km", new BigDecimal("0.13700"), 3);
 
-            empleado = new Empleado("Pepe", factorEmision, 20, direccionEmpl, departamento);
+            empleado = new Empleado("Pepe", LocalDate.now(), factorEmision, 20, direccionEmpl, departamento);
 
 
             calculoService.AsignarDistanciaTrabajo(empleado);

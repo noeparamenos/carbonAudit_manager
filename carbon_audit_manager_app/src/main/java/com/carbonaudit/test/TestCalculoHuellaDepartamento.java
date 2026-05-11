@@ -6,6 +6,7 @@ import com.carbonaudit.service.ServicioCalculoHuella;
 import com.carbonaudit.service.external.ServicioGeograficoORS;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * Test autocontenido del cálculo de huella de carbono total de un departamento.
@@ -80,7 +81,7 @@ public class TestCalculoHuellaDepartamento {
             System.out.println("Dirección empleado creada: " + dirEmpleado.getCalle()+ "- Nª " + dirEmpleado.getNumero() + ")");
 
             // Crear empleado
-            Empleado empleado = new Empleado("Juan García", factorCocheGasolina, 20, dirEmpleado, departamento);
+            Empleado empleado = new Empleado("Juan García", LocalDate.now(), factorCocheGasolina, 20, dirEmpleado, departamento);
             empleado = empleadoDAO.create(empleado);
             System.out.println("Empleado creado:" + empleado.getNombre());
 
