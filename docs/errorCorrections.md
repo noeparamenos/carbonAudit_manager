@@ -19,9 +19,9 @@
     - **Solución:** Se ha creado una clase intermedia `Launcher` que NO extiende `Application` (simplemente delega en `Main.main()`). 
       - Al ejecutar `Launcher`, el JVM no dispara la comprobación estricta.
       - Es el *Launcher pattern*: común en proyectos JavaFX empaquetados con Maven/Gradle.
-6. Posible Error al Actualizar distancia al trabajo en el Servicio calculo huella.
-   - **Causa**: Ahora solo se actualiza si no tiene asignadas coordenadas previamente
-   - **Solución**: O bien se hace otro metodo para actualizar si cambia de dirección o bien siempre (eliminando el if)
+6. ~~Posible Error al Actualizar distancia al trabajo en el Servicio calculo huella.~~  ✅ Resuelto (ver error 12)
+   - **Causa**: `AsignarDistanciaTrabajo()` solo geocodificaba si `latitud == null`, por lo que cambios de dirección no se reflejaban en el cálculo.
+   - **Solución**: Ver error 12.
 7. Riesgo de seguridad: cualquier usuario puede seleccionar cualquier rol o responsable sin autenticación.
    - **Causa**: La aplicación no dispone de sistema de login. Cualquiera puede elegir el rol Administrador o responsable activo.
    - **Solución**: Implementar un sistema de autenticación (usuario + contraseña) que determine el rol y el contexto automáticamente al iniciar sesión, eliminando las pantallas de selección de rol.
@@ -34,6 +34,14 @@
 10. Borrar un empleado destruía su historial de commuting y mandatos de responsabilidad.
    - **Causa**: El esquema original no contemplaba el ciclo de vida del empleado. Un `DELETE` en `EMPLEADO` propagaba en cascada (o fallaba por FK) eliminando o bloqueando los registros de `COMMUTING_EMPLEADO` y `RESPONSABLE`, que son datos de auditoría necesarios para reproducir cálculos de huella de períodos pasados.
    - **Solución**: Implementar **soft delete** añadiendo `fecha_alta DATE NOT NULL` y `fecha_baja DATE` a la tabla `EMPLEADO`. Al causar baja se registra la fecha en lugar de borrar el registro físicamente. Las consultas operativas filtran `WHERE fecha_baja IS NULL`. El método `darDeBaja()` en `EmpleadoDAO` encapsula esta lógica; el `delete()` se mantiene únicamente para limpieza en tests.
+12. Al modificar la dirección de un empleado o departamento, la distancia al trabajo no se recalculaba.
+   - **Causa**: `AsignarDistanciaTrabajo()` en `ServicioCalculoHuella` solo llama a `completarCoordenadas()` cuando `latitud == null || longitud == null`. Si la dirección ya había sido geocodificada previamente, las coordenadas antiguas persistían en el objeto en memoria y en BD, de modo que al cambiar la calle o ciudad la distancia calculada seguía siendo la de la dirección anterior.
+   - **Solución**: Cada controlador invalida las coordenadas (pone `latitud/longitud = null`) antes de persistir el cambio, forzando un re-geocoding en la siguiente llamada a la API:
+     - `PA3Controller.onGuardarEmpleado()` (modo edición): resetea coords de la dirección del empleado.
+     - `PA3Controller.onGuardarEditDpto()`: resetea coords de la dirección del departamento y lanza `geocodificarDireccionEnSegundoPlano()`.
+     - `PA2Controller.onGuardarEditEmpresa()`: resetea coords de la dirección de la empresa y lanza `geocodificarDireccionEnSegundoPlano()`.
+   - **Patrón aplicado**: `geocodificarDireccionEnSegundoPlano(Direccion)` — hilo daemon que llama a ORS y persiste las coords al terminar, sin bloquear la UI. `AsignarDistanciaTrabajo()` no se modificó; sigue geocodificando solo cuando `null`, lo que ahora es el comportamiento correcto.
+
 11. Error de compilación en los tests al añadir `fecha_alta` al modelo `Empleado`.
    - **Causa**: Al refactorizar `Empleado` se eliminó el constructor `Empleado(String, FactorEmision, int, Direccion, Departamento)` y se reemplazó por uno que incluye `LocalDate fechaAlta` como segundo parámetro. Los tests `TestCalculoHuellaDepartamento` y `TestServicioCalculoCommuting` seguían usando el constructor antiguo.
    - **Solución**: Añadir `import java.time.LocalDate` y pasar `LocalDate.now()` como segundo argumento en las dos llamadas afectadas.

@@ -3,9 +3,12 @@ package com.carbonaudit.controller;
 import com.carbonaudit.dao.*;
 import com.carbonaudit.model.*;
 import com.carbonaudit.service.ServicioCalculoHuella;
+import com.carbonaudit.service.external.ServicioGeograficoORS;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -106,13 +109,10 @@ public class PA2Controller {
     private final ResponsableDAO    responsableDAO  = new ResponsableDAO();
     private final EmpleadoDAO       empleadoDAO     = new EmpleadoDAO();
     private final ConsumoMensualDAO consumoDAO      = new ConsumoMensualDAO();
+    private final DireccionDAO      direccionDAO    = new DireccionDAO();
 
-    /*
-     * Se pasa null como servicio geográfico porque en PA2 solo usamos los métodos
-     * de cálculo de huella, que no necesitan llamar a la API de geolocalización.
-     * El geo service solo se usa en AsignarDistanciaTrabajo(), que no se invoca aquí.
-     */
-    private final ServicioCalculoHuella servicioHuella = new ServicioCalculoHuella(null);
+    private final ServicioGeograficoORS  geoService     = new ServicioGeograficoORS();
+    private final ServicioCalculoHuella  servicioHuella = new ServicioCalculoHuella(geoService);
 
     // ── Estado ────────────────────────────────────────────────────────────
 
@@ -470,11 +470,14 @@ public class PA2Controller {
             dir.setCiudad(editCiudad.getText().trim());
             dir.setCodigoPostal(editCp.getText().trim());
             dir.setProvincia(editProvincia.getText().trim());
+            // La dirección cambió: invalidar coordenadas para forzar re-geocoding
+            dir.setLatitud(null);
+            dir.setLongitud(null);
 
-            // EmpresaDAO.update() llama a DireccionDAO.update() si la dirección tiene id > 0
             empresaDAO.update(empresa);
             actualizarCabecera();
             cerrarPanelEditEmpresa();
+            geocodificarDireccionEnSegundoPlano(dir);
         } catch (NumberFormatException e) {
             mostrarError("El número de calle debe ser un valor numérico.");
         }
@@ -609,5 +612,21 @@ public class PA2Controller {
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+
+    private void geocodificarDireccionEnSegundoPlano(Direccion dir) {
+        Task<Void> tarea = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                geoService.completarCoordenadas(dir);
+                return null;
+            }
+        };
+        tarea.setOnSucceeded(e -> direccionDAO.update(dir));
+        tarea.setOnFailed(e -> Platform.runLater(() ->
+                mostrarError("No se pudo geocodificar la dirección de la empresa.")));
+        Thread hilo = new Thread(tarea);
+        hilo.setDaemon(true);
+        hilo.start();
     }
 }

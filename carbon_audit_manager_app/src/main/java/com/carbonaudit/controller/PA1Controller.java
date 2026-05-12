@@ -1,46 +1,56 @@
 package com.carbonaudit.controller;
 
+import com.carbonaudit.dao.DireccionDAO;
 import com.carbonaudit.dao.EmpresaDAO;
+import com.carbonaudit.dao.FactorEmisionDAO;
 import com.carbonaudit.model.Direccion;
 import com.carbonaudit.model.Empresa;
+import com.carbonaudit.model.FactorEmision;
+import com.carbonaudit.service.external.ServicioGeograficoORS;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.StringConverter;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * Controlador de PA1 · Lista de empresas.
  *
- * Responsabilidades:
- *   - Cargar y mostrar todas las empresas en la TableView.
- *   - Gestionar el panel lateral de alta de empresa.
- *   - Navegar a PA2 al seleccionar una empresa.
+ * Realiza:
+ *   - Tab Empresas: listar empresas, crear nueva, navegar a PA2.
+ *   - Tab Factores de emisión: listar, crear, editar y eliminar factores.
  */
 public class PA1Controller {
 
-    // ── Tabla ────────────────────────────────────────────────────────────
+    // ── Tab Empresas ──────────────────────────────────────────────────────
 
-    /*
-     * TableView<Empresa>: tabla tipada con objetos Empresa.
-     * TableColumn<Empresa, String>: columna que extrae un String de cada Empresa.
-     */
     @FXML private TableView<Empresa>        tablaEmpresas;
     @FXML private TableColumn<Empresa, String> colNombre;
     @FXML private TableColumn<Empresa, String> colCif;
     @FXML private TableColumn<Empresa, String> colCiudad;
     @FXML private TableColumn<Empresa, String> colSector;
 
-    // ── Panel lateral ────────────────────────────────────────────────────
+    // ── Tab Factores de emisión ───────────────────────────────────────────
 
-    @FXML private VBox panelLateral;
+    @FXML private TableView<FactorEmision>           tablaFactores;
+    @FXML private TableColumn<FactorEmision, String> colFactNombre;
+    @FXML private TableColumn<FactorEmision, String> colFactUnidad;
+    @FXML private TableColumn<FactorEmision, String> colFactValor;
+    @FXML private TableColumn<FactorEmision, String> colFactAlcance;
 
-    // ===== Campos del formulario nueva Empresa
+    // ── Panel lateral: empresa ────────────────────────────────────────────
 
+    @FXML private VBox      panelEmpresa;
     @FXML private TextField campNombre;
     @FXML private TextField campCif;
     @FXML private TextField campTelefono;
@@ -52,38 +62,59 @@ public class PA1Controller {
     @FXML private TextField campCp;
     @FXML private TextField campProvincia;
 
-    // ===== DAO y datos =======================
+    // ── Panel lateral: factor ─────────────────────────────────────────────
 
-    private final EmpresaDAO empresaDAO = new EmpresaDAO();
+    @FXML private VBox      panelFactor;
+    @FXML private Label     panelFactorTitulo;
+    @FXML private TextField campFactNombre;
+    @FXML private TextField campFactUnidad;
+    @FXML private TextField campFactValor;
+    @FXML private ComboBox<String> combFactAlcance;
+    @FXML private Button    btnEliminarFactor;
+
+    // ── DAOs ──────────────────────────────────────────────────────────────
+
+    private final EmpresaDAO           empresaDAO   = new EmpresaDAO();
+    private final FactorEmisionDAO     factorDAO    = new FactorEmisionDAO();
+    private final DireccionDAO         direccionDAO = new DireccionDAO();
+    private final ServicioGeograficoORS geoService  = new ServicioGeograficoORS();
+
+    // ── Estado ────────────────────────────────────────────────────────────
 
     /*
-     * ObservableList: lista que notifica a la TableView cuando se añaden o eliminan elementos.
-     * — no hace falta refrescarla manualmente.
+     * Factor que se está editando. null indica modo "nuevo factor".
      */
-    private final ObservableList<Empresa> listaEmpresas = FXCollections.observableArrayList();
+    private FactorEmision factorEditando;
 
-    // =========== Inicialización ==============
+    private final ObservableList<Empresa>       listaEmpresas = FXCollections.observableArrayList();
+    private final ObservableList<FactorEmision> listaFactores = FXCollections.observableArrayList();
+
+    private static final List<String> ALCANCES = List.of(
+            "1 · Combustión directa",
+            "2 · Energía (electricidad)",
+            "3 · Transporte y movilidad"
+    );
+
+    // ── Inicialización ─────────────────────────────────────────────────────
 
     @FXML
     public void initialize() {
-        // CONSTRAINED_RESIZE_POLICY no se puede referenciar desde FXML en JavaFX 21,
-        // por eso se asigna aquí. Reparte el ancho sobrante entre las columnas.
-        tablaEmpresas.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-        configurarColumnas();
-        configurarClicEnFila();
+        configurarColumnasEmpresas();
+        configurarColumnasFactores();
+        configurarClicEnFilaEmpresas();
+        configurarClicEnFilaFactores();
+        combFactAlcance.setItems(FXCollections.observableArrayList(ALCANCES));
         cargarEmpresas();
+        cargarFactores();
     }
 
-    /**
-     * Asocia cada columna a la propiedad del objeto Empresa que debe mostrar.
-     *
-     * setCellValueFactory recibe una función lambda que, dado un objeto Empresa,
-     * devuelve un ObservableValue<String> con el valor a mostrar en esa celda.
-     * SimpleStringProperty envuelve un String en un ObservableValue.
-     */
-    private void configurarColumnas() {
-        colNombre.setCellValueFactory(data -> //Recibe una empresa
-                new SimpleStringProperty(data.getValue().getNombreSocial())); //extrae el campo para la columna
+    // ── Configuración de columnas ──────────────────────────────────────────
+
+    private void configurarColumnasEmpresas() {
+        tablaEmpresas.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+
+        colNombre.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().getNombreSocial()));
 
         colCif.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().getCif()));
@@ -96,58 +127,90 @@ public class PA1Controller {
 
         colSector.setCellValueFactory(data -> {
             String sector = data.getValue().getSector();
-            return new SimpleStringProperty(sector != null ? sector : "Sin sector");
+            return new SimpleStringProperty(sector != null ? sector : "—");
         });
     }
 
-    /**
-     * Navegación a PA2 al hacer doble clic en una fila.
-     *
-     * setRowFactory permite personalizar cada fila de la tabla.
-     * Aquí añadimos un listener de clic a cada fila generada.
-     */
-    private void configurarClicEnFila() {
+    private void configurarColumnasFactores() {
+        tablaFactores.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
+        colFactNombre.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().getNombre()));
+
+        colFactUnidad.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().getUnidad()));
+
+        colFactValor.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().getValorFactor().toPlainString()));
+
+        colFactAlcance.setCellValueFactory(data -> {
+            int alcance = data.getValue().getAlcance();
+            String texto = switch (alcance) {
+                case 1 -> "Alcance 1 · Directo";
+                case 2 -> "Alcance 2 · Energía";
+                case 3 -> "Alcance 3 · Transporte";
+                default -> "—";
+            };
+            return new SimpleStringProperty(texto);
+        });
+    }
+
+    private void configurarClicEnFilaEmpresas() {
         tablaEmpresas.setRowFactory(tv -> {
-            TableRow<Empresa> fila = new TableRow<>(); //crear la fila vacia
-            fila.setOnMouseClicked(event -> { //listener para la fila
+            TableRow<Empresa> fila = new TableRow<>();
+            fila.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 1 && !fila.isEmpty()) {
-                    navegarAPA2(fila.getItem());//pasa el objeto empresa a la siguiente pantalla
+                    navegarAPA2(fila.getItem());
                 }
             });
             return fila;
         });
     }
 
-    /**
-     * Carga todas las empresas desde la BD y las asigna a la tabla.
-     * Al usar ObservableList, la TableView se actualiza sola.
-     */
+    /** Clic en una fila de factores abre el panel en modo edición. */
+    private void configurarClicEnFilaFactores() {
+        tablaFactores.setRowFactory(tv -> {
+            TableRow<FactorEmision> fila = new TableRow<>();
+            fila.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 1 && !fila.isEmpty()) {
+                    abrirPanelEditarFactor(fila.getItem());
+                }
+            });
+            return fila;
+        });
+    }
+
+    // ── Carga de datos ────────────────────────────────────────────────────
+
     private void cargarEmpresas() {
         listaEmpresas.setAll(empresaDAO.findAll());
         tablaEmpresas.setItems(listaEmpresas);
     }
 
-    // ── Panel lateral ────────────────────────────────────────────────────
-
-    /** Muestra el panel lateral y limpia los campos del formulario. */
-    @FXML
-    private void onNuevaEmpresa() {
-        limpiarFormulario();
-        panelLateral.setVisible(true);
-        panelLateral.setManaged(true);
+    private void cargarFactores() {
+        listaFactores.setAll(factorDAO.findAll());
+        tablaFactores.setItems(listaFactores);
     }
 
-    /**
-     * Valida el formulario, crea la empresa en BD y refresca la tabla.
-     *
-     * Si la validación falla (campos vacíos o datos incorrectos), muestra
-     * un Alert informativo y no cierra el panel.
-     */
-    @FXML
-    private void onGuardar() {
-        if (!formularioValido()) return; // si faltan datos no se guarda
+    // ── Panel lateral: Nueva empresa ──────────────────────────────────────
 
+    @FXML
+    private void onNuevaEmpresa() {
+        limpiarFormEmpresa();
+        cerrarPanelFactor();
+        panelEmpresa.setVisible(true);
+        panelEmpresa.setManaged(true);
+    }
+
+    @FXML
+    private void onGuardarEmpresa() {
+        if (campNombre.getText().trim().isEmpty()   || campCif.getText().trim().isEmpty()
+                || campCalle.getText().trim().isEmpty()   || campNumero.getText().trim().isEmpty()
+                || campCiudad.getText().trim().isEmpty()  || campCp.getText().trim().isEmpty()
+                || campProvincia.getText().trim().isEmpty()) {
+            mostrarError("Los campos marcados con * son obligatorios.");
+            return;
+        }
         try {
             Direccion dir = new Direccion();
             dir.setCalle(campCalle.getText().trim());
@@ -164,12 +227,10 @@ public class PA1Controller {
             empresa.setSector(campSector.getText().trim());
             empresa.setDireccion(dir);
 
-            empresaDAO.create(empresa); //Internamente se vuelven a comprobar los datos
-
-            // Refrescar la tabla con los datos actualizados de BD
+            empresaDAO.create(empresa);
             cargarEmpresas();
-            cerrarPanel();
-
+            cerrarPanelEmpresa();
+            geocodificarDireccionEnSegundoPlano(dir);
         } catch (NumberFormatException e) {
             mostrarError("El número de calle debe ser un valor numérico.");
         } catch (IllegalArgumentException e) {
@@ -177,82 +238,176 @@ public class PA1Controller {
         }
     }
 
-    /** Cierra el panel lateral sin guardar. */
     @FXML
-    private void onCancelar() {
-        cerrarPanel();
+    private void onCancelarEmpresa() {
+        cerrarPanelEmpresa();
     }
 
-    // ================ Navegación =========
+    // ── Panel lateral: Nuevo / Editar factor ──────────────────────────────
+
+    @FXML
+    private void onNuevoFactor() {
+        factorEditando = null;
+        panelFactorTitulo.setText("Nuevo factor");
+        limpiarFormFactor();
+        btnEliminarFactor.setVisible(false);
+        btnEliminarFactor.setManaged(false);
+        cerrarPanelEmpresa();
+        panelFactor.setVisible(true);
+        panelFactor.setManaged(true);
+    }
+
+    private void abrirPanelEditarFactor(FactorEmision factor) {
+        factorEditando = factor;
+        panelFactorTitulo.setText("Editar factor");
+        campFactNombre.setText(factor.getNombre());
+        campFactUnidad.setText(factor.getUnidad());
+        campFactValor.setText(factor.getValorFactor().toPlainString());
+        combFactAlcance.getSelectionModel().select(factor.getAlcance() - 1);
+        btnEliminarFactor.setVisible(true);
+        btnEliminarFactor.setManaged(true);
+        cerrarPanelEmpresa();
+        panelFactor.setVisible(true);
+        panelFactor.setManaged(true);
+    }
+
+    @FXML
+    private void onGuardarFactor() {
+        String nombre = campFactNombre.getText().trim();
+        String unidad = campFactUnidad.getText().trim();
+        if (nombre.isEmpty() || unidad.isEmpty()
+                || campFactValor.getText().trim().isEmpty()
+                || combFactAlcance.getValue() == null) {
+            mostrarError("Todos los campos son obligatorios.");
+            return;
+        }
+        try {
+            BigDecimal valor = new BigDecimal(campFactValor.getText().trim().replace(",", "."));
+            if (valor.compareTo(BigDecimal.ZERO) < 0) {
+                mostrarError("El factor de emisión no puede ser negativo.");
+                return;
+            }
+            int alcance = combFactAlcance.getSelectionModel().getSelectedIndex() + 1;
+
+            if (factorEditando == null) {
+                FactorEmision nuevo = new FactorEmision();
+                nuevo.setNombre(nombre);
+                nuevo.setUnidad(unidad);
+                nuevo.setValorFactor(valor);
+                nuevo.setAlcance(alcance);
+                factorDAO.create(nuevo);
+            } else {
+                factorEditando.setNombre(nombre);
+                factorEditando.setUnidad(unidad);
+                factorEditando.setValorFactor(valor);
+                factorEditando.setAlcance(alcance);
+                factorDAO.update(factorEditando);
+            }
+
+            cargarFactores();
+            cerrarPanelFactor();
+        } catch (NumberFormatException e) {
+            mostrarError("El valor del factor debe ser un número decimal (usa punto como separador).");
+        } catch (IllegalArgumentException e) {
+            mostrarError(e.getMessage());
+        }
+    }
 
     /**
-     * Navega a PA2 pasando la empresa seleccionada al controlador destino.
-     *
-     * Patrón de paso de datos entre controladores en JavaFX:
-     *   1. Cargar el FXML con FXMLLoader (no instanciar el controlador a mano).
-     *   2. Obtener el controlador con loader.getController().
-     *   3. Llamar a un métod setter en el controlador destino ANTES de mostrar la escena.
+     * Elimina el factor si no está en uso. La BD rechazará el DELETE con una
+     * excepción de FK si algún empleado, consumo o commuting lo referencia;
+     * el DAO imprime el error y el controlador informa al usuario.
      */
+    @FXML
+    private void onEliminarFactor() {
+        if (factorEditando == null) return;
+
+        Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmacion.setTitle("Confirmar eliminación");
+        confirmacion.setHeaderText("¿Eliminar \"" + factorEditando.getNombre() + "\"?");
+        confirmacion.setContentText(
+                "Solo es posible si ningún empleado ni consumo lo está usando.");
+        confirmacion.showAndWait().ifPresent(respuesta -> {
+            if (respuesta == ButtonType.OK) {
+                factorDAO.delete(factorEditando.getIdFactor());
+                cargarFactores();
+                cerrarPanelFactor();
+            }
+        });
+    }
+
+    @FXML
+    private void onCancelarFactor() {
+        cerrarPanelFactor();
+    }
+
+    // ── Navegación ─────────────────────────────────────────────────────────
+
     private void navegarAPA2(Empresa empresa) {
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/carbonaudit/view/pa2-empresa-view.fxml"));
             Scene escena = new Scene(loader.load());
-
-            // Pasamos la empresa seleccionada al controlador de PA2
             PA2Controller pa2 = loader.getController();
             pa2.setEmpresa(empresa);
-
-            //Mostramos la ventana
             Stage stage = (Stage) tablaEmpresas.getScene().getWindow();
             stage.setScene(escena);
             stage.sizeToScene();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // ============ Helpers =======================
+    // ── Helpers ─────────────────────────────────────────────────────────────
 
-    /** Valida que los campos obligatorios no estén vacíos. */
-    private boolean formularioValido() {
-        if (campNombre.getText().trim().isEmpty() ||
-            campCif.getText().trim().isEmpty()    ||
-            campCalle.getText().trim().isEmpty()  ||
-            campNumero.getText().trim().isEmpty() ||
-            campCiudad.getText().trim().isEmpty() ||
-            campCp.getText().trim().isEmpty()     ||
-            campProvincia.getText().trim().isEmpty()) {
-
-            mostrarError("Los campos marcados con * son obligatorios.");
-            return false;
-        }
-        return true;
+    private void cerrarPanelEmpresa() {
+        panelEmpresa.setVisible(false);
+        panelEmpresa.setManaged(false);
+        limpiarFormEmpresa();
     }
 
-    private void cerrarPanel() {
-        panelLateral.setVisible(false);
-        panelLateral.setManaged(false);
-        limpiarFormulario();
+    private void cerrarPanelFactor() {
+        panelFactor.setVisible(false);
+        panelFactor.setManaged(false);
+        limpiarFormFactor();
+        factorEditando = null;
     }
 
-    private void limpiarFormulario() {
+    private void limpiarFormEmpresa() {
         campNombre.clear();   campCif.clear();
         campTelefono.clear(); campEmail.clear();  campSector.clear();
         campCalle.clear();    campNumero.clear(); campCiudad.clear();
         campCp.clear();       campProvincia.clear();
     }
 
-    /**
-     * Muestra un diálogo de error con el mensaje indicado.
-     * Alert es el componente estándar de JavaFX para mensajes al usuario.
-     */
+    private void limpiarFormFactor() {
+        campFactNombre.clear();
+        campFactUnidad.clear();
+        campFactValor.clear();
+        combFactAlcance.getSelectionModel().clearSelection();
+    }
+
     private void mostrarError(String mensaje) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle("Aviso");
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+
+    private void geocodificarDireccionEnSegundoPlano(Direccion dir) {
+        Task<Void> tarea = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                geoService.completarCoordenadas(dir);
+                return null;
+            }
+        };
+        tarea.setOnSucceeded(e -> direccionDAO.update(dir));
+        tarea.setOnFailed(e -> Platform.runLater(() ->
+                mostrarError("No se pudo geocodificar la dirección de la empresa.")));
+        Thread hilo = new Thread(tarea);
+        hilo.setDaemon(true);
+        hilo.start();
     }
 }

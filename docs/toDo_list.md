@@ -82,7 +82,7 @@ Creación de la UI con JavaFX y visualización de resultados.
       - [x] P0 · Selección de rol
       - [x] PA1 · Lista de empresas
       - [x] PA2 · Vista empresa
-      - [ ] PA3 · Gestión de departamento
+      - [x] PA3 · Gestión de departamento
       - [ ] PR0 · Selección de responsable
       - [ ] PR1 · Vista responsable
     - [x] Ajustar tamaño y calidad del logo en P0
@@ -90,17 +90,20 @@ Creación de la UI con JavaFX y visualización de resultados.
   - **Implementación:**
     - [ ] Diseñar pantallas (`.fxml`) y controladores
       - [x] P0 · Selección de rol
-      - [x] PA1 · Lista de empresas — tabla, panel lateral alta empresa, navegación a PA2
+      - [x] PA1 · Lista de empresas — tabla, panel lateral alta empresa, tab Factores de emisión, navegación a PA2
       - [x] PA2 · Vista empresa — tabs: Departamentos, Consumos, Gráficos (Gráficos: placeholder)
-      - [ ] PA3 · Gestión de departamento (empleados + responsable)
+      - [x] PA3 · Gestión de departamento — tabs: Empleados (CRUD + cálculo distancia ORS), Responsable (asignar, finalizar, historial)
       - [ ] PR0 · Selección de responsable activo
       - [ ] PR1 · Vista responsable — tabs: Consumos, Trabajadores, Huella, Gráficos
-    - [ ] Edición y borrado de empresas (desde PA2)
-    - [ ] Crear formularios de alta/edición como paneles laterales deslizantes
+    - [x] Edición y borrado de empresas (desde PA2)
+    - [x] Crear formularios de alta/edición como paneles laterales deslizantes
+    - [x] Script de seed de factores de emisión (`database/seed_factores_emision.sql`)
+    - [x] Geocodificación automática en segundo plano al crear/modificar empresa, departamento y empleado
   - **Validaciones de integridad en la UI:**
-    - [ ] Al borrar un Departamento: comprobar si tiene Empleados/Consumos asociados.
-    - [ ] Al borrar un Empleado: comprobar si tiene registros de CommutingEmpleado asociados.
-    - [ ] Al borrar una Empresa: comprobar si tiene Departamentos asociados.
+    - [x] Al borrar un Departamento: comprobar si tiene Empleados activos asociados.
+    - [x] Al borrar un Empleado: soft delete — se registra fecha_baja en lugar de borrar (preserva auditoría).
+    - [x] Al borrar una Empresa: comprobar si tiene Departamentos asociados.
+    - [ ] Al borrar un Departamento: comprobar también si tiene Consumos asociados.
 
 ---
 
