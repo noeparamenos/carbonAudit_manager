@@ -68,13 +68,8 @@ public class ServicioCalculoHuella {
         Direccion dirEmpleado = empleado.getDireccion();
         Direccion dirDepartamento = empleado.getDepartamento().getDireccion();
 
-        // Llamamos a la API de Geocoding si la dirección aún no tiene coordenadas.
-        if (dirEmpleado.getLatitud() == null || dirEmpleado.getLongitud() == null) {
-            geoService.completarCoordenadas(dirEmpleado);
-        }
-        if (dirDepartamento.getLatitud() == null || dirDepartamento.getLongitud() == null) {
-            geoService.completarCoordenadas(dirDepartamento);
-        }
+        geoService.completarCoordenadas(dirEmpleado);
+        geoService.completarCoordenadas(dirDepartamento);
 
         // Cálculo y actualizacion de km al trabajo
         BigDecimal distanciaEnKm = geoService.calcularDistancia(dirEmpleado, dirDepartamento);

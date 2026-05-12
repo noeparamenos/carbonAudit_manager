@@ -361,10 +361,6 @@ public class PA3Controller {
                 dir.setCiudad(campEmpCiudad.getText().trim());
                 dir.setCodigoPostal(campEmpCp.getText().trim());
                 dir.setProvincia(campEmpProvincia.getText().trim());
-                // La dirección cambió: invalidar coordenadas para forzar re-geocoding
-                dir.setLatitud(null);
-                dir.setLongitud(null);
-
                 empleadoDAO.update(empleadoEditando);
                 empleadoParaApi = empleadoEditando;
             }
@@ -529,10 +525,6 @@ public class PA3Controller {
             dir.setCiudad(editDptoCiudad.getText().trim());
             dir.setCodigoPostal(editDptoCp.getText().trim());
             dir.setProvincia(editDptoProvincia.getText().trim());
-            // Invalidar coordenadas: la dirección ha cambiado
-            dir.setLatitud(null);
-            dir.setLongitud(null);
-
             departamentoDAO.update(departamento);
             actualizarCabecera();
             cerrarPanelEditDpto();

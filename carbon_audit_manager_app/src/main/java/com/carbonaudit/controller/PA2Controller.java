@@ -470,10 +470,6 @@ public class PA2Controller {
             dir.setCiudad(editCiudad.getText().trim());
             dir.setCodigoPostal(editCp.getText().trim());
             dir.setProvincia(editProvincia.getText().trim());
-            // La dirección cambió: invalidar coordenadas para forzar re-geocoding
-            dir.setLatitud(null);
-            dir.setLongitud(null);
-
             empresaDAO.update(empresa);
             actualizarCabecera();
             cerrarPanelEditEmpresa();
