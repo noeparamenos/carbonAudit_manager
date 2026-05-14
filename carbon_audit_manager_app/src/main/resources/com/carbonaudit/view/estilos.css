@@ -12,7 +12,7 @@
  * Ejemplo: color → -fx-text-fill, background → -fx-background-color
  */
 
-/* ── Pantalla P0: selección de rol ─────────────────────────────────────── */
+/* ========= P0 · Pantalla selección de rol ========================= */
 
 .pantalla-seleccion {
     -fx-background-color: #eef6f1;
@@ -29,7 +29,7 @@
     -fx-text-fill: #3a6b4a;
 }
 
-/* ── Tarjetas de selección de rol ───────────────────────────────────────── */
+/* ========= Tarjetas de selección de rol =========================== */
 
 .tarjeta {
     -fx-background-color: #f4faf6;
@@ -42,9 +42,7 @@
     -fx-pref-height: 108px;
 }
 
-/*
- * :hover se aplica automáticamente al pasar el ratón.
- */
+/* :hover se aplica automáticamente al pasar el ratón */
 .tarjeta:hover {
     -fx-background-color: #e6f4ec;
     -fx-border-color: #5aab72;
@@ -63,20 +61,20 @@
     /* maxWidth se controla con el atributo maxWidth del Label en el FXML */
 }
 
-/* ── Pie de pantalla ────────────────────────────────────────────────────── */
+/* ========= Pie de pantalla ======================================== */
 
 .version {
     -fx-font-size: 11px;
     -fx-text-fill: #b0ccb8;
 }
 
-/* ══ PANTALLAS INTERIORES (PA1, PA2, PA3, PR0, PR1) ═════════════════════ */
+/* ========= Pantallas interiores (PA1, PA2, PA3, PR0, PR1) ========= */
 
 .pantalla-interior {
     -fx-background-color: #f5f7f5;
 }
 
-/* ── Topbar ─────────────────────────────────────────────────────────────── */
+/* ========= Topbar ================================================= */
 
 .topbar {
     -fx-background-color: #1b3a2a;
@@ -96,7 +94,7 @@
     -fx-text-fill: #8ab89a;
 }
 
-/* ── Zona principal ─────────────────────────────────────────────────────── */
+/* ========= Zona principal ========================================= */
 
 .zona-principal {
     -fx-background-color: #f5f7f5;
@@ -108,7 +106,7 @@
     -fx-text-fill: #1b3a2a;
 }
 
-/* ── Botones ────────────────────────────────────────────────────────────── */
+/* ========= Botones ================================================ */
 
 .btn-primario {
     -fx-background-color: #3a6b4a;
@@ -152,7 +150,24 @@
     -fx-text-fill: #c0392b;
 }
 
-/* ── TableView ──────────────────────────────────────────────────────────── */
+/* Botón de acción destructiva (Eliminar) */
+.btn-peligro {
+    -fx-background-color: transparent;
+    -fx-text-fill: #c0392b;
+    -fx-border-color: #c0392b;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-padding: 8px 16px;
+}
+
+.btn-peligro:hover {
+    -fx-background-color: #fdecea;
+}
+
+/* ========= TableView ============================================== */
 
 .tabla {
     -fx-background-color: white;
@@ -197,7 +212,7 @@
     -fx-padding: 4px 0 0 0;
 }
 
-/* ── Panel lateral ──────────────────────────────────────────────────────── */
+/* ========= Panel lateral ========================================== */
 
 .panel-lateral {
     -fx-background-color: white;
@@ -218,7 +233,7 @@
     -fx-border-color: transparent;
 }
 
-/* ── Formularios ────────────────────────────────────────────────────────── */
+/* ========= Formularios ============================================ */
 
 .form-label {
     -fx-font-size: 12px;
@@ -233,14 +248,14 @@
     -fx-padding: 8px 0 2px 0;
 }
 
-/* ── Breadcrumb (PA2 y siguientes) ──────────────────────────────────────── */
+/* ========= Breadcrumb (PA2 y siguientes) ========================== */
 
 .topbar-sep {
     -fx-font-size: 13px;
     -fx-text-fill: #5a8a6a;
 }
 
-/* "Empresas" en el breadcrumb: actúa como enlace de vuelta */
+/* Enlace clicable (niveles anteriores del breadcrumb) */
 .topbar-breadcrumb-link {
     -fx-font-size: 13px;
     -fx-text-fill: #8ab89a;
@@ -252,14 +267,14 @@
     -fx-underline: true;
 }
 
-/* Nombre de la empresa activa: texto plano, no clicable */
+/* Nivel activo: texto plano, no clicable */
 .topbar-breadcrumb {
     -fx-font-size: 13px;
     -fx-text-fill: #e8f5e9;
     -fx-font-weight: bold;
 }
 
-/* ── Cabecera de empresa (PA2) ───────────────────────────────────────────── */
+/* ========= Cabecera de empresa (PA2) ============================== */
 
 .cabecera-empresa {
     -fx-background-color: white;
@@ -279,24 +294,7 @@
     -fx-text-fill: #6a9a7a;
 }
 
-/* Botón de acción destructiva (Eliminar) */
-.btn-peligro {
-    -fx-background-color: transparent;
-    -fx-text-fill: #c0392b;
-    -fx-border-color: #c0392b;
-    -fx-border-width: 1px;
-    -fx-border-radius: 4px;
-    -fx-background-radius: 4px;
-    -fx-font-size: 13px;
-    -fx-cursor: hand;
-    -fx-padding: 8px 16px;
-}
-
-.btn-peligro:hover {
-    -fx-background-color: #fdecea;
-}
-
-/* ── TabPane ─────────────────────────────────────────────────────────────── */
+/* ========= TabPane ================================================ */
 
 /*
  * En JavaFX, los selectores de TabPane usan sintaxis específica.
@@ -332,17 +330,41 @@
     -fx-padding: 0 0 0 0;
 }
 
-/* ── Checkbox "Año completo" ─────────────────────────────────────────────── */
+/* ========= Checkbox "Año completo" ================================ */
 
 .chk-periodo {
     -fx-font-size: 12px;
     -fx-text-fill: #3a6b4a;
 }
 
-/* ── Total empresa (Tab Consumos) ────────────────────────────────────────── */
+/* ========= Total departamento (Tab Consumos) ====================== */
 
 .total-empresa {
     -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1b3a2a;
+}
+
+/* ========= KPI cards (PR1 · Tab Huella mensual) =================== */
+
+.kpi-card {
+    -fx-background-color: #f4faf6;
+    -fx-border-color: #c8e6d5;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 12px 16px;
+    -fx-spacing: 4px;
+    -fx-alignment: CENTER;
+}
+
+.kpi-titulo {
+    -fx-font-size: 11px;
+    -fx-text-fill: #6a9a7a;
+}
+
+.kpi-valor {
+    -fx-font-size: 16px;
     -fx-font-weight: bold;
     -fx-text-fill: #1b3a2a;
 }

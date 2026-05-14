@@ -208,6 +208,23 @@ public class ResponsableDAO implements DAO<Responsable, Integer> {
     }
 
     /**
+     * Devuelve todos los mandatos activos (fecha_fin IS NULL) de cualquier departamento.
+     * Se usa en PR0 para listar los responsables que pueden identificarse.
+     *
+     * @return lista de responsables con mandato vigente
+     */
+    public List<Responsable> findAllActivos() {
+        List<Responsable> lista = new ArrayList<>();
+        String sql = "SELECT * FROM RESPONSABLE WHERE fecha_fin IS NULL ORDER BY fecha_inicio DESC";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) lista.add(mapResultSetToResponsable(rs));
+        } catch (SQLException e) { e.printStackTrace(); }
+        return lista;
+    }
+
+    /**
      * Devuelve el historial completo de responsables de un departamento,
      * ordenado del más reciente al más antiguo.
      *

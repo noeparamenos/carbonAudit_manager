@@ -46,8 +46,10 @@ public class ConsumoMensualDAO implements DAO<ConsumoMensual, Integer> {
                 consumo.setIdConsumo(rs.getInt(1));
             }
         } catch (SQLException e) {
-            //  si violamos el UNIQUE(id_dept, id_factor, mes, anio)
-            e.printStackTrace();
+            if (e.getSQLState().startsWith("23")) {
+                throw new IllegalArgumentException("Ya existe un consumo para ese recurso en el período seleccionado.");
+            }
+            throw new RuntimeException("Error al guardar el consumo: " + e.getMessage(), e);
         }
         return consumo;
     }

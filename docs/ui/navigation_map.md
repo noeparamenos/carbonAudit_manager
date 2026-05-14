@@ -28,7 +28,7 @@ P0 · Selección de rol
 
 ## Diagrama de flujo
 
-Ver [`../diagrams/navegacion.puml`](../diagrams/navegacion.puml).
+Ver [`./navegacion.puml`](navegacion.puml).
 
 ## Nota sobre autenticación
 
