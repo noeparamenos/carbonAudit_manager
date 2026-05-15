@@ -35,7 +35,6 @@
         - preserveRatio: mantiene proporciones originales al escalar.
         - smooth="true": para evitar pixelado al escalar.
     -->
-    <!-- fitWidth controla el tamaño -->
     <ImageView fitWidth="140.0" pickOnBounds="true" preserveRatio="true">
         <!-- @ ruta relativa al directorio de este FXML.-->
         <image>
@@ -44,21 +43,16 @@
     </ImageView>
 
 
-    <!-- Nombre de la aplicación -->
+    <!-- Titulo y subtitulo -->
     <Label styleClass="titulo-app" text="CarbonAudit Manager" />
-
-    <!-- Texto de invitación al usuario -->
     <Label styleClass="subtitulo" text="Selecciona tu perfil de acceso" />
 
-    <!--
-        HBox: coloca sus hijos en fila horizontal.
-        Contiene las dos tarjetas de selección de rol.
-    -->
+    <!-- HBox: coloca sus hijos en fila horizontal.
+        Contiene las dos tarjetas de selección de rol.-->
     <HBox alignment="CENTER" spacing="50.0">
 
-        <!--
-            Tarjeta Administrador.
-            - fx:id="tarjetaAdmin": permite al controlador referenciar este nodo.
+        <!-- Tarjeta Administrador.
+            - fx:id permite al controlador referenciar este nodo.
             - onMouseClicked: métod del controlador que se ejecuta al hacer clic.
         -->
         <VBox fx:id="tarjetaAdmin" alignment="CENTER" onMouseClicked="#onAdministradorClick" spacing="12.0" styleClass="tarjeta">
@@ -84,7 +78,7 @@
 
     </HBox>
 
-    <!-- Versión de la aplicación, anclada visualmente al pie de pantalla -->
+    <!-- Versión de la aplicación, anclada al pie de pantalla -->
     <Label styleClass="version" text="v1.0.0" />
 
 </VBox>

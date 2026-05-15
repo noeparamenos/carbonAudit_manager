@@ -26,8 +26,8 @@
    - **Causa**: La aplicación no dispone de sistema de login. Cualquiera puede elegir el rol Administrador o responsable activo.
    - **Solución**: Implementar un sistema de autenticación (usuario + contraseña) que determine el rol y el contexto automáticamente al iniciar sesión, eliminando las pantallas de selección de rol.
 8. La ventana P0 no se centra correctamente en el primer arranque en frío desde IntelliJ.
-   - **Causa**: En el primer lanzamiento la JVM inicializa JavaFX mientras el gestor de ventanas aún no ha terminado de posicionar la ventana. `centerOnScreen()`, `Platform.runLater()` y `setOnShown()` fallan en ese primer ciclo porque la ventana aún no tiene posición definitiva en pantalla.
-   - **Solución pendiente**: Investigar uso de `Screen.getPrimary().getVisualBounds()` para calcular y fijar manualmente `setX`/`setY`, o aplicar un retardo controlado tras `setOnShown`.
+   - **Causa**: En Linux, el gestor de ventanas reposiciona la ventana después de que JavaFX la coloca, ignorando cualquier `setX`/`setY` o `centerOnScreen()` previos al `show()`. El problema se agrava al lanzar desde IntelliJ por la latencia extra del agente IDE.
+   - **Solución**: Llamar a `Platform.runLater()` tras `show()` para encolar el centrado después del primer ciclo de renderizado, cuando la ventana ya tiene posición real. Se usa `Screen.getPrimary().getVisualBounds()` para calcular `setX`/`setY` manualmente. Funciona en Linux y Windows.
 9. `TableView.CONSTRAINED_RESIZE_POLICY` no se puede referenciar desde FXML en JavaFX 21.
    - **Causa**: El loader FXML de JavaFX 21 no puede convertir el string "TableView.CONSTRAINED_RESIZE_POLICY" al tipo `Callback` que espera `columnResizePolicy`.
    - **Solución**: Eliminar el atributo del FXML y asignarlo en el controlador desde `initialize()` con `tablaEmpresas.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN)`.

@@ -58,11 +58,8 @@
                     <Insets top="24.0" right="24.0" bottom="24.0" left="24.0"/>
                 </padding>
 
-                <!-- ── Cabecera del responsable ──────────────────────────── -->
-                <!--
-                    Muestra el nombre del responsable activo, su departamento y empresa.
-                    Debajo, el selector de período compartido entre todos los tabs.
-                -->
+                <!--  Cabecera del responsable  -->
+                <!-- Muestra el nombre del responsable activo, su departamento y empresa.-->
                 <VBox styleClass="cabecera-empresa" spacing="10.0">
                     <HBox alignment="CENTER_LEFT" spacing="12.0">
                         <VBox spacing="3.0" HBox.hgrow="ALWAYS">
@@ -74,10 +71,8 @@
                     <!-- Selector de período (mes y año). Compartido entre todos los tabs. -->
                     <HBox alignment="CENTER_LEFT" spacing="8.0">
                         <Label text="Período:" styleClass="form-label"/>
-                        <!--
-                            combMes e combAnio se sincronizan con todos los tabs.
-                            Al cambiar el período se recargan los tabs activos.
-                        -->
+                        <!-- combMes y año se sincronizan con todos los tabs.
+                            Al cambiar el período se recargan los tabs activos. -->
                         <ComboBox fx:id="combMes"  prefWidth="140.0"/>
                         <ComboBox fx:id="combAnio" prefWidth="85.0"/>
                     </HBox>
@@ -92,12 +87,9 @@
                     <tabs>
 
                         <!-- ── Tab: Consumos mensuales ──────────────────── -->
-                        <!--
-                            El responsable puede registrar, editar y duplicar consumos.
+                        <!-- Para registrar, editar y duplicar consumos.
                             Un clic en la fila abre el panel lateral en modo edición.
-                            "Nuevo consumo" abre el panel lateral vacío.
-                            "Duplicar mes anterior" copia los registros del mes previo.
-                        -->
+                            "Duplicar mes anterior" copia los registros del mes previo.-->
                         <Tab fx:id="tabConsumos" text="Consumos mensuales" closable="false">
                             <content>
                                 <VBox spacing="12.0">
@@ -136,18 +128,15 @@
                             </content>
                         </Tab>
 
-                        <!-- ── Tab: Trabajadores ─────────────────────────── -->
-                        <!--
-                            Vista de solo lectura. El CRUD de empleados corresponde
-                            al Administrador en PA3.
-                        -->
+                        <!-- Tab: Trabajadores -->
+                        <!--Vista de solo lectura.-->
                         <Tab fx:id="tabTrabajadores" text="Trabajadores" closable="false">
                             <content>
                                 <VBox spacing="12.0">
                                     <padding>
                                         <Insets top="16.0"/>
                                     </padding>
-
+                                    <!--tabla puede crecer verticalmente para ocupar todo el espacio libre disponible-->
                                     <TableView fx:id="tablaEmpleados" VBox.vgrow="ALWAYS"
                                                styleClass="tabla">
                                         <placeholder>
@@ -169,7 +158,7 @@
                             </content>
                         </Tab>
 
-                        <!-- ── Tab: Huella mensual ───────────────────────── -->
+                        <!-- Tab: Huella mensual  -->
                         <!--
                             Muestra los KPIs de CO₂e del período (total + por Scope),
                             la tabla de consumos con la emisión calculada y la sección

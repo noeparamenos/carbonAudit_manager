@@ -33,9 +33,10 @@ public class PR0Controller {
     // DAOs
     private final ResponsableDAO responsableDAO = new ResponsableDAO();
 
-    // Estado
+    // Estado (lista Observable a la que se suscribe la tabla)
     private final ObservableList<Responsable> listaResponsables = FXCollections.observableArrayList();
 
+    //======================== Métodos ==================================
 
     /**
      * Se ejecuta automáticamente al cargar el FXML.
@@ -43,9 +44,9 @@ public class PR0Controller {
      */
     @FXML
     public void initialize() {
-        configurarColumnas();
-        configurarClicEnFila();
-        cargarResponsables();
+        configurarColumnas();       // define qué campo muestra cada columna
+        configurarClicEnFila();     // define qué ocurre al hacer clic en una fila
+        cargarResponsables();       // conecta la lista Observable a la tabla y carga los datos
     }
 
 
@@ -56,12 +57,14 @@ public class PR0Controller {
     private void configurarColumnas() {
         tablaResponsables.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
+        // Para cada fila, la lambda recibe el objeto Responsable (data) y extrae el campo a mostrar
         colNombre.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().getEncargado().getNombre()));
 
         colDepartamento.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().getDepartamento().getNombre()));
 
+        // La empresa se obtiene por composición: Responsable → Departamento → Empresa
         colEmpresa.setCellValueFactory(data -> {
             var empresa = data.getValue().getDepartamento().getEmpresa();
             return new SimpleStringProperty(empresa != null ? empresa.getNombreSocial() : "—");
@@ -73,28 +76,30 @@ public class PR0Controller {
      * Mismo patrón que PA1 → PA2: un clic selecciona e inmediatamente navega.
      */
     private void configurarClicEnFila() {
+        // setRowFactory crea una fila personalizada por cada elemento de la tabla
         tablaResponsables.setRowFactory(tv -> {
             TableRow<Responsable> fila = new TableRow<>();
+            // Al hacer clic en una fila con datos, navega a PR1 con ese responsable
             fila.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 1 && !fila.isEmpty()) {
-                    navegarAPR1(fila.getItem());
+                    navegarAPR1(fila.getItem()); // fila.getItem() devuelve el Responsable de esa fila
                 }
             });
             return fila;
         });
     }
 
-    // ── Carga de datos ────────────────────────────────────────────────────
+    // ===================== Carga de datos ======================
 
     /**
      * Consulta todos los mandatos con fecha_fin IS NULL y los muestra en la tabla.
      */
     private void cargarResponsables() {
-        listaResponsables.setAll(responsableDAO.findAllActivos());
-        tablaResponsables.setItems(listaResponsables);
+        listaResponsables.setAll(responsableDAO.findAllActivos()); // rellena la lista Observable
+        tablaResponsables.setItems(listaResponsables);             // suscribe la tabla a la lista
     }
 
-    // ── Navegación ────────────────────────────────────────────────────────
+    // ===================== Navegación ======================
 
     /**
      * Vuelve a P0 (selección de rol) al hacer clic en "Inicio" del breadcrumb.
@@ -105,9 +110,10 @@ public class PR0Controller {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/carbonaudit/view/p0-seleccion-rol-view.fxml"));
             Scene escena = new Scene(loader.load());
+            // Obtiene la ventana actual a través de cualquier nodo visible y cambia la escena
             Stage stage = (Stage) tablaResponsables.getScene().getWindow();
-            stage.setScene(escena);
-            stage.sizeToScene();
+            stage.setScene(escena);    // reemplaza el contenido de la ventana
+            stage.sizeToScene();       // ajusta el tamaño de la ventana al de la nueva escena
             stage.centerOnScreen();
         } catch (Exception e) {
             e.printStackTrace();
@@ -125,11 +131,12 @@ public class PR0Controller {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/carbonaudit/view/pr1-responsable-view.fxml"));
             Scene escena = new Scene(loader.load());
-            PR1Controller pr1 = loader.getController();
-            pr1.setResponsable(responsable);
+            PR1Controller pr1 = loader.getController(); // obtiene el controlador del FXML cargado
+            pr1.setResponsable(responsable);             // pasa el responsable seleccionado a PR1
+            // Obtiene la ventana actual y cambia la escena
             Stage stage = (Stage) tablaResponsables.getScene().getWindow();
-            stage.setScene(escena);
-            stage.sizeToScene();
+            stage.setScene(escena);    // reemplaza el contenido de la ventana
+            stage.sizeToScene();       // ajusta el tamaño de la ventana al de la nueva escena
         } catch (Exception e) {
             e.printStackTrace();
         }

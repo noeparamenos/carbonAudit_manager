@@ -1,8 +1,11 @@
 package com.carbonaudit;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 /**
@@ -31,6 +34,14 @@ public class Main extends Application {
 		primaryStage.setResizable(false);
 
 		primaryStage.show();
+
+		// Encola el centrado tras el ciclo de renderizado, cuando la ventana ya tiene posición real.
+		// Recibe un runneable (lambda sin paŕametros)
+		Platform.runLater(() -> {
+			Rectangle2D pantalla = Screen.getPrimary().getVisualBounds();
+			primaryStage.setX((pantalla.getWidth()  - primaryStage.getWidth())  / 2);
+			primaryStage.setY((pantalla.getHeight() - primaryStage.getHeight()) / 2);
+		});
 	}
 
 	// Punto de entrada de la aplicación (main tradicional de Java)

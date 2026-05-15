@@ -12,28 +12,48 @@
  * Ejemplo: color → -fx-text-fill, background → -fx-background-color
  */
 
+/* ========= Variables de color ===================================== */
+
+.root {
+    -verde-oscuro:    #1b3a2a;
+    -verde-medio:     #3a6b4a;
+    -verde-hover:     #2d5a3d;
+    -verde-claro:     #e6f4ec;
+    -verde-suave:     #8ab89a;
+    -verde-texto:     #6a9a7a;
+    -verde-sep:       #5a8a6a;
+    -verde-kpi:       #c8e6d5;
+    -fondo-app:       #eef6f1;
+    -fondo-tarjeta:   #f4faf6;
+    -fondo-interior:  #f5f7f5;
+    -texto-topbar:    #e8f5e9;
+    -gris-borde:      #d5d8dc;
+    -rojo-peligro:    #c0392b;
+    -rojo-hover:      #fdecea;
+}
+
 /* ========= P0 · Pantalla selección de rol ========================= */
 
 .pantalla-seleccion {
-    -fx-background-color: #eef6f1;
+    -fx-background-color: -fondo-app;
 }
 
 .titulo-app {
     -fx-font-size: 26px;
     -fx-font-weight: bold;
-    -fx-text-fill: #1b3a2a;
+    -fx-text-fill: -verde-oscuro;
 }
 
 .subtitulo {
     -fx-font-size: 13px;
-    -fx-text-fill: #3a6b4a;
+    -fx-text-fill: -verde-medio;
 }
 
 /* ========= Tarjetas de selección de rol =========================== */
 
 .tarjeta {
-    -fx-background-color: #f4faf6;
-    -fx-border-color: #3a6b4a;
+    -fx-background-color: -fondo-tarjeta;
+    -fx-border-color: -verde-medio;
     -fx-border-width: 1.5px;
     -fx-border-radius: 6px;
     -fx-background-radius: 6px;
@@ -44,19 +64,19 @@
 
 /* :hover se aplica automáticamente al pasar el ratón */
 .tarjeta:hover {
-    -fx-background-color: #e6f4ec;
+    -fx-background-color: -verde-claro;
     -fx-border-color: #5aab72;
 }
 
 .tarjeta-titulo {
     -fx-font-size: 15px;
     -fx-font-weight: bold;
-    -fx-text-fill: #1b3a2a;
+    -fx-text-fill: -verde-oscuro;
 }
 
 .tarjeta-descripcion {
     -fx-font-size: 12px;
-    -fx-text-fill: #6a9a7a;
+    -fx-text-fill: -verde-texto;
     -fx-text-alignment: center;
     /* maxWidth se controla con el atributo maxWidth del Label en el FXML */
 }
@@ -71,13 +91,13 @@
 /* ========= Pantallas interiores (PA1, PA2, PA3, PR0, PR1) ========= */
 
 .pantalla-interior {
-    -fx-background-color: #f5f7f5;
+    -fx-background-color: -fondo-interior;
 }
 
 /* ========= Topbar ================================================= */
 
 .topbar {
-    -fx-background-color: #1b3a2a;
+    -fx-background-color: -verde-oscuro;
     -fx-padding: 12px 20px;
     -fx-alignment: CENTER_LEFT;
     -fx-spacing: 16px;
@@ -86,30 +106,30 @@
 .topbar-titulo {
     -fx-font-size: 15px;
     -fx-font-weight: bold;
-    -fx-text-fill: #e8f5e9;
+    -fx-text-fill: -texto-topbar;
 }
 
 .topbar-rol {
     -fx-font-size: 12px;
-    -fx-text-fill: #8ab89a;
+    -fx-text-fill: -verde-suave;
 }
 
 /* ========= Zona principal ========================================= */
 
 .zona-principal {
-    -fx-background-color: #f5f7f5;
+    -fx-background-color: -fondo-interior;
 }
 
 .seccion-titulo {
     -fx-font-size: 20px;
     -fx-font-weight: bold;
-    -fx-text-fill: #1b3a2a;
+    -fx-text-fill: -verde-oscuro;
 }
 
 /* ========= Botones ================================================ */
 
 .btn-primario {
-    -fx-background-color: #3a6b4a;
+    -fx-background-color: -verde-medio;
     -fx-text-fill: white;
     -fx-font-size: 13px;
     -fx-cursor: hand;
@@ -119,13 +139,13 @@
 }
 
 .btn-primario:hover {
-    -fx-background-color: #2d5a3d;
+    -fx-background-color: -verde-hover;
 }
 
 .btn-secundario {
     -fx-background-color: transparent;
-    -fx-text-fill: #3a6b4a;
-    -fx-border-color: #3a6b4a;
+    -fx-text-fill: -verde-medio;
+    -fx-border-color: -verde-medio;
     -fx-border-width: 1px;
     -fx-border-radius: 4px;
     -fx-background-radius: 4px;
@@ -135,7 +155,7 @@
 }
 
 .btn-secundario:hover {
-    -fx-background-color: #eef6f1;
+    -fx-background-color: -fondo-app;
 }
 
 .btn-cerrar {
@@ -147,14 +167,14 @@
 }
 
 .btn-cerrar:hover {
-    -fx-text-fill: #c0392b;
+    -fx-text-fill: -rojo-peligro;
 }
 
 /* Botón de acción destructiva (Eliminar) */
 .btn-peligro {
     -fx-background-color: transparent;
-    -fx-text-fill: #c0392b;
-    -fx-border-color: #c0392b;
+    -fx-text-fill: -rojo-peligro;
+    -fx-border-color: -rojo-peligro;
     -fx-border-width: 1px;
     -fx-border-radius: 4px;
     -fx-background-radius: 4px;
@@ -164,23 +184,23 @@
 }
 
 .btn-peligro:hover {
-    -fx-background-color: #fdecea;
+    -fx-background-color: -rojo-hover;
 }
 
 /* ========= TableView ============================================== */
 
 .tabla {
     -fx-background-color: white;
-    -fx-border-color: #d5d8dc;
+    -fx-border-color: -gris-borde;
     -fx-border-radius: 4px;
     -fx-background-radius: 4px;
 }
 
 .tabla .column-header {
-    -fx-background-color: #eef6f1;
+    -fx-background-color: -fondo-app;
     -fx-font-weight: bold;
     -fx-font-size: 12px;
-    -fx-text-fill: #1b3a2a;
+    -fx-text-fill: -verde-oscuro;
 }
 
 .tabla .table-row-cell {
@@ -193,12 +213,12 @@
 }
 
 .tabla .table-row-cell:hover {
-    -fx-background-color: #e6f4ec;
+    -fx-background-color: -verde-claro;
     -fx-cursor: hand;
 }
 
 .tabla .table-row-cell:selected {
-    -fx-background-color: #c8e6d5;
+    -fx-background-color: -verde-kpi;
 }
 
 .tabla-placeholder {
@@ -216,7 +236,7 @@
 
 .panel-lateral {
     -fx-background-color: white;
-    -fx-border-color: #d5d8dc;
+    -fx-border-color: -gris-borde;
     -fx-border-width: 0 0 0 1px;
     -fx-pref-width: 300px;
     -fx-padding: 20px;
@@ -225,7 +245,7 @@
 .panel-titulo {
     -fx-font-size: 15px;
     -fx-font-weight: bold;
-    -fx-text-fill: #1b3a2a;
+    -fx-text-fill: -verde-oscuro;
 }
 
 .scroll-formulario {
@@ -244,7 +264,7 @@
 .form-seccion {
     -fx-font-size: 12px;
     -fx-font-weight: bold;
-    -fx-text-fill: #3a6b4a;
+    -fx-text-fill: -verde-medio;
     -fx-padding: 8px 0 2px 0;
 }
 
@@ -252,25 +272,25 @@
 
 .topbar-sep {
     -fx-font-size: 13px;
-    -fx-text-fill: #5a8a6a;
+    -fx-text-fill: -verde-sep;
 }
 
 /* Enlace clicable (niveles anteriores del breadcrumb) */
 .topbar-breadcrumb-link {
     -fx-font-size: 13px;
-    -fx-text-fill: #8ab89a;
+    -fx-text-fill: -verde-suave;
     -fx-cursor: hand;
 }
 
 .topbar-breadcrumb-link:hover {
-    -fx-text-fill: #e8f5e9;
+    -fx-text-fill: -texto-topbar;
     -fx-underline: true;
 }
 
 /* Nivel activo: texto plano, no clicable */
 .topbar-breadcrumb {
     -fx-font-size: 13px;
-    -fx-text-fill: #e8f5e9;
+    -fx-text-fill: -texto-topbar;
     -fx-font-weight: bold;
 }
 
@@ -278,7 +298,7 @@
 
 .cabecera-empresa {
     -fx-background-color: white;
-    -fx-border-color: #d5d8dc;
+    -fx-border-color: -gris-borde;
     -fx-border-width: 0 0 1px 0;
     -fx-padding: 0 0 16px 0;
 }
@@ -286,12 +306,12 @@
 .empresa-nombre {
     -fx-font-size: 22px;
     -fx-font-weight: bold;
-    -fx-text-fill: #1b3a2a;
+    -fx-text-fill: -verde-oscuro;
 }
 
 .empresa-info {
     -fx-font-size: 13px;
-    -fx-text-fill: #6a9a7a;
+    -fx-text-fill: -verde-texto;
 }
 
 /* ========= TabPane ================================================ */
@@ -301,7 +321,7 @@
  * .tab-pane-verde es nuestra clase personalizada que aplica sobre el TabPane.
  */
 .tab-pane-verde > .tab-header-area > .headers-region > .tab {
-    -fx-background-color: #f5f7f5;
+    -fx-background-color: -fondo-interior;
     -fx-padding: 6px 20px;
 }
 
@@ -311,17 +331,17 @@
 
 .tab-pane-verde > .tab-header-area > .headers-region > .tab .tab-label {
     -fx-font-size: 13px;
-    -fx-text-fill: #3a6b4a;
+    -fx-text-fill: -verde-medio;
 }
 
 .tab-pane-verde > .tab-header-area > .headers-region > .tab:selected .tab-label {
     -fx-font-weight: bold;
-    -fx-text-fill: #1b3a2a;
+    -fx-text-fill: -verde-oscuro;
 }
 
 .tab-pane-verde > .tab-header-area {
-    -fx-background-color: #f5f7f5;
-    -fx-border-color: #d5d8dc;
+    -fx-background-color: -fondo-interior;
+    -fx-border-color: -gris-borde;
     -fx-border-width: 0 0 1px 0;
 }
 
@@ -334,7 +354,7 @@
 
 .chk-periodo {
     -fx-font-size: 12px;
-    -fx-text-fill: #3a6b4a;
+    -fx-text-fill: -verde-medio;
 }
 
 /* ========= Total departamento (Tab Consumos) ====================== */
@@ -342,14 +362,14 @@
 .total-empresa {
     -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-text-fill: #1b3a2a;
+    -fx-text-fill: -verde-oscuro;
 }
 
 /* ========= KPI cards (PR1 · Tab Huella mensual) =================== */
 
 .kpi-card {
-    -fx-background-color: #f4faf6;
-    -fx-border-color: #c8e6d5;
+    -fx-background-color: -fondo-tarjeta;
+    -fx-border-color: -verde-kpi;
     -fx-border-width: 1px;
     -fx-border-radius: 6px;
     -fx-background-radius: 6px;
@@ -360,11 +380,11 @@
 
 .kpi-titulo {
     -fx-font-size: 11px;
-    -fx-text-fill: #6a9a7a;
+    -fx-text-fill: -verde-texto;
 }
 
 .kpi-valor {
     -fx-font-size: 16px;
     -fx-font-weight: bold;
-    -fx-text-fill: #1b3a2a;
+    -fx-text-fill: -verde-oscuro;
 }

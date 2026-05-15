@@ -2,71 +2,62 @@
 
 Describe la organización de la lógica orientada a objetos, enfocándose en la estructura de los datos y su navegación.
 
-## 1. Diseño del modelo (POJOs)
+## 1. Modelo de dominio (POJOs)
 
-- Se utiliza un modelo de dominio puro basado en Composición, donde las clases del paquete `com.carbonaudit.model` representan fielmente las entidades de negocio sin incluir lógica de cálculo.
+Las clases del paquete `com.carbonaudit.model` representan las entidades de negocio sin incluir lógica de cálculo. Son estructuras de datos puras.
 
-### Identidad y Persistencia
+### Identidad y persistencia
 
-- Se ha mantenido una distinción clara entre la persistencia y la lógica en memoria:
-  
-  - **Identificadores (IDs):**Cada clase incluye un atributo `id` (Primary Key en DB) que permite la sincronización inequívoca con la bd (esenciales para que el patrón DAO pueda realizar operaciones CRUD)
-  
-  - **Composición de Objetos:** Las relaciones entre tablas se han representado como como **referencias a objetos completos**. Para permitir el acceso a todos los datos navegando entre métodos sin tener que realizar constantemente consultas a la BD.
+- Cada clase incluye un atributo `id` (PK en BD) que permite la sincronización con la base de datos y es necesario para las operaciones CRUD del DAO.
+- Las relaciones entre tablas se representan como **referencias a objetos completos** (composición), no como IDs primitivos. Esto permite navegar entre entidades sin consultas adicionales a la BD.
 
-Para tu archivo `class_architecture.md`, el resumen debe ser técnico, directo y resaltar las decisiones de diseño que hemos tomado (como el manejo de tipos de datos y validaciones). 
+## 2. Capa DAO
 
-Aquí tienes una estructura profesional lista para copiar y pegar:
+El paquete `com.carbonaudit.dao` abstrae toda la comunicación con PostgreSQL. El resto de la aplicación trabaja con objetos Java sin escribir SQL.
 
----
+Se optó por **JDBC manual** (sin ORM) para garantizar control explícito sobre tipos numéricos de alta precisión y evitar dependencias pesadas como Hibernate.
 
-## DAO
+Patrones aplicados:
 
-- El paquete DAO (Data Access Object) actúa como la **capa de persistencia** del sistema. Su función principal es abstraer toda la lógica de comunicación con la base de datos PostgreSQL, permitiendo que el resto de la aplicación trabaje con objetos Java (POJOs) sin usar SQL.
-- Se ha optado por una implementación de DAOs manuales mediante JDBC para garantizar la máxima transparencia en las transacciones, un control estricto sobre los tipos de datos numéricos de alta precisión y evitar la sobrecarga de dependencias externas (como jakarta/hibernate)
+1. **Interfaz genérica `DAO<T, K>`**: define las operaciones CRUD estándar. Los generics garantizan que cada DAO maneje el tipo de entidad (`T`) y clave primaria (`K`) correctos.
+2. **Singleton `DatabaseManager`**: centraliza la conexión a la BD mediante una única instancia compartida.
+3. **Composición en el mapeo**: los DAOs reconstruyen objetos complejos llamando a otros DAOs para resolver las relaciones FK.
 
+Manejo de errores: las `SQLException` se capturan y se relanza como `IllegalArgumentException` con mensaje legible cuando se viola una restricción de integridad (`SQLState 23xxx`).
 
-  1. **Interfaz Genérica `DAO<T, K>`**: 
-      * Define las operaciones CRUD estándar (`create`, `findById`, `findAll`, `update`, `delete`).
-      * Utiliza **Generics** para asegurar que cada DAO maneje el tipo de entidad (`T`) y el tipo de clave primaria (`K`) correctos.
-  2.  **Patrón Singleton en `DatabaseManager`**: 
-      * Centraliza la conexión a la base de datos mediante una única instancia, optimizando el uso de recursos y el pool de conexiones.
-  3.  **Composición y Relaciones**: 
-      * Los DAOs están interconectados para reconstruir objetos complejos a partir de claves foráneas (FK).
+## 3. Capa de servicio
 
-- Manejo de errores: Se capturan `SQLException` y se proporciona información sobre violaciones de restricciones de integridad asegurando que el sistema sea robusto.
+La responsabilidad de transformar consumos en kg CO₂e recae exclusivamente en `ServicioCalculoHuella`. Esto evita la dispersión de fórmulas y garantiza un único punto de verdad.
 
+- **Fórmula base:** `Emisiones = Cantidad × Factor_Emisión`
+- **Scopes:** el servicio agrupa las emisiones por Alcance 1, 2 y 3 según el factor de emisión asociado a cada consumo
+- **Commuting:** el cálculo de Alcance 3 requiere geolocalización; se delega en `IServicioGeografico` (implementado por `ServicioGeograficoORS`)
 
-## 2. Capa Service
-- La responsabilidad de transformar consumos en $CO_2$ recae exclusivamente en el `CarbonService`. Esto evita la dispersión de fórmulas y asegura un único punto de verdad.
+## 4. Tipos de datos
 
-- Algoritmos de Cálculo:
-  ----- A completar
+La integridad del dato es un requisito crítico en un sistema de auditoría:
 
-## 2. Tipos de Datos y Precisión Técnica
+- **`BigDecimal`**: para distancias, cantidades y factores de emisión. Evita errores de precisión de `double` y permite recuperar `null` de la BD sin forzar un valor por defecto.
+- **`java.time.LocalDate`**: para fechas de consumos y mandatos de responsables.
+- **`String`** con validación de formato para CIF y email (validados en la UI como primer filtro y en la capa DAO como segundo).
 
-- Debido a que se trata de un sistema de auditoría, la integridad del dato es un requisito crítico. Por lo que se a optado con tipos de datos con gran precisión para los cálculos. 
-- Ademas usar BigDecimal nos permite recuperar nulos en la BD y asignarlos como null al objeto, evitando errores como asingar un 0 a una coordenada
+## 5. Entidades clave
 
+### `Direccion`
+Objeto de valor compartido entre `Empresa`, `Departamento` y `Empleado`. Integra coordenadas de geolocalización (latitud/longitud) obtenidas vía API ORS.
 
-## 3. Entidades Clave
+### `Empleado`
+Implementa **soft delete**: en lugar de borrar el registro, se registra `fecha_baja`. Las consultas filtran `WHERE fecha_baja IS NULL`. Esto preserva el historial de commuting y mandatos necesario para reproducir cálculos de períodos pasados.
 
-### A. Entidad "Direccion" 
+### `Responsable`
+Representa un mandato activo de un empleado sobre un departamento. Un mandato activo tiene `fecha_fin IS NULL`.
 
-- La clase `Direccion` actúa como un objeto de valor fundamental que es compartido. 
-- Permite integrar APIs de geolocalización (latitud/longitud) de forma global en toda la app.
+## 6. Separación de responsabilidades
 
-
-## 4. Separación de Responsabilidades (Layering)
-
-- Se ha optado por un Modelo de Dominio puro para priorizar la separación de responsabilidades. 
-- La lógica de cálculo reside exclusivamente en la Capa de Servicio, garantizando que los modelos permanezcan como POJOs (Plain Old Java Objects) puros, facilitando su mantenimiento y persistencia
-
-1. **Modelo:** Define la estructura y las relaciones entre clases.
-2. **DAO (Data Access Object):** Es el único responsable de traducir los IDs de las tablas SQL a los objetos compuestos de Java.
-3. **Service:** Realiza los cálculos de emisiones utilizando los datos cargados en el Modelo.
-
-## 5. Tipos de Datos Estandarizados
-- **Magnitudes Físicas:** `BigDecimal`: permite mayor precisión en la gestión de datos clave que podrian ser auditados (distancias, cantidades, factores).
-- **Fechas:** `java.time.LocalDate` (gestión de histórico de consumos y mandos).
-- **Cadenas:** `String` con validación de formato para CIF y Email en la UI. Se realiza una clase Validador que sera usada en la UI (primper filtro) y en la capa de servicio
+| Capa | Responsabilidad |
+|------|----------------|
+| Model | Estructura y relaciones entre entidades (POJOs puros) |
+| DAO | Traducción entre objetos Java y tablas SQL |
+| Service | Cálculos de emisiones y geolocalización |
+| Controller | Gestión de eventos de usuario y navegación entre pantallas |
+| View (FXML) | Definición de la estructura visual |
