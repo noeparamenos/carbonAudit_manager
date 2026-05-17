@@ -17,7 +17,8 @@ skinparam sequence {
 actor "Administrador" as Admin
 participant "Vista\n(JavaFX)" as UI
 participant "PA3Controller" as Ctrl
-participant "ServicioCalculoHuella" as Servicio
+participant "ServicioGestionEmpleado" as ServGestion
+participant "ServicioCalculoHuella" as ServHuella
 participant "EmpleadoDAO" as EmpDAO
 participant "DireccionDAO" as DirDAO
 participant "ServicioGeograficoORS" as ORS
@@ -37,19 +38,27 @@ alt campos inválidos
     UI --> Admin : muestra aviso y cancela
 else campos válidos
 
-    Ctrl -> EmpDAO : 1.1.2. create(nuevo)
-    activate EmpDAO
-        EmpDAO -> BD : 1.1.2.1. INSERT INTO empleado
-        BD --> EmpDAO : 1.1.2.2. Empleado (con id)
-    EmpDAO --> Ctrl : 1.1.3. Empleado guardado
-    deactivate EmpDAO
+    Ctrl -> ServGestion : 1.1.2. crearEmpleado(nuevo)
+    activate ServGestion
+        ServGestion -> EmpDAO : 1.1.2.1. create(nuevo)
+        activate EmpDAO
+            EmpDAO -> BD : 1.1.2.1.1. INSERT INTO empleado
+            BD --> EmpDAO : 1.1.2.1.2. Empleado (con id)
+        EmpDAO --> ServGestion : 1.1.2.2. Empleado guardado
+        deactivate EmpDAO
+    ServGestion --> Ctrl : 1.1.3. Empleado guardado
+    deactivate ServGestion
 
-    Ctrl -> EmpDAO : 1.1.4. findAllByDepartamento(idDept)\n[cargarEmpleados]
-    activate EmpDAO
-        EmpDAO -> BD : 1.1.4.1. SELECT empleados WHERE idDept
-        BD --> EmpDAO : 1.1.4.2. List<Empleado>
-    EmpDAO --> Ctrl : 1.1.5. List<Empleado>
-    deactivate EmpDAO
+    Ctrl -> ServGestion : 1.1.4. getEmpleadosDepartamento(idDept)\n[cargarEmpleados]
+    activate ServGestion
+        ServGestion -> EmpDAO : 1.1.4.1. findAllByDepartamento(idDept)
+        activate EmpDAO
+            EmpDAO -> BD : 1.1.4.1.1. SELECT empleados WHERE idDept
+            BD --> EmpDAO : 1.1.4.1.2. List<Empleado>
+        EmpDAO --> ServGestion : 1.1.4.2. List<Empleado>
+        deactivate EmpDAO
+    ServGestion --> Ctrl : 1.1.5. List<Empleado>
+    deactivate ServGestion
 
     Ctrl --> UI : 1.1.6. actualiza tabla y cierra panel
     note right of Ctrl : lanza hilo daemon →\ncontinúa en fase asíncrona
@@ -62,63 +71,67 @@ deactivate UI
 
 == Fase asíncrona — hilo daemon (JavaFX Task) ==
 
-Ctrl -> Servicio : 2.1. calcularYPersistirDistancia(empleado)
-activate Servicio
+Ctrl -> ServHuella : 2.1. AsignarDistanciaTrabajo(empleado)
+activate ServHuella
 
-Servicio -> ORS : 2.1.1. completarCoordenadas(dirEmpleado)
+ServHuella -> ORS : 2.1.1. completarCoordenadas(dirEmpleado)
 activate ORS
     ORS -> ORSAPI : 2.1.1.1. HTTP geocoding · dirección empleado
     ORSAPI --> ORS : 2.1.1.2. lat / lon
-ORS --> Servicio : 2.1.2. coordenadas asignadas a dirEmpleado
+ORS --> ServHuella : 2.1.2. coordenadas asignadas a dirEmpleado
 deactivate ORS
 
-Servicio -> ORS : 2.1.3. completarCoordenadas(dirDepartamento)
+ServHuella -> ORS : 2.1.3. completarCoordenadas(dirDepartamento)
 activate ORS
     ORS -> ORSAPI : 2.1.3.1. HTTP geocoding · dirección departamento
     ORSAPI --> ORS : 2.1.3.2. lat / lon
-ORS --> Servicio : 2.1.4. coordenadas asignadas a dirDepartamento
+ORS --> ServHuella : 2.1.4. coordenadas asignadas a dirDepartamento
 deactivate ORS
 
-Servicio -> ORS : 2.1.5. calcularDistancia(dirEmpleado, dirDepartamento)
+ServHuella -> ORS : 2.1.5. calcularDistancia(dirEmpleado, dirDepartamento)
 activate ORS
     ORS -> ORSAPI : 2.1.5.1. HTTP route · coordenadas origen y destino
     ORSAPI --> ORS : 2.1.5.2. distancia en km
-ORS --> Servicio : 2.1.6. distanciaKm
+ORS --> ServHuella : 2.1.6. distanciaKm
 deactivate ORS
 
-Servicio -> Servicio : 2.1.7. empleado.setDistanciaTrabajo(distanciaKm)
+ServHuella -> ServHuella : 2.1.7. empleado.setDistanciaTrabajo(distanciaKm)
 
-Servicio -> EmpDAO : 2.1.8. update(empleado)\n[persiste distancia_trabajo + coordenadas]
-activate EmpDAO
-    EmpDAO -> BD : 2.1.8.1. UPDATE empleado SET distancia_trabajo, ...
-    BD --> EmpDAO : 2.1.8.2. OK
-EmpDAO --> Servicio : 2.1.9. actualizado
-deactivate EmpDAO
+ServHuella --> Ctrl : 2.2. cálculo completado
+deactivate ServHuella
 
-Servicio -> DirDAO : 2.1.10. update(deptDireccion)\n[persiste coordenadas del departamento]
-activate DirDAO
-    DirDAO -> BD : 2.1.10.1. UPDATE direccion SET lat, lon WHERE idDireccion
-    BD --> DirDAO : 2.1.10.2. OK
-DirDAO --> Servicio : 2.1.11. actualizado
-deactivate DirDAO
+Ctrl -> ServGestion : 2.3. persistirResultadoDistancia(empleado)
+activate ServGestion
+    ServGestion -> EmpDAO : 2.3.1. update(empleado)\n[persiste distancia_trabajo + coordenadas]
+    activate EmpDAO
+        EmpDAO -> BD : 2.3.1.1. UPDATE empleado SET distancia_trabajo, ...
+        BD --> EmpDAO : 2.3.1.2. OK
+    EmpDAO --> ServGestion : 2.3.2. actualizado
+    deactivate EmpDAO
 
-Servicio --> Ctrl : 2.2. tarea completada (onSucceeded)
-deactivate Servicio
+    ServGestion -> DirDAO : 2.3.3. update(deptDireccion)\n[persiste coordenadas del departamento]
+    activate DirDAO
+        DirDAO -> BD : 2.3.3.1. UPDATE direccion SET lat, lon WHERE idDireccion
+        BD --> DirDAO : 2.3.3.2. OK
+    DirDAO --> ServGestion : 2.3.4. actualizado
+    deactivate DirDAO
+ServGestion --> Ctrl : 2.4. persistencia completada (onSucceeded)
+deactivate ServGestion
 
 note over Ctrl : onSucceeded ejecuta en el hilo de JavaFX
 
-Ctrl -> Servicio : 2.3. getEmpleadosDepartamento(idDept)\n[cargarEmpleados — refresca tabla]
-activate Servicio
-    Servicio -> EmpDAO : 2.3.1. findAllByDepartamento(idDept)
+Ctrl -> ServGestion : 2.5. getEmpleadosDepartamento(idDept)\n[cargarEmpleados — refresca tabla]
+activate ServGestion
+    ServGestion -> EmpDAO : 2.5.1. findAllByDepartamento(idDept)
     activate EmpDAO
-        EmpDAO -> BD : 2.3.1.1. SELECT empleados WHERE idDept
-        BD --> EmpDAO : 2.3.1.2. List<Empleado>
-    EmpDAO --> Servicio : 2.3.2. List<Empleado>
+        EmpDAO -> BD : 2.5.1.1. SELECT empleados WHERE idDept
+        BD --> EmpDAO : 2.5.1.2. List<Empleado>
+    EmpDAO --> ServGestion : 2.5.2. List<Empleado>
     deactivate EmpDAO
-Servicio --> Ctrl : 2.4. List<Empleado>
-deactivate Servicio
+ServGestion --> Ctrl : 2.6. List<Empleado>
+deactivate ServGestion
 
-Ctrl --> UI : 2.5. tabla actualizada con distancia al trabajo
-UI --> Admin : 2.6. muestra distancia calculada en la fila del empleado
+Ctrl --> UI : 2.7. tabla actualizada con distancia al trabajo
+UI --> Admin : 2.8. muestra distancia calculada en la fila del empleado
 
 @enduml

@@ -3,6 +3,7 @@ package com.carbonaudit.controller;
 import com.carbonaudit.dao.*;
 import com.carbonaudit.model.*;
 import com.carbonaudit.service.ServicioCalculoHuella;
+import com.carbonaudit.service.ServicioGestionEmpleado;
 import com.carbonaudit.service.external.ServicioGeograficoORS;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -96,7 +97,6 @@ public class PA3Controller {
 
     // ── DAOs y servicios ──────────────────────────────────────────────────
 
-    private final EmpleadoDAO      empleadoDAO     = new EmpleadoDAO();
     private final ResponsableDAO   responsableDAO  = new ResponsableDAO();
     private final DepartamentoDAO  departamentoDAO = new DepartamentoDAO();
     private final FactorEmisionDAO factorDAO       = new FactorEmisionDAO();
@@ -105,8 +105,9 @@ public class PA3Controller {
      * Se pasa null como geo service en PA2; aquí sí lo necesitamos para calcular
      * la distancia al trabajo de cada empleado tras guardar sus datos.
      */
-    private final ServicioGeograficoORS  geoService     = new ServicioGeograficoORS();
-    private final ServicioCalculoHuella servicioHuella = new ServicioCalculoHuella(geoService);
+    private final ServicioGeograficoORS  geoService      = new ServicioGeograficoORS();
+    private final ServicioCalculoHuella  servicioHuella  = new ServicioCalculoHuella(geoService);
+    private final ServicioGestionEmpleado servicioGestion = new ServicioGestionEmpleado();
 
     // ── Estado ────────────────────────────────────────────────────────────
 
@@ -231,7 +232,7 @@ public class PA3Controller {
     }
 
     private void cargarEmpleados() {
-        listaEmpleados.setAll(servicioHuella.getEmpleadosDepartamento(departamento.getIdDepartamento()));
+        listaEmpleados.setAll(servicioGestion.getEmpleadosDepartamento(departamento.getIdDepartamento()));
         tablaEmpleados.setItems(listaEmpleados);
     }
 
@@ -346,7 +347,7 @@ public class PA3Controller {
                 nuevo.setMedioTransporte(combEmpVehiculo.getValue());
                 nuevo.setDireccion(dir);
                 nuevo.setDepartamento(departamento);
-                empleadoDAO.create(nuevo);
+                servicioGestion.crearEmpleado(nuevo);
                 empleadoParaApi = nuevo;
             } else {
                 empleadoEditando.setNombre(nombre);
@@ -359,7 +360,7 @@ public class PA3Controller {
                 dir.setCiudad(campEmpCiudad.getText().trim());
                 dir.setCodigoPostal(campEmpCp.getText().trim());
                 dir.setProvincia(campEmpProvincia.getText().trim());
-                empleadoDAO.update(empleadoEditando);
+                servicioGestion.actualizarEmpleado(empleadoEditando);
                 empleadoParaApi = empleadoEditando;
             }
 
@@ -388,7 +389,7 @@ public class PA3Controller {
                 "El empleado quedará inactivo. Sus registros históricos se conservarán para auditoría.");
         confirmacion.showAndWait().ifPresent(respuesta -> {
             if (respuesta == ButtonType.OK) {
-                empleadoDAO.darDeBaja(empleadoEditando.getIdEmpleado(), LocalDate.now());
+                servicioGestion.darDeBajaEmpleado(empleadoEditando.getIdEmpleado(), LocalDate.now());
                 cargarEmpleados();
                 cerrarPanelEmpleado();
             }
@@ -408,7 +409,7 @@ public class PA3Controller {
      */
     @FXML
     private void onAsignarResponsable() {
-        List<Empleado> empleados = servicioHuella.getEmpleadosDepartamento(departamento.getIdDepartamento());
+        List<Empleado> empleados = servicioGestion.getEmpleadosDepartamento(departamento.getIdDepartamento());
         combRespEmpleado.setItems(FXCollections.observableArrayList(empleados));
         combRespEmpleado.setConverter(new StringConverter<>() {
             @Override public String toString(Empleado e) { return e != null ? e.getNombre() : ""; }
@@ -545,7 +546,7 @@ public class PA3Controller {
 
     @FXML
     private void onEliminarDpto() {
-        List<Empleado> empleados = servicioHuella.getEmpleadosDepartamento(departamento.getIdDepartamento());
+        List<Empleado> empleados = servicioGestion.getEmpleadosDepartamento(departamento.getIdDepartamento());
         if (!empleados.isEmpty()) {
             mostrarError("No se puede eliminar el departamento porque tiene "
                     + empleados.size() + " empleado(s) activo(s).\n"
@@ -625,7 +626,7 @@ public class PA3Controller {
             }
         };
 
-        tarea.setOnSucceeded(e -> servicioHuella.persistirCoordenadas(dir));
+        tarea.setOnSucceeded(e -> servicioGestion.persistirCoordenadas(dir));
         tarea.setOnFailed(e -> Platform.runLater(() ->
                 mostrarError("No se pudo geocodificar la dirección del departamento "
                         + "(comprueba la conexión y la clave API ORS).")));
@@ -647,8 +648,8 @@ public class PA3Controller {
         Task<Void> tarea = new Task<>() {
             @Override
             protected Void call() throws Exception {
-                // Calcula distancia vía ORS y persiste resultado en BD (sin tocar DAOs desde el Controlador)
-                servicioHuella.calcularYPersistirDistancia(empleado);
+                servicioHuella.AsignarDistanciaTrabajo(empleado);
+                servicioGestion.persistirResultadoDistancia(empleado);
                 return null;
             }
         };
