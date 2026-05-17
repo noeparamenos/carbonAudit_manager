@@ -108,7 +108,6 @@ public class PA2Controller {
     private final DepartamentoDAO   departamentoDAO = new DepartamentoDAO();
     private final ResponsableDAO    responsableDAO  = new ResponsableDAO();
     private final EmpleadoDAO       empleadoDAO     = new EmpleadoDAO();
-    private final ConsumoMensualDAO consumoDAO      = new ConsumoMensualDAO();
     private final DireccionDAO      direccionDAO    = new DireccionDAO();
 
     private final ServicioGeograficoORS  geoService     = new ServicioGeograficoORS();
@@ -303,29 +302,24 @@ public class PA2Controller {
 
         // Calculo anualizado
         if (chkAnioCompleto.isSelected()) {
-            consumos = consumoDAO.getConsumosByEmpresaAnio(empresa.getIdEmpresa(), anio);
+            // Obtiene consumos a través del Servicio (no del DAO directamente)
+            consumos = servicioHuella.getConsumosAnualesEmpresa(empresa.getIdEmpresa(), anio);
+            total = chkIncluirCommuting.isSelected()
+                    // Con commuting: Scope 1+2+3 (12 meses) vía Servicio
+                    ? servicioHuella.getHuellaAnualEmpresa(empresa, anio)
+                    // Sin commuting: suma de emisiones de la lista ya obtenida, sin nueva query
+                    : servicioHuella.getTotalConsumos(consumos);
 
-            if (chkIncluirCommuting.isSelected()) {
-                // getHuellaAnualEmpresa suma Scope 1+2+3 (12 meses) para toda la empresa
-                total = servicioHuella.getHuellaAnualEmpresa(empresa, anio);
-            } else { // Sin commuting
-                total = consumos.stream()
-                        .map(ConsumoMensual::calcularEmision)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-            }
-            // Calculo mensual
+        // Calculo mensual
         } else {
             int mes = combMes.getSelectionModel().getSelectedIndex() + 1;
-            consumos = consumoDAO.getConsumosByEmpresaMes(empresa.getIdEmpresa(), mes, anio);
-
-            if (chkIncluirCommuting.isSelected()) {
-                // getHuellaTotalEmpresaMes suma Scope 1+2+3 para el mes seleccionado
-                total = servicioHuella.getHuellaTotalEmpresaMes(empresa, mes, anio);
-            } else {
-                total = consumos.stream()
-                        .map(ConsumoMensual::calcularEmision)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-            }
+            // Obtiene consumos a través del Servicio (no del DAO directamente)
+            consumos = servicioHuella.getConsumosMensualesEmpresa(empresa.getIdEmpresa(), mes, anio);
+            total = chkIncluirCommuting.isSelected()
+                    // Con commuting: Scope 1+2+3 para el mes seleccionado vía Servicio
+                    ? servicioHuella.getHuellaTotalEmpresaMes(empresa, mes, anio)
+                    // Sin commuting: suma de emisiones de la lista ya obtenida, sin nueva query
+                    : servicioHuella.getTotalConsumos(consumos);
         }
 
         listaConsumos.setAll(consumos);

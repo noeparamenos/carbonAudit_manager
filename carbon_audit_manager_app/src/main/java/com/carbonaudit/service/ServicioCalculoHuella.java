@@ -98,14 +98,33 @@ public class ServicioCalculoHuella {
     }
 
     // =========== ACCESO A CONSUMOS (encapsula el DAO para que el controlador no lo toque) ==============
+    // Estos métodos evitan que la capa Controller llame al DAO directamente,
+    // manteniendo la separación de capas: Controller → Service → DAO.
 
-    /**
-     * Devuelve los consumos mensuales de un departamento.
-     * Método de acceso que evita que la capa Controller llame al DAO directamente,
-     * manteniendo la separación de capas: Controller → Service → DAO.
-     */
+    /** Consumos de un departamento para un mes concreto. */
     public List<ConsumoMensual> getConsumosMensuales(int idDepartamento, int mes, int anio) {
         return consumoDAO.getConsumosDepartamentoMes(idDepartamento, mes, anio);
+    }
+
+    /** Consumos de una empresa para un mes concreto (todos sus departamentos). */
+    public List<ConsumoMensual> getConsumosMensualesEmpresa(int idEmpresa, int mes, int anio) {
+        return consumoDAO.getConsumosByEmpresaMes(idEmpresa, mes, anio);
+    }
+
+    /** Consumos de una empresa para un año completo (todos sus departamentos, los 12 meses). */
+    public List<ConsumoMensual> getConsumosAnualesEmpresa(int idEmpresa, int anio) {
+        return consumoDAO.getConsumosByEmpresaAnio(idEmpresa, anio);
+    }
+
+    /**
+     * Suma las emisiones de una lista de consumos sin incluir commuting (Scope 1 + 2).
+     * Centraliza el cálculo del total para que no quede lógica de negocio en el Controlador.
+     */
+    public BigDecimal getTotalConsumos(List<ConsumoMensual> consumos) {
+        return consumos.stream()
+                .map(ConsumoMensual::calcularEmision)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
     // =========== CÁLCULO DE HUELLA POR DEPARTAMENTO ==============
