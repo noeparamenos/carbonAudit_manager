@@ -1,11 +1,10 @@
 package com.carbonaudit.controller;
 
-import com.carbonaudit.dao.DireccionDAO;
-import com.carbonaudit.dao.EmpresaDAO;
-import com.carbonaudit.dao.FactorEmisionDAO;
 import com.carbonaudit.model.Direccion;
 import com.carbonaudit.model.Empresa;
 import com.carbonaudit.model.FactorEmision;
+import com.carbonaudit.service.ServicioGestionEmpresa;
+import com.carbonaudit.service.ServicioGestionFactores;
 import com.carbonaudit.service.external.ServicioGeograficoORS;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -72,12 +71,11 @@ public class PA1Controller {
     @FXML private ComboBox<String> combFactAlcance;
     @FXML private Button    btnEliminarFactor;
 
-    // ── DAOs ──────────────────────────────────────────────────────────────
+    // ── Servicios ─────────────────────────────────────────────────────────
 
-    private final EmpresaDAO           empresaDAO   = new EmpresaDAO();
-    private final FactorEmisionDAO     factorDAO    = new FactorEmisionDAO();
-    private final DireccionDAO         direccionDAO = new DireccionDAO();
-    private final ServicioGeograficoORS geoService  = new ServicioGeograficoORS();
+    private final ServicioGestionEmpresa  servicioEmpresa  = new ServicioGestionEmpresa();
+    private final ServicioGestionFactores servicioFactores = new ServicioGestionFactores();
+    private final ServicioGeograficoORS   geoService       = new ServicioGeograficoORS();
 
     // ── Estado ────────────────────────────────────────────────────────────
 
@@ -183,12 +181,12 @@ public class PA1Controller {
     // ── Carga de datos ────────────────────────────────────────────────────
 
     private void cargarEmpresas() {
-        listaEmpresas.setAll(empresaDAO.findAll());
+        listaEmpresas.setAll(servicioEmpresa.getEmpresas());
         tablaEmpresas.setItems(listaEmpresas);
     }
 
     private void cargarFactores() {
-        listaFactores.setAll(factorDAO.findAll());
+        listaFactores.setAll(servicioFactores.getFactores());
         tablaFactores.setItems(listaFactores);
     }
 
@@ -227,7 +225,7 @@ public class PA1Controller {
             empresa.setSector(campSector.getText().trim());
             empresa.setDireccion(dir);
 
-            empresaDAO.create(empresa);
+            servicioEmpresa.crearEmpresa(empresa);
             cargarEmpresas();
             cerrarPanelEmpresa();
             geocodificarDireccionEnSegundoPlano(dir);
@@ -295,13 +293,13 @@ public class PA1Controller {
                 nuevo.setUnidad(unidad);
                 nuevo.setValorFactor(valor);
                 nuevo.setAlcance(alcance);
-                factorDAO.create(nuevo);
+                servicioFactores.crearFactor(nuevo);
             } else {
                 factorEditando.setNombre(nombre);
                 factorEditando.setUnidad(unidad);
                 factorEditando.setValorFactor(valor);
                 factorEditando.setAlcance(alcance);
-                factorDAO.update(factorEditando);
+                servicioFactores.actualizarFactor(factorEditando);
             }
 
             cargarFactores();
@@ -329,7 +327,7 @@ public class PA1Controller {
                 "Solo es posible si ningún empleado ni consumo lo está usando.");
         confirmacion.showAndWait().ifPresent(respuesta -> {
             if (respuesta == ButtonType.OK) {
-                factorDAO.delete(factorEditando.getIdFactor());
+                servicioFactores.eliminarFactor(factorEditando.getIdFactor());
                 cargarFactores();
                 cerrarPanelFactor();
             }
@@ -403,7 +401,7 @@ public class PA1Controller {
                 return null;
             }
         };
-        tarea.setOnSucceeded(e -> direccionDAO.update(dir));
+        tarea.setOnSucceeded(e -> servicioEmpresa.persistirCoordenadas(dir));
         tarea.setOnFailed(e -> Platform.runLater(() ->
                 mostrarError("No se pudo geocodificar la dirección de la empresa.")));
         Thread hilo = new Thread(tarea);

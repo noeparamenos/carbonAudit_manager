@@ -1,8 +1,10 @@
 package com.carbonaudit.controller;
 
-import com.carbonaudit.dao.*;
 import com.carbonaudit.model.*;
+import com.carbonaudit.service.ServicioGestionDepartamento;
 import com.carbonaudit.service.ServicioGestionEmpleado;
+import com.carbonaudit.service.ServicioGestionFactores;
+import com.carbonaudit.service.ServicioGestionResponsable;
 import com.carbonaudit.service.external.ServicioGeograficoORS;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -94,18 +96,13 @@ public class PA3Controller {
     @FXML private TextField editDptoCp;
     @FXML private TextField editDptoProvincia;
 
-    // ── DAOs y servicios ──────────────────────────────────────────────────
+    // ── Servicios ─────────────────────────────────────────────────────────
 
-    private final ResponsableDAO   responsableDAO  = new ResponsableDAO();
-    private final DepartamentoDAO  departamentoDAO = new DepartamentoDAO();
-    private final FactorEmisionDAO factorDAO       = new FactorEmisionDAO();
-
-    /*
-     * Se pasa null como geo service en PA2; aquí sí lo necesitamos para calcular
-     * la distancia al trabajo de cada empleado tras guardar sus datos.
-     */
-    private final ServicioGeograficoORS   geoService      = new ServicioGeograficoORS();
-    private final ServicioGestionEmpleado servicioGestion = new ServicioGestionEmpleado(geoService);
+    private final ServicioGeograficoORS      geoService           = new ServicioGeograficoORS();
+    private final ServicioGestionEmpleado    servicioGestion      = new ServicioGestionEmpleado(geoService);
+    private final ServicioGestionResponsable servicioResponsable  = new ServicioGestionResponsable();
+    private final ServicioGestionDepartamento servicioDepartamento = new ServicioGestionDepartamento();
+    private final ServicioGestionFactores    servicioFactores     = new ServicioGestionFactores();
 
     // ── Estado ────────────────────────────────────────────────────────────
 
@@ -205,7 +202,7 @@ public class PA3Controller {
      * Usa un StringConverter para mostrar nombre + unidad en lugar del toString() por defecto.
      */
     private void cargarVehiculos() {
-        List<FactorEmision> vehiculos = factorDAO.findByAlcance(3);
+        List<FactorEmision> vehiculos = servicioFactores.getFactoresPorAlcance(3);
         combEmpVehiculo.setItems(FXCollections.observableArrayList(vehiculos));
         combEmpVehiculo.setConverter(new StringConverter<>() {
             @Override public String toString(FactorEmision f) {
@@ -239,7 +236,7 @@ public class PA3Controller {
      * Si hay responsable activo muestra su nombre y habilita "Finalizar mandato".
      */
     private void cargarResponsable() {
-        Optional<Responsable> activo = responsableDAO.findActivoByDepartamento(
+        Optional<Responsable> activo = servicioResponsable.getActivoByDepartamento(
                 departamento.getIdDepartamento());
 
         if (activo.isPresent()) {
@@ -255,7 +252,7 @@ public class PA3Controller {
         }
 
         listaHistorial.setAll(
-                responsableDAO.findAllByDepartamento(departamento.getIdDepartamento()));
+                servicioResponsable.getAllByDepartamento(departamento.getIdDepartamento()));
         tablaHistorial.setItems(listaHistorial);
     }
 
@@ -432,18 +429,18 @@ public class PA3Controller {
             return;
         }
 
-        Optional<Responsable> activo = responsableDAO.findActivoByDepartamento(
+        Optional<Responsable> activo = servicioResponsable.getActivoByDepartamento(
                 departamento.getIdDepartamento());
         activo.ifPresent(r -> {
             r.setFechaFin(dateRespInicio.getValue().minusDays(1));
-            responsableDAO.update(r);
+            servicioResponsable.actualizarResponsable(r);
         });
 
         Responsable nuevo = new Responsable(
                 dateRespInicio.getValue(),
                 departamento,
                 combRespEmpleado.getValue());
-        responsableDAO.create(nuevo);
+        servicioResponsable.crearResponsable(nuevo);
 
         cargarResponsable();
         cerrarPanelResponsable();
@@ -455,7 +452,7 @@ public class PA3Controller {
      */
     @FXML
     private void onFinalizarMandato() {
-        Optional<Responsable> activo = responsableDAO.findActivoByDepartamento(
+        Optional<Responsable> activo = servicioResponsable.getActivoByDepartamento(
                 departamento.getIdDepartamento());
         if (activo.isEmpty()) return;
 
@@ -468,7 +465,7 @@ public class PA3Controller {
             if (respuesta == ButtonType.OK) {
                 Responsable r = activo.get();
                 r.setFechaFin(LocalDate.now());
-                responsableDAO.update(r);
+                servicioResponsable.actualizarResponsable(r);
                 cargarResponsable();
             }
         });
@@ -522,7 +519,7 @@ public class PA3Controller {
             dir.setCiudad(editDptoCiudad.getText().trim());
             dir.setCodigoPostal(editDptoCp.getText().trim());
             dir.setProvincia(editDptoProvincia.getText().trim());
-            departamentoDAO.update(departamento);
+            servicioDepartamento.actualizarDepartamento(departamento);
             actualizarCabecera();
             cerrarPanelEditDpto();
 
@@ -558,7 +555,7 @@ public class PA3Controller {
         confirmacion.setContentText("Esta acción no se puede deshacer.");
         confirmacion.showAndWait().ifPresent(respuesta -> {
             if (respuesta == ButtonType.OK) {
-                departamentoDAO.delete(departamento.getIdDepartamento());
+                servicioDepartamento.eliminarDepartamento(departamento.getIdDepartamento());
                 navegarAPA2();
             }
         });

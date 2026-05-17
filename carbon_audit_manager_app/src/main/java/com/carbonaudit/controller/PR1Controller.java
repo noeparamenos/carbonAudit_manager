@@ -1,9 +1,9 @@
 package com.carbonaudit.controller;
 
-import com.carbonaudit.dao.*;
 import com.carbonaudit.model.*;
 import com.carbonaudit.service.ServicioCalculoHuella;
 import com.carbonaudit.service.ServicioGestionEmpleado;
+import com.carbonaudit.service.ServicioGestionFactores;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -93,12 +93,11 @@ public class PR1Controller {
     @FXML private TextField campCantidad;
     @FXML private Button    btnEliminarConsumo;
 
-    // DAOs y servicios
+    // Servicios
 
-    private final FactorEmisionDAO factorDAO = new FactorEmisionDAO();
-
-    private final ServicioCalculoHuella  servicioHuella  = new ServicioCalculoHuella();
-    private final ServicioGestionEmpleado servicioGestion = new ServicioGestionEmpleado();
+    private final ServicioCalculoHuella   servicioHuella   = new ServicioCalculoHuella();
+    private final ServicioGestionEmpleado servicioGestion  = new ServicioGestionEmpleado();
+    private final ServicioGestionFactores servicioFactores = new ServicioGestionFactores();
 
     //  Estado
     private Responsable  responsable;
@@ -302,7 +301,7 @@ public class PR1Controller {
      * Se muestra nombre + unidad para facilitar la identificación del recurso.
      */
     private void cargarFactores() {
-        List<FactorEmision> factores = factorDAO.findAll();
+        List<FactorEmision> factores = servicioFactores.getFactores();
         combFactor.setItems(FXCollections.observableArrayList(factores)); //exige observable (aunque aqui no es necesario)
         // extraer la información para rellenar el combobox. (sin llamar al toString original)
         combFactor.setConverter(new StringConverter<>() {

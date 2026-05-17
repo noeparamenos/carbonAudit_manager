@@ -1,7 +1,7 @@
 package com.carbonaudit.controller;
 
-import com.carbonaudit.dao.ResponsableDAO;
 import com.carbonaudit.model.Responsable;
+import com.carbonaudit.service.ServicioGestionResponsable;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -30,8 +30,7 @@ public class PR0Controller {
     @FXML private TableColumn<Responsable, String> colDepartamento;
     @FXML private TableColumn<Responsable, String> colEmpresa;
 
-    // DAOs
-    private final ResponsableDAO responsableDAO = new ResponsableDAO();
+    private final ServicioGestionResponsable servicioResponsable = new ServicioGestionResponsable();
 
     // Estado (lista Observable a la que se suscribe la tabla)
     private final ObservableList<Responsable> listaResponsables = FXCollections.observableArrayList();
@@ -95,7 +94,7 @@ public class PR0Controller {
      * Consulta todos los mandatos con fecha_fin IS NULL y los muestra en la tabla.
      */
     private void cargarResponsables() {
-        listaResponsables.setAll(responsableDAO.findAllActivos()); // rellena la lista Observable
+        listaResponsables.setAll(servicioResponsable.getAllActivos());
         tablaResponsables.setItems(listaResponsables);             // suscribe la tabla a la lista
     }
 

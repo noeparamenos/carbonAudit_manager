@@ -1,8 +1,11 @@
 package com.carbonaudit.controller;
 
-import com.carbonaudit.dao.*;
 import com.carbonaudit.model.*;
 import com.carbonaudit.service.ServicioCalculoHuella;
+import com.carbonaudit.service.ServicioGestionDepartamento;
+import com.carbonaudit.service.ServicioGestionEmpleado;
+import com.carbonaudit.service.ServicioGestionEmpresa;
+import com.carbonaudit.service.ServicioGestionResponsable;
 import com.carbonaudit.service.external.ServicioGeograficoORS;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -16,7 +19,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import com.carbonaudit.model.Direccion;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -102,16 +104,14 @@ public class PA2Controller {
     @FXML private TextField editCp;
     @FXML private TextField editProvincia;
 
-    // ========= DAOs ==========
+    // ── Servicios ─────────────────────────────────────────────────────────
 
-    private final EmpresaDAO        empresaDAO      = new EmpresaDAO();
-    private final DepartamentoDAO   departamentoDAO = new DepartamentoDAO();
-    private final ResponsableDAO    responsableDAO  = new ResponsableDAO();
-    private final EmpleadoDAO       empleadoDAO     = new EmpleadoDAO();
-    private final DireccionDAO      direccionDAO    = new DireccionDAO();
-
-    private final ServicioGeograficoORS  geoService     = new ServicioGeograficoORS();
-    private final ServicioCalculoHuella  servicioHuella = new ServicioCalculoHuella();
+    private final ServicioGestionEmpresa      servicioEmpresa      = new ServicioGestionEmpresa();
+    private final ServicioGestionDepartamento servicioDepartamento = new ServicioGestionDepartamento();
+    private final ServicioGestionResponsable  servicioResponsable  = new ServicioGestionResponsable();
+    private final ServicioGestionEmpleado     servicioGestion      = new ServicioGestionEmpleado();
+    private final ServicioGeograficoORS       geoService           = new ServicioGeograficoORS();
+    private final ServicioCalculoHuella       servicioHuella       = new ServicioCalculoHuella();
 
     // ── Estado ────────────────────────────────────────────────────────────
 
@@ -198,15 +198,15 @@ public class PA2Controller {
             return new SimpleStringProperty(dir != null ? dir.getCiudad() : "—");
         });
 
-        // countByDepartamento() lanza una consulta COUNT(*) por cada fila
+        // countEmpleadosDepartamento() lanza una consulta COUNT(*) por cada fila
         colDeptEmpleados.setCellValueFactory(data -> {
-            int count = empleadoDAO.countByDepartamento(
+            int count = servicioGestion.countEmpleadosDepartamento(
                     data.getValue().getIdDepartamento());
             return new SimpleStringProperty(String.valueOf(count)); // Total de empleados en el Departamento
         });
 
         colDeptResponsable.setCellValueFactory(data -> {
-            Optional<Responsable> resp = responsableDAO.findActivoByDepartamento(
+            Optional<Responsable> resp = servicioResponsable.getActivoByDepartamento(
                     data.getValue().getIdDepartamento());
             // Si no hay responsable activo, mostramos un guion
             return new SimpleStringProperty(
@@ -284,7 +284,7 @@ public class PA2Controller {
     /** Consulta todos los departamentos de la empresa activa y los muestra en la tabla. */
     private void cargarDepartamentos() {
         listaDepartamentos.setAll(
-                departamentoDAO.findAllByEmpresa(empresa.getIdEmpresa()));
+                servicioDepartamento.getDepartamentosEmpresa(empresa.getIdEmpresa()));
         tablaDepartamentos.setItems(listaDepartamentos);
     }
 
@@ -404,7 +404,7 @@ public class PA2Controller {
             dpto.setNombre(nombre);
             dpto.setEmpresa(empresa);
             dpto.setDireccion(dir);
-            departamentoDAO.create(dpto);
+            servicioDepartamento.crearDepartamento(dpto);
             cargarDepartamentos();
             cerrarPanelDpto();
         } catch (NumberFormatException e) {
@@ -464,7 +464,7 @@ public class PA2Controller {
             dir.setCiudad(editCiudad.getText().trim());
             dir.setCodigoPostal(editCp.getText().trim());
             dir.setProvincia(editProvincia.getText().trim());
-            empresaDAO.update(empresa);
+            servicioEmpresa.actualizarEmpresa(empresa);
             actualizarCabecera();
             cerrarPanelEditEmpresa();
             geocodificarDireccionEnSegundoPlano(dir);
@@ -483,7 +483,7 @@ public class PA2Controller {
     @FXML
     private void onEliminarEmpresa() {
         List<Departamento> departamentos =
-                departamentoDAO.findAllByEmpresa(empresa.getIdEmpresa());
+                servicioDepartamento.getDepartamentosEmpresa(empresa.getIdEmpresa());
         if (!departamentos.isEmpty()) {
             mostrarError("No se puede eliminar la empresa porque tiene "
                     + departamentos.size() + " departamento(s) asociado(s).\n"
@@ -497,7 +497,7 @@ public class PA2Controller {
         confirmacion.setContentText("Esta acción no se puede deshacer.");
         confirmacion.showAndWait().ifPresent(respuesta -> {
             if (respuesta == ButtonType.OK) {
-                empresaDAO.delete(empresa.getIdEmpresa());
+                servicioEmpresa.eliminarEmpresa(empresa.getIdEmpresa());
                 navegarAPA1();
             }
         });
@@ -612,7 +612,7 @@ public class PA2Controller {
                 return null;
             }
         };
-        tarea.setOnSucceeded(e -> direccionDAO.update(dir));
+        tarea.setOnSucceeded(e -> servicioEmpresa.persistirCoordenadas(dir));
         tarea.setOnFailed(e -> Platform.runLater(() ->
                 mostrarError("No se pudo geocodificar la dirección de la empresa.")));
         Thread hilo = new Thread(tarea);

@@ -59,6 +59,11 @@ package "com.carbonaudit.dao" as Dao {
 
 package "com.carbonaudit.service" as Service {
     [ServicioCalculoHuella]
+    [ServicioGestionEmpleado]
+    [ServicioGestionEmpresa]
+    [ServicioGestionDepartamento]
+    [ServicioGestionResponsable]
+    [ServicioGestionFactores]
 }
 
 package "com.carbonaudit.service.external" as ServiceExt {
@@ -93,7 +98,7 @@ ServiceExt -[hidden]d-> Controller
 note bottom of Root       : Punto de entrada · Launcher pattern
 note bottom of Model      : Capa de Modelo · POJOs puros sin lógica de negocio
 note bottom of Dao        : Capa DAO · Acceso a la base de datos vía JDBC
-note bottom of Service    : Capa de Servicio · Cálculo de huella (Scopes 1, 2 y 3)
+note bottom of Service    : Capa de Servicio · Lógica de negocio y gestión de entidades
 note bottom of ServiceExt : Servicio externo · Geolocalización y rutas (ORS API)
 note bottom of Controller : Capa de Presentación · Controladores JavaFX (MVC)
 

@@ -50,6 +50,10 @@ public class ServicioGestionEmpleado {
         return empleadoDAO.findAllByDepartamento(idDepartamento);
     }
 
+    public int countEmpleadosDepartamento(int idDepartamento) {
+        return empleadoDAO.countByDepartamento(idDepartamento);
+    }
+
     // =========== GEOCODIFICACIÓN Y DISTANCIA ==============
 
     /** Persiste las coordenadas geocodificadas de una dirección. */
