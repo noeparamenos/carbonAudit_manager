@@ -61,7 +61,7 @@ Desarrollo del Motor de Cálculo (Service) y la lógica de negocio
     - [ ] Crear cuenta en la API de Google
     - [ ] Implementar los metodos para calcular la geolocalización de la dirección y el calculo de distancias
     - [ ] Implementar una clase test para comprobar el funcionamiento de la API
-  - [ ] Implementar La lógica del calculo del Commuting
+  - [x] Implementar La lógica del calculo del Commuting
     - [x] Implementar metodo que calcule la **distancia al trabajo** del empelado usando el servicio externo
     - [x] Implementar un método que calcule el **impacto mensual del commuting** de un empleado 
     - [x] Implementar pruebas para asegurar la precisión en los cálculos de transporte por distancia y tipo de combustible.
@@ -82,23 +82,26 @@ Creación de la UI con JavaFX y visualización de resultados.
       - [x] P0 · Selección de rol
       - [x] PA1 · Lista de empresas
       - [x] PA2 · Vista empresa
-      - [x] PA3 · Gestión de departamento
+      - [ ] PA3 · Gestión de departamento
       - [ ] PR0 · Selección de responsable
       - [ ] PR1 · Vista responsable
     - [x] Ajustar tamaño y calidad del logo en P0
-    - [ ] Resolver centrado de ventana P0 en el primer arranque en frío (ver error 8)
+    - [x] Resolver centrado de ventana P0 en el primer arranque en frío (ver error 8)
   - **Implementación:**
-    - [ ] Diseñar pantallas (`.fxml`) y controladores
+    - [x] Diseñar pantallas (`.fxml`) y controladores
       - [x] P0 · Selección de rol
       - [x] PA1 · Lista de empresas — tabla, panel lateral alta empresa, tab Factores de emisión, navegación a PA2
       - [x] PA2 · Vista empresa — tabs: Departamentos, Consumos, Gráficos (Gráficos: placeholder)
       - [x] PA3 · Gestión de departamento — tabs: Empleados (CRUD + cálculo distancia ORS), Responsable (asignar, finalizar, historial)
-      - [ ] PR0 · Selección de responsable activo
-      - [ ] PR1 · Vista responsable — tabs: Consumos, Trabajadores, Huella, Gráficos
+      - [x] PR0 · Selección de responsable activo
+      - [x] PR1 · Vista responsable — tabs: Consumos, Trabajadores, Huella, Gráficos
     - [x] Edición y borrado de empresas (desde PA2)
     - [x] Crear formularios de alta/edición como paneles laterales deslizantes
     - [x] Script de seed de factores de emisión (`database/seed_factores_emision.sql`)
     - [x] Geocodificación automática en segundo plano al crear/modificar empresa, departamento y empleado
+  - **Gráficos (actualmente placeholders):**
+    - [ ] PA2 · Tab Gráficos (Administrador) — evolución histórica de emisiones por departamento
+    - [ ] PR1 · Tab Gráficos (Responsable) — evolución histórica de emisiones del departamento por período
   - **Validaciones de integridad en la UI:**
     - [x] Al borrar un Departamento: comprobar si tiene Empleados activos asociados.
     - [x] Al borrar un Empleado: soft delete — se registra fecha_baja en lugar de borrar (preserva auditoría).
