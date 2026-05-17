@@ -4,6 +4,7 @@ import com.carbonaudit.dao.DireccionDAO;
 import com.carbonaudit.dao.EmpleadoDAO;
 import com.carbonaudit.model.Direccion;
 import com.carbonaudit.model.Empleado;
+import com.carbonaudit.service.external.IServicioGeografico;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -15,12 +16,14 @@ import java.util.List;
  */
 public class ServicioGestionEmpleado {
 
-    private final EmpleadoDAO  empleadoDAO;
-    private final DireccionDAO direccionDAO;
+    private final EmpleadoDAO         empleadoDAO;
+    private final DireccionDAO        direccionDAO;
+    private final IServicioGeografico geoService;
 
-    public ServicioGestionEmpleado() {
+    public ServicioGestionEmpleado(IServicioGeografico geoService) {
         this.empleadoDAO  = new EmpleadoDAO();
         this.direccionDAO = new DireccionDAO();
+        this.geoService   = geoService;
     }
 
     // =========== CRUD EMPLEADO ==============
@@ -41,7 +44,7 @@ public class ServicioGestionEmpleado {
         return empleadoDAO.findAllByDepartamento(idDepartamento);
     }
 
-    // =========== PERSISTENCIA DE COORDENADAS Y DISTANCIA ==============
+    // =========== GEOCODIFICACIÓN Y DISTANCIA ==============
 
     /** Persiste las coordenadas geocodificadas de una dirección. */
     public void persistirCoordenadas(Direccion dir) {
@@ -49,14 +52,22 @@ public class ServicioGestionEmpleado {
     }
 
     /**
-     * Persiste en BD la distancia al trabajo calculada y las coordenadas geocodificadas
-     * de ambas direcciones (empleado y departamento).
-     * Se llama desde el callback onSucceeded del hilo asíncrono de cálculo de distancia.
+     * Geocodifica las direcciones del empleado y su departamento, calcula la distancia
+     * al trabajo vía la API geográfica y persiste el resultado en BD.
+     * Se ejecuta desde el hilo daemon de JavaFX Task; no toca la UI.
      */
-    public void persistirResultadoDistancia(Empleado empleado) {
+    public void calcularYPersistirDistancia(Empleado empleado) throws Exception {
+        Direccion dirEmpleado     = empleado.getDireccion();
+        Direccion dirDepartamento = empleado.getDepartamento().getDireccion();
+
+        geoService.completarCoordenadas(dirEmpleado);
+        geoService.completarCoordenadas(dirDepartamento);
+
+        empleado.setDistanciaTrabajo(geoService.calcularDistancia(dirEmpleado, dirDepartamento));
+
         empleadoDAO.update(empleado);
-        if (empleado.getDepartamento().getDireccion() != null) {
-            direccionDAO.update(empleado.getDepartamento().getDireccion());
+        if (dirDepartamento != null) {
+            direccionDAO.update(dirDepartamento);
         }
     }
 }

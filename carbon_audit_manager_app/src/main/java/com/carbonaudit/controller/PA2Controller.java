@@ -111,7 +111,7 @@ public class PA2Controller {
     private final DireccionDAO      direccionDAO    = new DireccionDAO();
 
     private final ServicioGeograficoORS  geoService     = new ServicioGeograficoORS();
-    private final ServicioCalculoHuella  servicioHuella = new ServicioCalculoHuella(geoService);
+    private final ServicioCalculoHuella  servicioHuella = new ServicioCalculoHuella();
 
     // ── Estado ────────────────────────────────────────────────────────────
 

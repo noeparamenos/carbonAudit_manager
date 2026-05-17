@@ -2,7 +2,6 @@ package com.carbonaudit.controller;
 
 import com.carbonaudit.dao.*;
 import com.carbonaudit.model.*;
-import com.carbonaudit.service.ServicioCalculoHuella;
 import com.carbonaudit.service.ServicioGestionEmpleado;
 import com.carbonaudit.service.external.ServicioGeograficoORS;
 import javafx.application.Platform;
@@ -105,9 +104,8 @@ public class PA3Controller {
      * Se pasa null como geo service en PA2; aquí sí lo necesitamos para calcular
      * la distancia al trabajo de cada empleado tras guardar sus datos.
      */
-    private final ServicioGeograficoORS  geoService      = new ServicioGeograficoORS();
-    private final ServicioCalculoHuella  servicioHuella  = new ServicioCalculoHuella(geoService);
-    private final ServicioGestionEmpleado servicioGestion = new ServicioGestionEmpleado();
+    private final ServicioGeograficoORS   geoService      = new ServicioGeograficoORS();
+    private final ServicioGestionEmpleado servicioGestion = new ServicioGestionEmpleado(geoService);
 
     // ── Estado ────────────────────────────────────────────────────────────
 
@@ -648,8 +646,7 @@ public class PA3Controller {
         Task<Void> tarea = new Task<>() {
             @Override
             protected Void call() throws Exception {
-                servicioHuella.AsignarDistanciaTrabajo(empleado);
-                servicioGestion.persistirResultadoDistancia(empleado);
+                servicioGestion.calcularYPersistirDistancia(empleado);
                 return null;
             }
         };

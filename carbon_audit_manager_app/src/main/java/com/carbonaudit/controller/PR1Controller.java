@@ -3,7 +3,6 @@ package com.carbonaudit.controller;
 import com.carbonaudit.dao.*;
 import com.carbonaudit.model.*;
 import com.carbonaudit.service.ServicioCalculoHuella;
-import com.carbonaudit.service.external.ServicioGeograficoORS;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -101,10 +100,8 @@ public class PR1Controller {
 
     /*
      * ServicioCalculoHuella se usa en el Tab Huella para calcular el total por Scope.
-     * Requiere un IServicioGeografico; se pasa la implementación ORS (aunque el cálculo de distancias ya está hecho).
      */
-    private final ServicioGeograficoORS geoService     = new ServicioGeograficoORS();
-    private final ServicioCalculoHuella servicioHuella = new ServicioCalculoHuella(geoService);
+    private final ServicioCalculoHuella servicioHuella = new ServicioCalculoHuella();
 
     //  Estado
     private Responsable  responsable;

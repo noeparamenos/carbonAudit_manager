@@ -2,7 +2,6 @@ package com.carbonaudit.test;
 
 import com.carbonaudit.model.*;
 import com.carbonaudit.service.ServicioCalculoHuella;
-import com.carbonaudit.service.external.IServicioGeografico;
 import com.carbonaudit.service.external.ServicioGeograficoORS;
 
 import java.math.BigDecimal;
@@ -12,33 +11,23 @@ public class TestServicioCalculoCommuting {
     public static void main(String[] args) {
         try {
 
-            IServicioGeografico servicioGeografico = new ServicioGeograficoORS();
-            Empleado empleado;
-            Departamento departamento;
-            Direccion direccionEmpl;
-            Direccion direccionDep;
-            FactorEmision factorEmision;
+            ServicioGeograficoORS servicioGeografico = new ServicioGeograficoORS();
+            ServicioCalculoHuella calculoService     = new ServicioCalculoHuella();
 
-            ServicioCalculoHuella calculoService = new ServicioCalculoHuella(servicioGeografico);
+            Direccion direccionEmpl = new Direccion("Calle La Laguna", 6, "La Mata del Paramo", "24008");
+            Direccion direccionDep  = new Direccion("Calle Manuel Llaneza", 3, "Oviedo", "33010");
 
-            direccionEmpl = new Direccion("Calle La Laguna", 6, "La Mata del Paramo", "24008");
-            direccionDep = new Direccion("Calle Manuel Llaneza", 3, "Oviedo", "33010");
-
-            // Asignacion de posicionamiento
             servicioGeografico.completarCoordenadas(direccionDep);
             servicioGeografico.completarCoordenadas(direccionEmpl);
             System.out.println("Coordenadas departamento: " + direccionDep.getLatitud() + " " + direccionDep.getLongitud());
             System.out.println("Coordenadas empleado: " + direccionEmpl.getLatitud() + " " + direccionEmpl.getLongitud());
 
+            Departamento departamento = new Departamento("RRHH", direccionDep, new Empresa());
+            FactorEmision factorEmision = new FactorEmision("Coche Gasolina Medio", "km", new BigDecimal("0.13700"), 3);
+            Empleado empleado = new Empleado("Pepe", LocalDate.now(), factorEmision, 20, direccionEmpl, departamento);
 
-            departamento = new Departamento("RRHH", direccionDep, new Empresa());
-
-            factorEmision = new FactorEmision("Coche Gasolina Medio", "km", new BigDecimal("0.13700"), 3);
-
-            empleado = new Empleado("Pepe", LocalDate.now(), factorEmision, 20, direccionEmpl, departamento);
-
-
-            calculoService.AsignarDistanciaTrabajo(empleado);
+            // Calcular distancia vía geoService y asignar al empleado
+            empleado.setDistanciaTrabajo(servicioGeografico.calcularDistancia(direccionEmpl, direccionDep));
 
 
             // test geolocalizacion

@@ -4,7 +4,6 @@ import com.carbonaudit.dao.CommutingEmpleadoDAO;
 import com.carbonaudit.dao.ConsumoMensualDAO;
 import com.carbonaudit.dao.DepartamentoDAO;
 import com.carbonaudit.model.*;
-import com.carbonaudit.service.external.IServicioGeografico;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -14,86 +13,34 @@ import java.util.Map;
 
 public class ServicioCalculoHuella {
 
-    private final IServicioGeografico geoService;
-    private final ConsumoMensualDAO consumoDAO;
+    private final ConsumoMensualDAO    consumoDAO;
     private final CommutingEmpleadoDAO commutingDAO;
-    private final DepartamentoDAO departamentoDAO;
+    private final DepartamentoDAO      departamentoDAO;
 
-    /**
-     * Constructor que recibe la interfaz de geoService para poder usar distintas APIs para calcular las distancias.
-     * @param geoService implementación del servicio geográfico (ORS u otro)
-     */
-    public ServicioCalculoHuella(IServicioGeografico geoService) {
-        this.geoService      = geoService;
+    public ServicioCalculoHuella() {
         this.consumoDAO      = new ConsumoMensualDAO();
         this.commutingDAO    = new CommutingEmpleadoDAO();
         this.departamentoDAO = new DepartamentoDAO();
     }
 
-    // =========== COMMUTING DE EMPLEADOS ==============
+    // =========== COMMUTING DE EMPLEADO (cálculo puro, sin persistencia) ==============
 
     /**
-     * Válida que todos los campos estén presentes para evitar `NullPointerException`
-     * @param emp a validar los datos
-     */
-    private void validarDatosEmpleado(Empleado emp) {
-        // 1. Validaciones de seguridad
-        if (emp.getDepartamento().getDireccion() == null) {
-            throw new IllegalStateException("El empleado no tiene un departamento con dirección valida asignada.");
-        }
-        if (emp.getDireccion() == null) {
-            throw new IllegalStateException("El empleado no tiene una dirección válida.");
-        }
-        if (emp.getMedioTransporte() == null || emp.getMedioTransporte().getValorFactor() == null) {
-            throw new IllegalStateException("El empleado no tiene un medio de transporte o factor de emisión válido asignado.");
-        }
-    }
-
-
-
-
-    // A revisar: si solo se puede asignar una vez
-    /**
-     * Calcula la distancia real entre la casa del empleado y su departamento de trabajo,
-     * actualiza el campo km
-     *
-     * @param empleado El empleado a procesar.
-     * @throws Exception Si faltan datos o falla la conexión con el servicio de mapas.
-     */
-    public void AsignarDistanciaTrabajo(Empleado empleado) throws Exception {
-
-
-        // Datos de direcciones
-        Direccion dirEmpleado = empleado.getDireccion();
-        Direccion dirDepartamento = empleado.getDepartamento().getDireccion();
-
-        geoService.completarCoordenadas(dirEmpleado);
-        geoService.completarCoordenadas(dirDepartamento);
-
-        // Cálculo y actualizacion de km al trabajo
-        BigDecimal distanciaEnKm = geoService.calcularDistancia(dirEmpleado, dirDepartamento);
-        empleado.setDistanciaTrabajo(distanciaEnKm);
-    }
-
-    /**
-     * Calcula y devuelve la huella generada por un empleado al mes en su transporte al trabajo.
+     * Calcula la huella generada por un empleado al mes en su transporte al trabajo.
+     * Requiere que {@code emp.getDistanciaTrabajo()} ya esté asignada.
      * Resultado expresado en kgCO2e.
-     * @param emp Empleado del que se quiere calcular el commuting mensual
      */
-    public BigDecimal getCommutingMensual(Empleado emp) throws Exception {
-
-        validarDatosEmpleado(emp);
-
-        // KM totales realizados en un mes (Ida y vuelta * días)
+    public BigDecimal getCommutingMensual(Empleado emp) {
+        if (emp.getDistanciaTrabajo() == null
+                || emp.getMedioTransporte() == null
+                || emp.getMedioTransporte().getValorFactor() == null) {
+            throw new IllegalStateException("El empleado no tiene distancia al trabajo o medio de transporte válido.");
+        }
         BigDecimal kmTotalesMes = emp.getDistanciaTrabajo()
                 .multiply(new BigDecimal("2"))
                 .multiply(new BigDecimal(emp.getDiasPresenciales()));
-
-        // 3. Resultado: km * factor_conversion
-        BigDecimal emisiones = kmTotalesMes.multiply(emp.getMedioTransporte().getValorFactor());
-
-        // 4. Redondeo a 2 decimales para la vista del usuario
-        return emisiones.setScale(2, RoundingMode.HALF_UP);
+        return kmTotalesMes.multiply(emp.getMedioTransporte().getValorFactor())
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
     // =========== ACCESO A CONSUMOS (encapsula el DAO para que el controlador no lo toque) ==============

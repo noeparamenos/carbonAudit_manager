@@ -3,7 +3,6 @@ package com.carbonaudit.test;
 import com.carbonaudit.dao.*;
 import com.carbonaudit.model.*;
 import com.carbonaudit.service.ServicioCalculoHuella;
-import com.carbonaudit.service.external.ServicioGeograficoORS;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -34,7 +33,7 @@ public class TestCalculoHuellaDepartamento {
             CommutingEmpleadoDAO commutingDAO = new CommutingEmpleadoDAO();
 
             // Servicio Para cálculo de la huella
-            ServicioCalculoHuella servicioHuella = new ServicioCalculoHuella(new ServicioGeograficoORS());
+            ServicioCalculoHuella servicioHuella = new ServicioCalculoHuella();
 
             System.out.println("Factores de emisión anteriores eliminados");
 
