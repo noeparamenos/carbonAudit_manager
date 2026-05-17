@@ -110,6 +110,23 @@ Creación de la UI con JavaFX y visualización de resultados.
 
 ---
 
+## Deuda Técnica
+Mejoras de arquitectura identificadas pero pospuestas para no bloquear el avance de features.
+
+- **Acceso directo a DAOs en controladores (violación Controller → Service → DAO):**
+  Los siguientes controladores instancian y llaman a DAOs directamente en lugar de pasar por un servicio.
+  La solución sería crear servicios dedicados (`ServicioGestionEmpresa`, `ServicioGestionDepartamento`, `ServicioGestionResponsable`) o ampliar los existentes.
+
+  | Controlador | DAOs con acceso directo | Operaciones afectadas |
+  |-------------|------------------------|-----------------------|
+  | `PA2Controller` | `EmpresaDAO`, `DepartamentoDAO`, `ResponsableDAO`, `EmpleadoDAO`, `DireccionDAO` | CRUD empresa/departamento, consulta responsable, listado empleados, geocodificación |
+  | `PA3Controller` | `ResponsableDAO`, `DepartamentoDAO`, `FactorEmisionDAO` | Mandatos de responsable, editar/eliminar departamento, ComboBox vehículos |
+  | `PA1Controller` | `EmpresaDAO`, `FactorEmisionDAO`, `DireccionDAO` | CRUD empresas, gestión factores de emisión, geocodificación |
+  | `PR0Controller` | `ResponsableDAO` | Obtener responsable activo al iniciar sesión |
+  | `PR1Controller` | `FactorEmisionDAO` | Cargar factores en ComboBox (solo lectura) |
+
+---
+
 ## Fase 4: Pruebas Finales y Documentación
 Refinado del software y preparación del proyecto final.
   - [ ] Pruebas de compatibilidad en el sistema operativo Linux.
