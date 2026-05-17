@@ -3,6 +3,7 @@ package com.carbonaudit.controller;
 import com.carbonaudit.dao.*;
 import com.carbonaudit.model.*;
 import com.carbonaudit.service.ServicioCalculoHuella;
+import com.carbonaudit.service.ServicioGestionEmpleado;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -94,14 +95,10 @@ public class PR1Controller {
 
     // DAOs y servicios
 
-    private final ConsumoMensualDAO  consumoDAO      = new ConsumoMensualDAO();
-    private final EmpleadoDAO        empleadoDAO     = new EmpleadoDAO();
-    private final FactorEmisionDAO   factorDAO       = new FactorEmisionDAO();
+    private final FactorEmisionDAO factorDAO = new FactorEmisionDAO();
 
-    /*
-     * ServicioCalculoHuella se usa en el Tab Huella para calcular el total por Scope.
-     */
-    private final ServicioCalculoHuella servicioHuella = new ServicioCalculoHuella();
+    private final ServicioCalculoHuella  servicioHuella  = new ServicioCalculoHuella();
+    private final ServicioGestionEmpleado servicioGestion = new ServicioGestionEmpleado();
 
     //  Estado
     private Responsable  responsable;
@@ -342,20 +339,14 @@ public class PR1Controller {
         int mes  = combMes.getSelectionModel().getSelectedIndex() + 1;
         int anio = combAnio.getSelectionModel().getSelectedItem();
 
-        // Inserta los consumos en la lista Observable
-        listaConsumos.setAll(consumoDAO.getConsumosDepartamentoMes(
+        listaConsumos.setAll(servicioHuella.getConsumosMensuales(
                 departamento.getIdDepartamento(), mes, anio));
 
-        // Conecta la lista Observable a las tablas (cada fila será un objeto <ConsumoMensual> de la lista)
         tablaConsumos.setItems(listaConsumos);
         tablaHuella.setItems(listaConsumos);
 
-        // Suma las emisiones de todos los consumos de la lista
-        BigDecimal total = BigDecimal.ZERO;
-        for (ConsumoMensual consumo : listaConsumos) {
-            total = total.add(consumo.calcularEmision());
-        }
-        lblTotalDpto.setText(String.format("%.2f kg CO₂e", total));
+        lblTotalDpto.setText(String.format("%.2f kg CO₂e",
+                servicioHuella.getTotalConsumos(listaConsumos)));
     }
 
     /**
@@ -363,10 +354,8 @@ public class PR1Controller {
      * Se llama una sola vez en setResponsable(); no depende del período seleccionado.
      */
     private void cargarEmpleados() {
-        // Inserta los emplados en la lista Observable desde la BD
-        listaEmpleados.setAll(
-                empleadoDAO.findAllByDepartamento(departamento.getIdDepartamento()));
-        tablaEmpleados.setItems(listaEmpleados); // Conceta la tabla con la lista (cada Objeto será una fila)
+        listaEmpleados.setAll(servicioGestion.getEmpleadosDepartamento(departamento.getIdDepartamento()));
+        tablaEmpleados.setItems(listaEmpleados);
     }
 
     /**
@@ -488,15 +477,12 @@ public class PR1Controller {
             int anio = combAnio.getSelectionModel().getSelectedItem();
 
             if (consumoEditando == null) {
-                // CREAR nuevo registro
-                ConsumoMensual nuevo = new ConsumoMensual(
-                        cantidad, mes, anio, departamento, combFactor.getValue());
-                consumoDAO.create(nuevo);
+                servicioHuella.crearConsumo(new ConsumoMensual(
+                        cantidad, mes, anio, departamento, combFactor.getValue()));
             } else {
-                // ACTUALIZAR registro existente
                 consumoEditando.setCantidad(cantidad);
                 consumoEditando.setFactorEmision(combFactor.getValue());
-                consumoDAO.update(consumoEditando);
+                servicioHuella.actualizarConsumo(consumoEditando);
             }
 
             cargarConsumos();
@@ -524,7 +510,7 @@ public class PR1Controller {
         confirmacion.showAndWait().ifPresent(respuesta -> {
             if (respuesta == ButtonType.OK) {
                 // BORRAR de la BD
-                consumoDAO.delete(consumoEditando.getIdConsumo());
+                servicioHuella.eliminarConsumo(consumoEditando.getIdConsumo());
                 cargarConsumos();
                 cerrarPanelConsumo();
             }
@@ -550,7 +536,7 @@ public class PR1Controller {
         int mesAnterior  = mesActual == 1 ? 12 : mesActual - 1;
         int anioAnterior = mesActual == 1 ? anioActual - 1 : anioActual;
 
-        List<ConsumoMensual> anteriores = consumoDAO.getConsumosDepartamentoMes(
+        List<ConsumoMensual> anteriores = servicioHuella.getConsumosMensuales(
                 departamento.getIdDepartamento(), mesAnterior, anioAnterior);
 
         if (anteriores.isEmpty()) {
@@ -571,7 +557,7 @@ public class PR1Controller {
                 ConsumoMensual nuevo = new ConsumoMensual(
                         anterior.getCantidad(), mesActual, anioActual,
                         departamento, anterior.getFactorEmision());
-                consumoDAO.create(nuevo);
+                servicioHuella.crearConsumo(nuevo);
                 creados++;
             }
         }

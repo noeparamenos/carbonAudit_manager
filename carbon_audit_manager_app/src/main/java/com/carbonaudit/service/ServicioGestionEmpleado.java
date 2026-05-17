@@ -20,10 +20,16 @@ public class ServicioGestionEmpleado {
     private final DireccionDAO        direccionDAO;
     private final IServicioGeografico geoService;
 
+    /** Constructor completo — requerido cuando se necesite calcular distancias vía API. */
     public ServicioGestionEmpleado(IServicioGeografico geoService) {
         this.empleadoDAO  = new EmpleadoDAO();
         this.direccionDAO = new DireccionDAO();
         this.geoService   = geoService;
+    }
+
+    /** Constructor sin geoService — para contextos de solo lectura/escritura sin cálculo de distancias. */
+    public ServicioGestionEmpleado() {
+        this(null);
     }
 
     // =========== CRUD EMPLEADO ==============

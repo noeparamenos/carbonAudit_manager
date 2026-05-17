@@ -52,6 +52,10 @@ public class ServicioCalculoHuella {
         return consumoDAO.getConsumosDepartamentoMes(idDepartamento, mes, anio);
     }
 
+    public void crearConsumo(ConsumoMensual consumo)      { consumoDAO.create(consumo); }
+    public void actualizarConsumo(ConsumoMensual consumo) { consumoDAO.update(consumo); }
+    public void eliminarConsumo(int idConsumo)            { consumoDAO.delete(idConsumo); }
+
     /** Consumos de una empresa para un mes concreto (todos sus departamentos). */
     public List<ConsumoMensual> getConsumosMensualesEmpresa(int idEmpresa, int mes, int anio) {
         return consumoDAO.getConsumosByEmpresaMes(idEmpresa, mes, anio);

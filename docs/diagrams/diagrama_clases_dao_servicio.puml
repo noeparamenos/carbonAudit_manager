@@ -67,8 +67,14 @@ package "com.carbonaudit.service" {
     class ServicioGeograficoORS implements IServicioGeografico
 
     class ServicioCalculoHuella {
-        + asignarDistanciaTrabajo(emp: Empleado) : void
         + getCommutingMensual(emp: Empleado) : BigDecimal
+        + getConsumosMensuales(idDept, mes, anio) : List
+        + getConsumosMensualesEmpresa(idEmpresa, mes, anio) : List
+        + getConsumosAnualesEmpresa(idEmpresa, anio) : List
+        + getTotalConsumos(consumos: List) : BigDecimal
+        + crearConsumo(consumo: ConsumoMensual) : void
+        + actualizarConsumo(consumo: ConsumoMensual) : void
+        + eliminarConsumo(idConsumo: int) : void
         + getHuellaTotalDepartamentoMes(dept, mes, anio) : BigDecimal
         + getHuellaTotalEmpresaMes(empresa, mes, anio) : BigDecimal
         + getHuellaPorScope(dept, mes, anio) : Map
@@ -76,12 +82,25 @@ package "com.carbonaudit.service" {
         + getHuellaAnualEmpresa(empresa, anio) : BigDecimal
         + getVariacionMensual(dept, mes, anio) : BigDecimal
     }
+
+    class ServicioGestionEmpleado {
+        + crearEmpleado(empleado: Empleado) : Empleado
+        + actualizarEmpleado(empleado: Empleado) : void
+        + darDeBajaEmpleado(idEmpleado: int, fecha: LocalDate) : void
+        + getEmpleadosDepartamento(idDept: int) : List
+        + persistirCoordenadas(dir: Direccion) : void
+        + calcularYPersistirDistancia(empleado: Empleado) : void
+    }
 }
 
-' Dependencias del servicio de cálculo
-ServicioCalculoHuella --> IServicioGeografico
+' Dependencias de ServicioCalculoHuella
 ServicioCalculoHuella ..> ConsumoMensualDAO    : usa
 ServicioCalculoHuella ..> CommutingEmpleadoDAO : usa
 ServicioCalculoHuella ..> DepartamentoDAO      : usa
+
+' Dependencias de ServicioGestionEmpleado
+ServicioGestionEmpleado --> IServicioGeografico
+ServicioGestionEmpleado ..> EmpleadoDAO   : usa
+ServicioGestionEmpleado ..> DireccionDAO  : usa
 
 @enduml
