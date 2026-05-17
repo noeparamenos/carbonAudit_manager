@@ -1,0 +1,124 @@
+@startuml Diagrama de Secuencia - Alta de Empleado
+
+skinparam sequenceArrowThickness 1.5
+skinparam participant {
+    BackgroundColor White
+    BorderColor #555
+}
+skinparam actor {
+    BorderColor #555
+}
+skinparam sequence {
+    LifeLineBorderColor #777
+    GroupBackgroundColor #F5F5F5
+    GroupBorderColor #AAAAAA
+}
+
+actor "Administrador" as Admin
+participant "Vista\n(JavaFX)" as UI
+participant "PA3Controller" as Ctrl
+participant "ServicioCalculoHuella" as Servicio
+participant "EmpleadoDAO" as EmpDAO
+participant "DireccionDAO" as DirDAO
+participant "ServicioGeograficoORS" as ORS
+database "Base de Datos" as BD
+participant "ORS API\n(REST)" as ORSAPI
+
+== Fase síncrona ==
+
+Admin -> UI : 1. rellena formulario y pulsa "Guardar"
+activate UI
+
+UI -> Ctrl : 1.1. onGuardarEmpleado()
+activate Ctrl
+
+alt campos inválidos
+    Ctrl --> UI : 1.1.1. mostrarError()
+    UI --> Admin : muestra aviso y cancela
+else campos válidos
+
+    Ctrl -> EmpDAO : 1.1.2. create(nuevo)
+    activate EmpDAO
+        EmpDAO -> BD : 1.1.2.1. INSERT INTO empleado
+        BD --> EmpDAO : 1.1.2.2. Empleado (con id)
+    EmpDAO --> Ctrl : 1.1.3. Empleado guardado
+    deactivate EmpDAO
+
+    Ctrl -> EmpDAO : 1.1.4. findAllByDepartamento(idDept)\n[cargarEmpleados]
+    activate EmpDAO
+        EmpDAO -> BD : 1.1.4.1. SELECT empleados WHERE idDept
+        BD --> EmpDAO : 1.1.4.2. List<Empleado>
+    EmpDAO --> Ctrl : 1.1.5. List<Empleado>
+    deactivate EmpDAO
+
+    Ctrl --> UI : 1.1.6. actualiza tabla y cierra panel
+    note right of Ctrl : lanza hilo daemon →\ncontinúa en fase asíncrona
+
+end
+
+deactivate Ctrl
+UI --> Admin : 1.2. tabla actualizada (distancia pendiente)
+deactivate UI
+
+== Fase asíncrona — hilo daemon (JavaFX Task) ==
+
+Ctrl -> Servicio : 2.1. calcularYPersistirDistancia(empleado)
+activate Servicio
+
+Servicio -> ORS : 2.1.1. completarCoordenadas(dirEmpleado)
+activate ORS
+    ORS -> ORSAPI : 2.1.1.1. HTTP geocoding · dirección empleado
+    ORSAPI --> ORS : 2.1.1.2. lat / lon
+ORS --> Servicio : 2.1.2. coordenadas asignadas a dirEmpleado
+deactivate ORS
+
+Servicio -> ORS : 2.1.3. completarCoordenadas(dirDepartamento)
+activate ORS
+    ORS -> ORSAPI : 2.1.3.1. HTTP geocoding · dirección departamento
+    ORSAPI --> ORS : 2.1.3.2. lat / lon
+ORS --> Servicio : 2.1.4. coordenadas asignadas a dirDepartamento
+deactivate ORS
+
+Servicio -> ORS : 2.1.5. calcularDistancia(dirEmpleado, dirDepartamento)
+activate ORS
+    ORS -> ORSAPI : 2.1.5.1. HTTP route · coordenadas origen y destino
+    ORSAPI --> ORS : 2.1.5.2. distancia en km
+ORS --> Servicio : 2.1.6. distanciaKm
+deactivate ORS
+
+Servicio -> Servicio : 2.1.7. empleado.setDistanciaTrabajo(distanciaKm)
+
+Servicio -> EmpDAO : 2.1.8. update(empleado)\n[persiste distancia_trabajo + coordenadas]
+activate EmpDAO
+    EmpDAO -> BD : 2.1.8.1. UPDATE empleado SET distancia_trabajo, ...
+    BD --> EmpDAO : 2.1.8.2. OK
+EmpDAO --> Servicio : 2.1.9. actualizado
+deactivate EmpDAO
+
+Servicio -> DirDAO : 2.1.10. update(deptDireccion)\n[persiste coordenadas del departamento]
+activate DirDAO
+    DirDAO -> BD : 2.1.10.1. UPDATE direccion SET lat, lon WHERE idDireccion
+    BD --> DirDAO : 2.1.10.2. OK
+DirDAO --> Servicio : 2.1.11. actualizado
+deactivate DirDAO
+
+Servicio --> Ctrl : 2.2. tarea completada (onSucceeded)
+deactivate Servicio
+
+note over Ctrl : onSucceeded ejecuta en el hilo de JavaFX
+
+Ctrl -> Servicio : 2.3. getEmpleadosDepartamento(idDept)\n[cargarEmpleados — refresca tabla]
+activate Servicio
+    Servicio -> EmpDAO : 2.3.1. findAllByDepartamento(idDept)
+    activate EmpDAO
+        EmpDAO -> BD : 2.3.1.1. SELECT empleados WHERE idDept
+        BD --> EmpDAO : 2.3.1.2. List<Empleado>
+    EmpDAO --> Servicio : 2.3.2. List<Empleado>
+    deactivate EmpDAO
+Servicio --> Ctrl : 2.4. List<Empleado>
+deactivate Servicio
+
+Ctrl --> UI : 2.5. tabla actualizada con distancia al trabajo
+UI --> Admin : 2.6. muestra distancia calculada en la fila del empleado
+
+@enduml

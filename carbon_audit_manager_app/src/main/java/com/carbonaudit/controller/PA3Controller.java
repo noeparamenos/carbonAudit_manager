@@ -100,7 +100,6 @@ public class PA3Controller {
     private final ResponsableDAO   responsableDAO  = new ResponsableDAO();
     private final DepartamentoDAO  departamentoDAO = new DepartamentoDAO();
     private final FactorEmisionDAO factorDAO       = new FactorEmisionDAO();
-    private final DireccionDAO     direccionDAO    = new DireccionDAO();
 
     /*
      * Se pasa null como geo service en PA2; aquí sí lo necesitamos para calcular
@@ -232,8 +231,7 @@ public class PA3Controller {
     }
 
     private void cargarEmpleados() {
-        listaEmpleados.setAll(
-                empleadoDAO.findAllByDepartamento(departamento.getIdDepartamento()));
+        listaEmpleados.setAll(servicioHuella.getEmpleadosDepartamento(departamento.getIdDepartamento()));
         tablaEmpleados.setItems(listaEmpleados);
     }
 
@@ -410,7 +408,7 @@ public class PA3Controller {
      */
     @FXML
     private void onAsignarResponsable() {
-        List<Empleado> empleados = empleadoDAO.findAllByDepartamento(departamento.getIdDepartamento());
+        List<Empleado> empleados = servicioHuella.getEmpleadosDepartamento(departamento.getIdDepartamento());
         combRespEmpleado.setItems(FXCollections.observableArrayList(empleados));
         combRespEmpleado.setConverter(new StringConverter<>() {
             @Override public String toString(Empleado e) { return e != null ? e.getNombre() : ""; }
@@ -547,7 +545,7 @@ public class PA3Controller {
 
     @FXML
     private void onEliminarDpto() {
-        List<Empleado> empleados = empleadoDAO.findAllByDepartamento(departamento.getIdDepartamento());
+        List<Empleado> empleados = servicioHuella.getEmpleadosDepartamento(departamento.getIdDepartamento());
         if (!empleados.isEmpty()) {
             mostrarError("No se puede eliminar el departamento porque tiene "
                     + empleados.size() + " empleado(s) activo(s).\n"
@@ -627,7 +625,7 @@ public class PA3Controller {
             }
         };
 
-        tarea.setOnSucceeded(e -> direccionDAO.update(dir));
+        tarea.setOnSucceeded(e -> servicioHuella.persistirCoordenadas(dir));
         tarea.setOnFailed(e -> Platform.runLater(() ->
                 mostrarError("No se pudo geocodificar la dirección del departamento "
                         + "(comprueba la conexión y la clave API ORS).")));
@@ -649,19 +647,13 @@ public class PA3Controller {
         Task<Void> tarea = new Task<>() {
             @Override
             protected Void call() throws Exception {
-                servicioHuella.AsignarDistanciaTrabajo(empleado);
+                // Calcula distancia vía ORS y persiste resultado en BD (sin tocar DAOs desde el Controlador)
+                servicioHuella.calcularYPersistirDistancia(empleado);
                 return null;
             }
         };
 
-        tarea.setOnSucceeded(e -> {
-            // Persiste distancia_trabajo y las coordenadas geocodificadas de ambas direcciones
-            empleadoDAO.update(empleado);
-            if (departamento.getDireccion() != null) {
-                direccionDAO.update(departamento.getDireccion());
-            }
-            cargarEmpleados();
-        });
+        tarea.setOnSucceeded(e -> cargarEmpleados());
 
         tarea.setOnFailed(e -> Platform.runLater(() -> {
             mostrarError("El empleado se guardó, pero no se pudo calcular la distancia al trabajo "

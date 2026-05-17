@@ -3,6 +3,8 @@ package com.carbonaudit.service;
 import com.carbonaudit.dao.CommutingEmpleadoDAO;
 import com.carbonaudit.dao.ConsumoMensualDAO;
 import com.carbonaudit.dao.DepartamentoDAO;
+import com.carbonaudit.dao.DireccionDAO;
+import com.carbonaudit.dao.EmpleadoDAO;
 import com.carbonaudit.model.*;
 import com.carbonaudit.service.external.IServicioGeografico;
 
@@ -14,21 +16,24 @@ import java.util.Map;
 
 public class ServicioCalculoHuella {
 
-    private final IServicioGeografico geoService; // Interfaz
+    private final IServicioGeografico geoService;
     private final ConsumoMensualDAO consumoDAO;
     private final CommutingEmpleadoDAO commutingDAO;
     private final DepartamentoDAO departamentoDAO;
+    private final EmpleadoDAO empleadoDAO;
+    private final DireccionDAO direccionDAO;
 
     /**
-     * Constructor que recibe la interfaz de geoService para poder usar distintas APIs para calcular las distancias
-     * @param geoService
+     * Constructor que recibe la interfaz de geoService para poder usar distintas APIs para calcular las distancias.
+     * @param geoService implementación del servicio geográfico (ORS u otro)
      */
     public ServicioCalculoHuella(IServicioGeografico geoService) {
-        this.geoService = geoService;
-        // Inicialización del resto de DAOs
-        this.consumoDAO = new ConsumoMensualDAO();
-        this.commutingDAO = new CommutingEmpleadoDAO();
+        this.geoService      = geoService;
+        this.consumoDAO      = new ConsumoMensualDAO();
+        this.commutingDAO    = new CommutingEmpleadoDAO();
         this.departamentoDAO = new DepartamentoDAO();
+        this.empleadoDAO     = new EmpleadoDAO();
+        this.direccionDAO    = new DireccionDAO();
     }
 
     // =========== COMMUTING DE EMPLEADOS ==============
@@ -125,6 +130,32 @@ public class ServicioCalculoHuella {
                 .map(ConsumoMensual::calcularEmision)
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    /** Empleados activos de un departamento. */
+    public List<Empleado> getEmpleadosDepartamento(int idDepartamento) {
+        return empleadoDAO.findAllByDepartamento(idDepartamento);
+    }
+
+    /**
+     * Persiste las coordenadas geocodificadas de una dirección.
+     * Evita que el Controlador llame a DireccionDAO directamente tras geocodificar.
+     */
+    public void persistirCoordenadas(Direccion dir) {
+        direccionDAO.update(dir);
+    }
+
+    /**
+     * Calcula la distancia al trabajo del empleado vía ORS y la persiste en BD.
+     * Combina AsignarDistanciaTrabajo() con la persistencia del resultado para que
+     * el Controlador no necesite llamar a ningún DAO en el callback onSucceeded.
+     */
+    public void calcularYPersistirDistancia(Empleado empleado) throws Exception {
+        AsignarDistanciaTrabajo(empleado);
+        empleadoDAO.update(empleado);
+        if (empleado.getDepartamento().getDireccion() != null) {
+            direccionDAO.update(empleado.getDepartamento().getDireccion());
+        }
     }
 
     // =========== CÁLCULO DE HUELLA POR DEPARTAMENTO ==============
