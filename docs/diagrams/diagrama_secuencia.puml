@@ -16,6 +16,7 @@ skinparam sequence {
 
 actor "Responsable" as Resp
 participant "Vista\n(JavaFX)" as UI
+participant "PR1Controller" as Ctrl
 participant "ServicioCalculoHuella" as Servicio
 participant "ConsumoMensualDAO" as ConsumoDAO
 participant "CommutingEmpleadoDAO" as CommutingDAO
@@ -23,44 +24,55 @@ database "Base de Datos" as BD
 
 ' ========================= FLUJO PRINCIPAL =========================
 
-Resp -> UI : selecciona departamento, mes y año
+Resp -> UI : 1. selecciona mes y año\n(el departamento viene del Responsable activo)
 activate UI
 
-UI -> Servicio : getHuellaTotalDepartamentoMes(departamento, mes, anio)
+UI -> Ctrl : 2. cargarHuella()
+activate Ctrl
+
+Ctrl -> Servicio : 3. getHuellaTotalDepartamentoMes(departamento, mes, anio)
 activate Servicio
 
 ' --- SCOPE 1 + 2: Consumos ---
-Servicio -> ConsumoDAO : getConsumosDepartamentoMes(idDept, mes, anio)
+Servicio -> ConsumoDAO : 4. getConsumosDepartamentoMes(idDept, mes, anio)
 activate ConsumoDAO
-    ConsumoDAO -> BD : SELECT consumos WHERE idDept, mes, anio
-    BD --> ConsumoDAO : List<ConsumoMensual>
-ConsumoDAO --> Servicio : List<ConsumoMensual>
+    ConsumoDAO -> BD : 5. SELECT consumos WHERE idDept, mes, anio
+    BD --> ConsumoDAO : 6. List<ConsumoMensual>
+ConsumoDAO --> Servicio : 7. List<ConsumoMensual>
 deactivate ConsumoDAO
 
 loop por cada ConsumoMensual
-    Servicio -> Servicio : consumo.calcularEmision()
+    Servicio -> Servicio : 8. consumo.calcularEmision()
     note right : cantidad × valorFactor
 end
 
 ' --- SCOPE 3: Commuting (condicional) ---
 opt departamento.incluirAlcance3 == true
-    Servicio -> CommutingDAO : getCommutingsDepartamentoMes(idDept, mes, anio)
+    Servicio -> CommutingDAO : 9. getCommutingsDepartamentoMes(idDept, mes, anio)
     activate CommutingDAO
-        CommutingDAO -> BD : SELECT commutings WHERE idDept, mes, anio
-        BD --> CommutingDAO : List<CommutingEmpleado>
-    CommutingDAO --> Servicio : List<CommutingEmpleado>
+        CommutingDAO -> BD : 10. SELECT commutings WHERE idDept, mes, anio
+        BD --> CommutingDAO : 11. List<CommutingEmpleado>
+    CommutingDAO --> Servicio : 12. List<CommutingEmpleado>
     deactivate CommutingDAO
 
     loop por cada CommutingEmpleado
-        Servicio -> Servicio : calcularEmisionCommuting(commuting)
+        Servicio -> Servicio : 13. calcularEmisionCommuting(commuting)
         note right : km × 2 × días × valorFactor
     end
 end
 
-Servicio --> UI : totalEmisiones (BigDecimal, kgCO2e)
+Servicio --> Ctrl : 14. totalEmisiones (BigDecimal, kgCO2e)
 deactivate Servicio
 
-UI --> Resp : muestra resultado en pantalla
+Ctrl -> Servicio : 15. getHuellaPorScope(departamento, mes, anio)
+activate Servicio
+Servicio --> Ctrl : 16. Map<Integer, BigDecimal> (Scope 1, 2, 3)
+deactivate Servicio
+
+Ctrl --> UI : 17. actualiza KPIs y tabla de desglose
+deactivate Ctrl
+
+UI --> Resp : 18. muestra resultado en pantalla
 deactivate UI
 
 @enduml
