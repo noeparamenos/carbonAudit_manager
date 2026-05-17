@@ -383,8 +383,8 @@ public class PR1Controller {
         int mes  = combMes.getSelectionModel().getSelectedIndex() + 1;
         int anio = combAnio.getSelectionModel().getSelectedItem();
 
-        // Refrescar consumos por si el usuario editó datos en Tab Consumos
-        listaConsumos.setAll(consumoDAO.getConsumosDepartamentoMes(
+        // Refrescar consumos a través del Servicio (no del DAO directamente)
+        listaConsumos.setAll(servicioHuella.getConsumosMensuales(
                 departamento.getIdDepartamento(), mes, anio));
 
         //Calculos de la huella

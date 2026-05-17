@@ -39,6 +39,9 @@
 11. Al modificar la dirección de un empleado o departamento, la distancia al trabajo no se recalculaba.
     - **Causa**: `AsignarDistanciaTrabajo()` solo llamaba a `completarCoordenadas()` cuando `latitud == null || longitud == null`. Como los controladores no detectaban si la dirección había cambiado, las coordenadas anteriores persistían y la distancia calculada era incorrecta.
     - **Solución**: `AsignarDistanciaTrabajo()` en `ServicioCalculoHuella` llama siempre a `completarCoordenadas()` para ambas direcciones (empleado y departamento), sin condición.
+13. `PR1Controller.cargarHuella()` llamaba directamente a `ConsumoMensualDAO`, violando la separación de capas.
+    - **Causa**: Para refrescar `listaConsumos` antes de calcular la huella, el controlador instanciaba y llamaba al DAO directamente en lugar de pasar por el Servicio. En una arquitectura de 3 capas el Controlador solo debe comunicarse con la capa de Servicio.
+    - **Solución**: Se añade `getConsumosMensuales(idDept, mes, anio)` a `ServicioCalculoHuella`, que encapsula la llamada al DAO. `cargarHuella()` pasa a llamar a este método, manteniendo la regla Controller → Service → DAO.
 12. `PSQLException` por clave duplicada en `ConsumoMensualDAO.create()` no llegaba al controlador.
     - **Causa**: El `catch (SQLException e)` del DAO solo hacía `printStackTrace()` y no relanzaba nada. El controlador capturaba `IllegalArgumentException` para mostrar avisos al usuario, pero nunca recibía el error de la restricción `UNIQUE(id_dept, id_factor, mes, anio)`.
     - **Solución**: En el `catch` del DAO se comprueba el SQLState (`23xxx` = violación de integridad) y se relanza como `IllegalArgumentException` con mensaje legible. Cualquier otro `SQLException` se relanza como `RuntimeException`.

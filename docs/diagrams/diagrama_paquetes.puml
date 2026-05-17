@@ -1,0 +1,100 @@
+@startuml Diagrama de Paquetes - CarbonAudit Manager
+
+top to bottom direction
+skinparam packageStyle rectangle
+skinparam package {
+    BackgroundColor #FAFAFA
+    BorderColor #555
+    FontStyle bold
+}
+skinparam component {
+    BackgroundColor White
+    BorderColor #777
+    FontSize 11
+}
+skinparam database {
+    BackgroundColor #EEF6FF
+    BorderColor #4A90D9
+}
+skinparam cloud {
+    BackgroundColor #FFF8EE
+    BorderColor #E0963A
+}
+skinparam arrow {
+    Color #555
+    FontSize 10
+}
+skinparam shadowing false
+
+' ========================= PAQUETES INTERNOS =========================
+
+package "com.carbonaudit" as Root {
+    [Launcher]
+    [Main]
+}
+
+package "com.carbonaudit.model" as Model {
+    [Empresa]
+    [Departamento]
+    [Empleado]
+    [Responsable]
+    [Direccion]
+    [ConsumoMensual]
+    [CommutingEmpleado]
+    [FactorEmision]
+}
+
+package "com.carbonaudit.dao" as Dao {
+    [DAO<T,K>]
+    [DatabaseManager]
+    [EmpresaDAO]
+    [DepartamentoDAO]
+    [EmpleadoDAO]
+    [ResponsableDAO]
+    [DireccionDAO]
+    [ConsumoMensualDAO]
+    [CommutingEmpleadoDAO]
+    [FactorEmisionDAO]
+}
+
+package "com.carbonaudit.service" as Service {
+    [ServicioCalculoHuella]
+}
+
+package "com.carbonaudit.service.external" as ServiceExt {
+    [IServicioGeografico]
+    [ServicioGeograficoORS]
+}
+
+package "com.carbonaudit.controller" as Controller {
+    [SeleccionRolController]
+    [PA1Controller]
+    [PA2Controller]
+    [PA3Controller]
+    [PR0Controller]
+    [PR1Controller]
+}
+
+' ========================= SISTEMAS EXTERNOS =========================
+
+database "PostgreSQL" as DB
+cloud "OpenRouteService\nAPI (REST)" as ORS
+
+' ========================= ORDEN VERTICAL (enlaces ocultos) ==========
+
+Root       -[hidden]d-> Model
+Model      -[hidden]d-> Dao
+Dao        -[hidden]d-> Service
+Service    -[hidden]d-> ServiceExt
+ServiceExt -[hidden]d-> Controller
+
+' ========================= NOTAS DESCRIPTIVAS =========================
+
+note bottom of Root       : Punto de entrada · Launcher pattern
+note bottom of Model      : Capa de Modelo · POJOs puros sin lógica de negocio
+note bottom of Dao        : Capa DAO · Acceso a la base de datos vía JDBC
+note bottom of Service    : Capa de Servicio · Cálculo de huella (Scopes 1, 2 y 3)
+note bottom of ServiceExt : Servicio externo · Geolocalización y rutas (ORS API)
+note bottom of Controller : Capa de Presentación · Controladores JavaFX (MVC)
+
+@enduml

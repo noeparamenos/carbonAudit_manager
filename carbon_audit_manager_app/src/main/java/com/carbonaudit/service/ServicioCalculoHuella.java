@@ -97,6 +97,17 @@ public class ServicioCalculoHuella {
         return emisiones.setScale(2, RoundingMode.HALF_UP);
     }
 
+    // =========== ACCESO A CONSUMOS (encapsula el DAO para que el controlador no lo toque) ==============
+
+    /**
+     * Devuelve los consumos mensuales de un departamento.
+     * Método de acceso que evita que la capa Controller llame al DAO directamente,
+     * manteniendo la separación de capas: Controller → Service → DAO.
+     */
+    public List<ConsumoMensual> getConsumosMensuales(int idDepartamento, int mes, int anio) {
+        return consumoDAO.getConsumosDepartamentoMes(idDepartamento, mes, anio);
+    }
+
     // =========== CÁLCULO DE HUELLA POR DEPARTAMENTO ==============
 
     /**
