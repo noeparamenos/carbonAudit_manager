@@ -82,9 +82,9 @@ Creación de la UI con JavaFX y visualización de resultados.
       - [x] P0 · Selección de rol
       - [x] PA1 · Lista de empresas
       - [x] PA2 · Vista empresa
-      - [ ] PA3 · Gestión de departamento
-      - [ ] PR0 · Selección de responsable
-      - [ ] PR1 · Vista responsable
+      - [x] PA3 · Gestión de departamento
+      - [x] PR0 · Selección de responsable
+      - [x] PR1 · Vista responsable
     - [x] Ajustar tamaño y calidad del logo en P0
     - [x] Resolver centrado de ventana P0 en el primer arranque en frío (ver error 8)
   - **Implementación:**
