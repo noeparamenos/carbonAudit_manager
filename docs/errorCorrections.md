@@ -78,6 +78,14 @@
       - **Hard-delete con CASCADE en `DEPARTAMENTO` y `EMPRESA`**: modela una acción administrativa destructiva e irreversible. Al borrar un departamento se destruye todo su historial de auditoría (empleados, consumos, commutings). Esta pérdida es aceptada y esperada — un departamento activo con historial real nunca debería eliminarse.
       - **Consecuencia**: el soft-delete de empleados tiene sentido dentro del ciclo de vida de un departamento, pero no sobrevive a la eliminación del departamento padre. La UI debe advertir explícitamente de esta pérdida antes de confirmar el borrado.
 
+17. La UI se congelaba al cargar las pestañas de Gráficos y Consumos (especialmente con "Año completo").
+    - **Causa**: Problema **N+1 queries** derivado del patrón de composición en los DAOs. Cada llamada a `getHuellaTotalEmpresaMes()` genera una cadena de queries: 1 para obtener los departamentos + N×3 queries por departamento (consumos, check commuting, commuting) = 1+3N queries por mes. Para 12 meses con 2 departamentos son ~84 queries, y antes de la optimización los gráficos de barras y líneas las repetían por separado (~168 queries en total). Todo en el hilo de JavaFX, bloqueando la UI.
+    - **Causa raíz estructural**: la decisión de diseño *"Composición sobre Almacenamiento de FK"* (cada DAO reconstruye objetos completos con sus relaciones) hace que los métodos de servicio encadenen llamadas DAO en lugar de ejecutar una sola query con JOINs. Es eficiente para operaciones CRUD puntuales pero genera N+1 en operaciones de reporting.
+    - **Solución aplicada**:
+      - `cargarGraficos()` y `cargarConsumos()` en PA1Controller y PR1Controller movidos a hilos de fondo (`Task<Void>`) — la UI no se congela mientras cargan los datos.
+      - En PA1Controller, la matriz `dept × mes` se calcula una sola vez y se reutiliza para los tres gráficos (tarta, barras y líneas), eliminando el trabajo duplicado.
+    - **Solución profesional a futuro**: añadir métodos de *reporting* en los DAOs con queries SQL específicas (JOIN + GROUP BY) para los casos de uso de gráficos, evitando el N+1 en origen. No se aplica ahora porque el volumen de datos actual no lo justifica.
+
 15. **[MEJORA FUTURA]** Los registros de commuting se generan con los empleados activos en el momento de la consulta, no con los que estaban activos durante el mes del período histórico.
     - **Causa**: `garantizarRegistrosCommuting()` usa `EmpleadoDAO.findAllByDepartamento()`, que filtra por `fecha_baja IS NULL` (activos ahora). Si un empleado se da de baja hoy y después se consulta un mes pasado que aún no tenía snapshot, ese empleado no aparecerá en el registro aunque sí estuviera activo ese mes.
     - **Mejora propuesta** (dos partes):

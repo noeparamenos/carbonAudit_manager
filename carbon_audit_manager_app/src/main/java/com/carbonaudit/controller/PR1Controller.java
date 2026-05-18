@@ -16,8 +16,11 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 
+import javafx.concurrent.Task;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -407,55 +410,79 @@ public class PR1Controller {
     private void cargarGraficos() {
         if (departamento == null) return;
 
-        int mes  = combMes.getSelectionModel().getSelectedIndex() + 1;
-        int anio = combAnio.getSelectionModel().getSelectedItem();
+        final int mes  = combMes.getSelectionModel().getSelectedIndex() + 1;
+        final int anio = combAnio.getSelectionModel().getSelectedItem();
 
-        // 1. Tarta: desglose por Alcance del período seleccionado
-        Map<Integer, BigDecimal> porScope = servicioHuella.getHuellaPorScope(departamento, mes, anio);
-        grafPorScope.getData().clear();
-        porScope.forEach((scope, valor) -> {
-            if (valor.compareTo(BigDecimal.ZERO) > 0)
-                grafPorScope.getData().add(new PieChart.Data("Alcance " + scope, valor.doubleValue()));
+        final Map<Integer, BigDecimal>         porScope        = new LinkedHashMap<>();
+        final List<BigDecimal>                 tendencia       = new ArrayList<>(12);
+        final Map<String, Map<String, Double>> datosPorRecurso = new LinkedHashMap<>();
+
+        Task<Void> tarea = new Task<>() {
+            @Override
+            protected Void call() {
+                // Tarta: desglose por alcance del período seleccionado
+                porScope.putAll(servicioHuella.getHuellaPorScope(departamento, mes, anio));
+
+                // Tendencia mensual + líneas por recurso en una sola iteración
+                for (int m = 1; m <= 12; m++) {
+                    String etiqueta = NOMBRES_MESES[m - 1].substring(0, 3);
+                    tendencia.add(servicioHuella.getHuellaTotalDepartamentoMes(departamento, m, anio));
+                    for (ConsumoMensual c : servicioHuella.getConsumosMensuales(
+                            departamento.getIdDepartamento(), m, anio)) {
+                        datosPorRecurso
+                                .computeIfAbsent(c.getFactorEmision().getNombre(), k -> new LinkedHashMap<>())
+                                .put(etiqueta, c.calcularEmision().doubleValue());
+                    }
+                }
+                return null;
+            }
+        };
+
+        tarea.setOnSucceeded(e -> {
+            // Tarta
+            grafPorScope.getData().clear();
+            porScope.forEach((scope, valor) -> {
+                if (valor.compareTo(BigDecimal.ZERO) > 0)
+                    grafPorScope.getData().add(new PieChart.Data("Alcance " + scope, valor.doubleValue()));
+            });
+
+            // Línea: tendencia mensual
+            grafTendencia.getData().clear();
+            XYChart.Series<String, Number> serieTot = new XYChart.Series<>();
+            serieTot.setName("Total CO₂e");
+            for (int m = 1; m <= 12; m++)
+                serieTot.getData().add(new XYChart.Data<>(
+                        NOMBRES_MESES[m - 1].substring(0, 3), tendencia.get(m - 1).doubleValue()));
+            grafTendencia.getData().add(serieTot);
+
+            // Líneas por recurso
+            grafConsumibles.getData().clear();
+            datosPorRecurso.forEach((recurso, valores) -> {
+                XYChart.Series<String, Number> serie = new XYChart.Series<>();
+                serie.setName(recurso);
+                for (int m = 1; m <= 12; m++) {
+                    String etiqueta = NOMBRES_MESES[m - 1].substring(0, 3);
+                    serie.getData().add(new XYChart.Data<>(etiqueta, valores.getOrDefault(etiqueta, 0.0)));
+                }
+                grafConsumibles.getData().add(serie);
+            });
         });
 
-        // 2. Línea: tendencia mensual del año (total CO₂e)
-        grafTendencia.getData().clear();
-        XYChart.Series<String, Number> serieTot = new XYChart.Series<>();
-        serieTot.setName("Total CO₂e");
-        for (int m = 1; m <= 12; m++) {
-            BigDecimal total = servicioHuella.getHuellaTotalDepartamentoMes(departamento, m, anio);
-            serieTot.getData().add(new XYChart.Data<>(NOMBRES_MESES[m - 1].substring(0, 3), total.doubleValue()));
-        }
-        grafTendencia.getData().add(serieTot);
+        tarea.setOnFailed(e ->
+                mostrarError("Error al cargar los gráficos: " + tarea.getException().getMessage()));
 
-        // 3. Líneas por recurso: mes a mes del año (una serie por recurso)
-        grafConsumibles.getData().clear();
-        Map<String, Map<String, Double>> datosPorRecurso = new LinkedHashMap<>();
-        for (int m = 1; m <= 12; m++) {
-            String etiqueta = NOMBRES_MESES[m - 1].substring(0, 3);
-            for (ConsumoMensual c : servicioHuella.getConsumosMensuales(departamento.getIdDepartamento(), m, anio)) {
-                datosPorRecurso
-                        .computeIfAbsent(c.getFactorEmision().getNombre(), k -> new LinkedHashMap<>())
-                        .put(etiqueta, c.calcularEmision().doubleValue());
-            }
-        }
-        for (Map.Entry<String, Map<String, Double>> entrada : datosPorRecurso.entrySet()) {
-            XYChart.Series<String, Number> serie = new XYChart.Series<>();
-            serie.setName(entrada.getKey());
-            for (int m = 1; m <= 12; m++) {
-                String etiqueta = NOMBRES_MESES[m - 1].substring(0, 3);
-                serie.getData().add(new XYChart.Data<>(etiqueta, entrada.getValue().getOrDefault(etiqueta, 0.0)));
-            }
-            grafConsumibles.getData().add(serie);
-        }
+        Thread hilo = new Thread(tarea);
+        hilo.setDaemon(true);
+        hilo.start();
     }
 
     /** Recarga los datos del tab activo al cambiar el selector de período. */
     private void refrescarTabActiva() {
         if (departamento == null) return;
         Tab activa = tabPane.getSelectionModel().getSelectedItem();
-        if (activa == tabConsumos)    cargarConsumos();
-        else if (activa == tabHuella) cargarHuella();
+        if      (activa == tabConsumos)  cargarConsumos();
+        else if (activa == tabHuella)    cargarHuella();
+        else if (activa == tabGraficos)  cargarGraficos();
     }
 
     // =========== Panel lateral: Nuevo consumo =========

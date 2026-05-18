@@ -24,8 +24,12 @@ import javafx.stage.Stage;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -297,32 +301,47 @@ public class PA1Controller {
     }
 
     /**
-     * Carga los consumos según el período activo.
+     * Carga los consumos según el período activo en un hilo de fondo.
      * Si "Año completo" está marcado, consulta los 12 meses; si no, solo el mes seleccionado.
      * El total incluye Alcance 3 solo para los departamentos que lo tengan habilitado.
      */
     private void cargarConsumos() {
         if (empresa == null) return;
 
-        int anio = combAnio.getSelectionModel().getSelectedItem();
-        List<ConsumoMensual> consumos;
-        BigDecimal total;
+        final int     anio        = combAnio.getSelectionModel().getSelectedItem();
+        final boolean anioCompleto = chkAnioCompleto.isSelected();
+        final int     mes         = anioCompleto ? 1 : combMes.getSelectionModel().getSelectedIndex() + 1;
 
-        // Calculo anualizado
-        if (chkAnioCompleto.isSelected()) {
-            consumos = servicioHuella.getConsumosAnualesEmpresa(empresa.getIdEmpresa(), anio);
-            total    = servicioHuella.getHuellaAnualEmpresa(empresa, anio);
+        @SuppressWarnings("unchecked")
+        final List<ConsumoMensual>[] consumosHolder = new List[1];
+        final BigDecimal[]           totalHolder    = new BigDecimal[1];
 
-        // Calculo mensual
-        } else {
-            int mes = combMes.getSelectionModel().getSelectedIndex() + 1;
-            consumos = servicioHuella.getConsumosMensualesEmpresa(empresa.getIdEmpresa(), mes, anio);
-            total    = servicioHuella.getHuellaTotalEmpresaMes(empresa, mes, anio);
-        }
+        Task<Void> tarea = new Task<>() {
+            @Override
+            protected Void call() {
+                if (anioCompleto) {
+                    consumosHolder[0] = servicioHuella.getConsumosAnualesEmpresa(empresa.getIdEmpresa(), anio);
+                    totalHolder[0]    = servicioHuella.getHuellaAnualEmpresa(empresa, anio);
+                } else {
+                    consumosHolder[0] = servicioHuella.getConsumosMensualesEmpresa(empresa.getIdEmpresa(), mes, anio);
+                    totalHolder[0]    = servicioHuella.getHuellaTotalEmpresaMes(empresa, mes, anio);
+                }
+                return null;
+            }
+        };
 
-        listaConsumos.setAll(consumos);
-        tablaConsumos.setItems(listaConsumos);
-        lblTotalEmpresa.setText(String.format("%.2f kg CO₂e", total));
+        tarea.setOnSucceeded(e -> {
+            listaConsumos.setAll(consumosHolder[0]);
+            tablaConsumos.setItems(listaConsumos);
+            lblTotalEmpresa.setText(String.format("%.2f kg CO₂e", totalHolder[0]));
+        });
+
+        tarea.setOnFailed(e ->
+                mostrarError("Error al cargar los consumos: " + tarea.getException().getMessage()));
+
+        Thread hilo = new Thread(tarea);
+        hilo.setDaemon(true);
+        hilo.start();
     }
 
     /** Activa o desactiva el modo año completo y deshabilita el combo de mes en consecuencia. */
@@ -552,48 +571,80 @@ public class PA1Controller {
 
     private void cargarGraficos() {
         if (empresa == null) return;
-        int anio = combAnio.getSelectionModel().getSelectedItem();
-        boolean anioCompleto = chkAnioCompleto.isSelected();
-        int mes = anioCompleto ? 1 : combMes.getSelectionModel().getSelectedIndex() + 1;
 
-        List<Departamento> departamentos =
+        final int anio = combAnio.getSelectionModel().getSelectedItem();
+        final boolean anioCompleto = chkAnioCompleto.isSelected();
+        final int mes = anioCompleto ? 1 : combMes.getSelectionModel().getSelectedIndex() + 1;
+        final List<Departamento> departamentos =
                 servicioDepartamento.getDepartamentosEmpresa(empresa.getIdEmpresa());
 
-        // ── Tarta: peso de emisiones por departamento ─────────────────────
-        grafDepartamentos.getData().clear();
-        for (Departamento dep : departamentos) {
-            BigDecimal valor = anioCompleto
-                    ? servicioHuella.getHuellaAnualDepartamento(dep, anio)
-                    : servicioHuella.getHuellaTotalDepartamentoMes(dep, mes, anio);
-            if (valor.compareTo(BigDecimal.ZERO) > 0) {
-                grafDepartamentos.getData().add(
-                        new PieChart.Data(dep.getNombre(), valor.doubleValue()));
-            }
-        }
+        // Contenedores para los datos calculados en segundo plano
+        final Map<Departamento, BigDecimal>       valPeriodo = new LinkedHashMap<>();
+        final List<BigDecimal>                    totalesMes = new ArrayList<>(12);
+        final Map<Departamento, List<BigDecimal>> valMesDept = new LinkedHashMap<>();
 
-        // ── Barras: evolución mensual de la empresa (12 meses del año) ────
-        grafEmpresaMensual.getData().clear();
-        XYChart.Series<String, Number> serieEmpresa = new XYChart.Series<>();
-        serieEmpresa.setName(String.valueOf(anio));
-        for (int m = 1; m <= 12; m++) {
-            BigDecimal total = servicioHuella.getHuellaTotalEmpresaMes(empresa, m, anio);
-            serieEmpresa.getData().add(new XYChart.Data<>(
-                    NOMBRES_MESES[m - 1].substring(0, 3), total.doubleValue()));
-        }
-        grafEmpresaMensual.getData().add(serieEmpresa);
-
-        // ── Líneas: tendencia por departamento (12 meses del año) ─────────
-        grafTendenciaDeps.getData().clear();
-        for (Departamento dep : departamentos) {
-            XYChart.Series<String, Number> serie = new XYChart.Series<>();
-            serie.setName(dep.getNombre());
-            for (int m = 1; m <= 12; m++) {
-                BigDecimal val = servicioHuella.getHuellaTotalDepartamentoMes(dep, m, anio);
-                serie.getData().add(new XYChart.Data<>(
-                        NOMBRES_MESES[m - 1].substring(0, 3), val.doubleValue()));
+        Task<Void> tarea = new Task<>() {
+            @Override
+            protected Void call() {
+                // Calcula huella dept × mes una sola vez — base para los tres gráficos
+                for (int m = 1; m <= 12; m++) {
+                    BigDecimal totalMes = BigDecimal.ZERO;
+                    for (Departamento dep : departamentos) {
+                        BigDecimal val = servicioHuella.getHuellaTotalDepartamentoMes(dep, m, anio);
+                        valMesDept.computeIfAbsent(dep, k -> new ArrayList<>(12)).add(val);
+                        totalMes = totalMes.add(val);
+                    }
+                    totalesMes.add(totalMes.setScale(2, RoundingMode.HALF_UP));
+                }
+                // Valor de cada departamento para el período (tarta)
+                for (Departamento dep : departamentos) {
+                    List<BigDecimal> mensuales = valMesDept.get(dep);
+                    BigDecimal valor = anioCompleto
+                            ? mensuales.stream().reduce(BigDecimal.ZERO, BigDecimal::add)
+                                       .setScale(2, RoundingMode.HALF_UP)
+                            : mensuales.get(mes - 1);
+                    valPeriodo.put(dep, valor);
+                }
+                return null;
             }
-            grafTendenciaDeps.getData().add(serie);
-        }
+        };
+
+        tarea.setOnSucceeded(e -> {
+            // Tarta: peso por departamento
+            grafDepartamentos.getData().clear();
+            valPeriodo.forEach((dep, valor) -> {
+                if (valor.compareTo(BigDecimal.ZERO) > 0)
+                    grafDepartamentos.getData().add(
+                            new PieChart.Data(dep.getNombre(), valor.doubleValue()));
+            });
+
+            // Barras: evolución mensual empresa
+            grafEmpresaMensual.getData().clear();
+            XYChart.Series<String, Number> serieEmpresa = new XYChart.Series<>();
+            serieEmpresa.setName(String.valueOf(anio));
+            for (int m = 1; m <= 12; m++)
+                serieEmpresa.getData().add(new XYChart.Data<>(
+                        NOMBRES_MESES[m - 1].substring(0, 3), totalesMes.get(m - 1).doubleValue()));
+            grafEmpresaMensual.getData().add(serieEmpresa);
+
+            // Líneas: tendencia por departamento
+            grafTendenciaDeps.getData().clear();
+            valMesDept.forEach((dep, mensuales) -> {
+                XYChart.Series<String, Number> serie = new XYChart.Series<>();
+                serie.setName(dep.getNombre());
+                for (int m = 1; m <= 12; m++)
+                    serie.getData().add(new XYChart.Data<>(
+                            NOMBRES_MESES[m - 1].substring(0, 3), mensuales.get(m - 1).doubleValue()));
+                grafTendenciaDeps.getData().add(serie);
+            });
+        });
+
+        tarea.setOnFailed(e ->
+                mostrarError("Error al cargar los gráficos: " + tarea.getException().getMessage()));
+
+        Thread hilo = new Thread(tarea);
+        hilo.setDaemon(true);
+        hilo.start();
     }
 
     // ── Navegación ─────────────────────────────────────────────────────────
