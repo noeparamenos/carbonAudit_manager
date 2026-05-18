@@ -7,6 +7,7 @@ import com.carbonaudit.service.ServicioGestionFactores;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.chart.*;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -17,6 +18,7 @@ import javafx.util.StringConverter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -53,6 +55,12 @@ public class PR1Controller {
     @FXML private Tab     tabConsumos;
     @FXML private Tab     tabTrabajadores;
     @FXML private Tab     tabHuella;
+    @FXML private Tab     tabGraficos;
+
+    // Tab Gráficos
+    @FXML private PieChart                  grafPorScope;
+    @FXML private LineChart<String, Number> grafTendencia;
+    @FXML private LineChart<String, Number> grafConsumibles;
 
     // Tab Consumos mensuales
     @FXML private TableView<ConsumoMensual>           tablaConsumos;
@@ -291,8 +299,9 @@ public class PR1Controller {
         tabPane.getSelectionModel().selectedItemProperty().addListener(
                 (obs, anterior, nuevo) -> { //De que tab venias y a cual has clicado
                     if (departamento == null || nuevo == null) return;
-                    if (nuevo == tabConsumos)    cargarConsumos(); //navega a consumos
-                    else if (nuevo == tabHuella) cargarHuella(); //navega a huella
+                    if (nuevo == tabConsumos)       cargarConsumos();
+                    else if (nuevo == tabHuella)   cargarHuella();
+                    else if (nuevo == tabGraficos) cargarGraficos();
                 });
     }
 
@@ -388,6 +397,56 @@ public class PR1Controller {
         } else {
             lblCommuting.setText("Commuting (Alcance 3) no habilitado para este departamento. "
                     + "El administrador puede activarlo en la configuración del departamento.");
+        }
+    }
+
+    /**
+     * Carga los tres gráficos del tab Gráficos para el departamento y período activos.
+     * Tarta de scope, línea de tendencia anual y líneas por recurso.
+     */
+    private void cargarGraficos() {
+        if (departamento == null) return;
+
+        int mes  = combMes.getSelectionModel().getSelectedIndex() + 1;
+        int anio = combAnio.getSelectionModel().getSelectedItem();
+
+        // 1. Tarta: desglose por Alcance del período seleccionado
+        Map<Integer, BigDecimal> porScope = servicioHuella.getHuellaPorScope(departamento, mes, anio);
+        grafPorScope.getData().clear();
+        porScope.forEach((scope, valor) -> {
+            if (valor.compareTo(BigDecimal.ZERO) > 0)
+                grafPorScope.getData().add(new PieChart.Data("Alcance " + scope, valor.doubleValue()));
+        });
+
+        // 2. Línea: tendencia mensual del año (total CO₂e)
+        grafTendencia.getData().clear();
+        XYChart.Series<String, Number> serieTot = new XYChart.Series<>();
+        serieTot.setName("Total CO₂e");
+        for (int m = 1; m <= 12; m++) {
+            BigDecimal total = servicioHuella.getHuellaTotalDepartamentoMes(departamento, m, anio);
+            serieTot.getData().add(new XYChart.Data<>(NOMBRES_MESES[m - 1].substring(0, 3), total.doubleValue()));
+        }
+        grafTendencia.getData().add(serieTot);
+
+        // 3. Líneas por recurso: mes a mes del año (una serie por recurso)
+        grafConsumibles.getData().clear();
+        Map<String, Map<String, Double>> datosPorRecurso = new LinkedHashMap<>();
+        for (int m = 1; m <= 12; m++) {
+            String etiqueta = NOMBRES_MESES[m - 1].substring(0, 3);
+            for (ConsumoMensual c : servicioHuella.getConsumosMensuales(departamento.getIdDepartamento(), m, anio)) {
+                datosPorRecurso
+                        .computeIfAbsent(c.getFactorEmision().getNombre(), k -> new LinkedHashMap<>())
+                        .put(etiqueta, c.calcularEmision().doubleValue());
+            }
+        }
+        for (Map.Entry<String, Map<String, Double>> entrada : datosPorRecurso.entrySet()) {
+            XYChart.Series<String, Number> serie = new XYChart.Series<>();
+            serie.setName(entrada.getKey());
+            for (int m = 1; m <= 12; m++) {
+                String etiqueta = NOMBRES_MESES[m - 1].substring(0, 3);
+                serie.getData().add(new XYChart.Data<>(etiqueta, entrada.getValue().getOrDefault(etiqueta, 0.0)));
+            }
+            grafConsumibles.getData().add(serie);
         }
     }
 

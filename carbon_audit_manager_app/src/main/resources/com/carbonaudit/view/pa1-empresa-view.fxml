@@ -2,6 +2,7 @@
 
 <?import java.net.URL?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
@@ -176,13 +177,37 @@
                             </content>
                         </Tab>
 
-                        <!-- ── Tab: Gráficos (placeholder) ──────────────── -->
+                        <!--  Tab: Gráficos  -->
                         <Tab fx:id="tabGraficos" text="Gráficos" closable="false">
                             <content>
-                                <VBox alignment="CENTER" spacing="16.0">
-                                    <Label text="Los gráficos estarán disponibles próximamente."
-                                           styleClass="tabla-placeholder"/>
-                                </VBox>
+                                <ScrollPane fitToWidth="true" styleClass="scroll-formulario">
+                                    <VBox spacing="20.0">
+                                        <padding>
+                                            <Insets top="16.0" right="8.0" bottom="16.0" left="0.0"/>
+                                        </padding>
+
+                                        <Label text="Peso de emisiones por departamento"
+                                               styleClass="form-seccion"/>
+                                        <PieChart fx:id="grafDepartamentos" prefHeight="260.0"
+                                                  animated="false" legendSide="RIGHT"/>
+
+                                        <Label text="Evolución mensual de la empresa"
+                                               styleClass="form-seccion"/>
+                                        <BarChart fx:id="grafEmpresaMensual" prefHeight="240.0"
+                                                  animated="false">
+                                            <xAxis><CategoryAxis/></xAxis>
+                                            <yAxis><NumberAxis label="kg CO₂e" forceZeroInRange="true"/></yAxis>
+                                        </BarChart>
+
+                                        <Label text="Tendencia por departamento"
+                                               styleClass="form-seccion"/>
+                                        <LineChart fx:id="grafTendenciaDeps" prefHeight="260.0"
+                                                   animated="false" createSymbols="false">
+                                            <xAxis><CategoryAxis/></xAxis>
+                                            <yAxis><NumberAxis label="kg CO₂e" forceZeroInRange="true"/></yAxis>
+                                        </LineChart>
+                                    </VBox>
+                                </ScrollPane>
                             </content>
                         </Tab>
 

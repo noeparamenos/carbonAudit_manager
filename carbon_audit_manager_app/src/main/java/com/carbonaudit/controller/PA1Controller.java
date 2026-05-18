@@ -15,6 +15,7 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -60,6 +61,13 @@ public class PA1Controller {
     @FXML private TabPane tabPane;
     @FXML private Tab     tabDepartamentos;
     @FXML private Tab     tabConsumos;
+    @FXML private Tab     tabGraficos;
+
+    // ── Gráficos ──────────────────────────────────────────────────────────
+
+    @FXML private PieChart                  grafDepartamentos;
+    @FXML private BarChart<String, Number>  grafEmpresaMensual;
+    @FXML private LineChart<String, Number> grafTendenciaDeps;
 
     // ========= Tab Departamentos ==========================
 
@@ -265,7 +273,8 @@ public class PA1Controller {
         tabPane.getSelectionModel().selectedItemProperty().addListener(
                 (obs, anterior, nuevo) -> {
                     if (empresa == null || nuevo == null) return;
-                    if (nuevo == tabConsumos) cargarConsumos();
+                    if      (nuevo == tabConsumos)  cargarConsumos();
+                    else if (nuevo == tabGraficos)  cargarGraficos();
                 });
     }
 
@@ -320,17 +329,15 @@ public class PA1Controller {
     @FXML
     private void onToggleAnioCompleto() {
         combMes.setDisable(chkAnioCompleto.isSelected());
-        if (tabPane.getSelectionModel().getSelectedItem() == tabConsumos) {
-            cargarConsumos();
-        }
+        refrescarTabActiva();
     }
 
     /** Recarga los datos de la pestaña activa al cambiar el selector de período. */
     private void refrescarTabActiva() {
         if (empresa == null) return;
         Tab activa = tabPane.getSelectionModel().getSelectedItem();
-        if (activa == tabConsumos) cargarConsumos();
-        // Gráficos: pendiente de implementar en una fase posterior
+        if      (activa == tabConsumos) cargarConsumos();
+        else if (activa == tabGraficos) cargarGraficos();
     }
 
     // =========== Panel lateral: NUEVO DEPARTAMENTO =======================
@@ -538,6 +545,54 @@ public class PA1Controller {
         } catch (IOException e) {
             e.printStackTrace();
             mostrarError("Error al exportar el archivo: " + e.getMessage());
+        }
+    }
+
+    // ── Gráficos ───────────────────────────────────────────────────────────
+
+    private void cargarGraficos() {
+        if (empresa == null) return;
+        int anio = combAnio.getSelectionModel().getSelectedItem();
+        boolean anioCompleto = chkAnioCompleto.isSelected();
+        int mes = anioCompleto ? 1 : combMes.getSelectionModel().getSelectedIndex() + 1;
+
+        List<Departamento> departamentos =
+                servicioDepartamento.getDepartamentosEmpresa(empresa.getIdEmpresa());
+
+        // ── Tarta: peso de emisiones por departamento ─────────────────────
+        grafDepartamentos.getData().clear();
+        for (Departamento dep : departamentos) {
+            BigDecimal valor = anioCompleto
+                    ? servicioHuella.getHuellaAnualDepartamento(dep, anio)
+                    : servicioHuella.getHuellaTotalDepartamentoMes(dep, mes, anio);
+            if (valor.compareTo(BigDecimal.ZERO) > 0) {
+                grafDepartamentos.getData().add(
+                        new PieChart.Data(dep.getNombre(), valor.doubleValue()));
+            }
+        }
+
+        // ── Barras: evolución mensual de la empresa (12 meses del año) ────
+        grafEmpresaMensual.getData().clear();
+        XYChart.Series<String, Number> serieEmpresa = new XYChart.Series<>();
+        serieEmpresa.setName(String.valueOf(anio));
+        for (int m = 1; m <= 12; m++) {
+            BigDecimal total = servicioHuella.getHuellaTotalEmpresaMes(empresa, m, anio);
+            serieEmpresa.getData().add(new XYChart.Data<>(
+                    NOMBRES_MESES[m - 1].substring(0, 3), total.doubleValue()));
+        }
+        grafEmpresaMensual.getData().add(serieEmpresa);
+
+        // ── Líneas: tendencia por departamento (12 meses del año) ─────────
+        grafTendenciaDeps.getData().clear();
+        for (Departamento dep : departamentos) {
+            XYChart.Series<String, Number> serie = new XYChart.Series<>();
+            serie.setName(dep.getNombre());
+            for (int m = 1; m <= 12; m++) {
+                BigDecimal val = servicioHuella.getHuellaTotalDepartamentoMes(dep, m, anio);
+                serie.getData().add(new XYChart.Data<>(
+                        NOMBRES_MESES[m - 1].substring(0, 3), val.doubleValue()));
+            }
+            grafTendenciaDeps.getData().add(serie);
         }
     }
 

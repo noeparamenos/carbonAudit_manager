@@ -2,6 +2,7 @@
 
 <?import java.net.URL?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
@@ -228,13 +229,37 @@
                             </content>
                         </Tab>
 
-                        <!-- ── Tab: Gráficos (placeholder) ──────────────── -->
+                        <!-- ── Tab: Gráficos ──────────────────────────────── -->
                         <Tab fx:id="tabGraficos" text="Gráficos" closable="false">
                             <content>
-                                <VBox alignment="CENTER" spacing="16.0">
-                                    <Label text="Los gráficos estarán disponibles próximamente."
-                                           styleClass="tabla-placeholder"/>
-                                </VBox>
+                                <ScrollPane fitToWidth="true" styleClass="scroll-formulario">
+                                    <VBox spacing="20.0">
+                                        <padding>
+                                            <Insets top="16.0" right="8.0" bottom="16.0" left="0.0"/>
+                                        </padding>
+
+                                        <Label text="Desglose por Alcance (período seleccionado)"
+                                               styleClass="form-seccion"/>
+                                        <PieChart fx:id="grafPorScope" prefHeight="260.0"
+                                                  animated="false" legendSide="RIGHT"/>
+
+                                        <Label text="Evolución mensual de emisiones"
+                                               styleClass="form-seccion"/>
+                                        <LineChart fx:id="grafTendencia" prefHeight="240.0"
+                                                   animated="false" createSymbols="true">
+                                            <xAxis><CategoryAxis/></xAxis>
+                                            <yAxis><NumberAxis label="kg CO₂e" forceZeroInRange="true"/></yAxis>
+                                        </LineChart>
+
+                                        <Label text="Evolución por recurso"
+                                               styleClass="form-seccion"/>
+                                        <LineChart fx:id="grafConsumibles" prefHeight="260.0"
+                                                   animated="false" createSymbols="false">
+                                            <xAxis><CategoryAxis/></xAxis>
+                                            <yAxis><NumberAxis label="kg CO₂e" forceZeroInRange="true"/></yAxis>
+                                        </LineChart>
+                                    </VBox>
+                                </ScrollPane>
                             </content>
                         </Tab>
 
