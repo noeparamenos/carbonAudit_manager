@@ -27,11 +27,27 @@ Manejo de errores: las `SQLException` se capturan y se relanza como `IllegalArgu
 
 ## 3. Capa de servicio
 
-La responsabilidad de transformar consumos en kg CO₂e recae exclusivamente en `ServicioCalculoHuella`. Esto evita la dispersión de fórmulas y garantiza un único punto de verdad.
+Los controladores **nunca acceden directamente al DAO**. Toda la lógica de negocio y de acceso a datos pasa por la capa de servicio. Esta capa se divide en siete clases con responsabilidades bien delimitadas:
 
-- **Fórmula base:** `Emisiones = Cantidad × Factor_Emisión`
-- **Scopes:** el servicio agrupa las emisiones por Alcance 1, 2 y 3 según el factor de emisión asociado a cada consumo
-- **Commuting:** el cálculo de Alcance 3 requiere geolocalización; se delega en `IServicioGeografico` (implementado por `ServicioGeograficoORS`)
+### Servicios de gestión (CRUD por dominio)
+
+Cada servicio de gestión encapsula las operaciones CRUD de un dominio concreto, instanciando internamente los DAOs necesarios. El controlador desconoce la existencia de los DAOs.
+
+| Servicio | DAOs que orquesta | Responsabilidad |
+|---|---|---|
+| `ServicioGestionEmpresa` | `EmpresaDAO`, `DireccionDAO` | Alta, edición y borrado de empresas; persistencia de coordenadas |
+| `ServicioGestionDepartamento` | `DepartamentoDAO`, `DireccionDAO` | CRUD de departamentos; persistencia de coordenadas |
+| `ServicioGestionEmpleado` | `EmpleadoDAO`, `DireccionDAO` | CRUD de empleados; soft delete; geocodificación y cálculo de distancia al trabajo |
+| `ServicioGestionFactores` | `FactorEmisionDAO` | CRUD de factores de emisión |
+| `ServicioGestionResponsable` | `ResponsableDAO` | Asignación y cierre de mandatos de responsabilidad |
+
+### Servicio de cálculo
+
+**`ServicioCalculoHuella`** — concentra todos los cálculos de emisiones de CO₂ equivalente. Aplica la fórmula base `Emisiones = Cantidad × Factor_Emisión` y agrega los resultados por alcance (Scope 1, 2, 3). Para el Alcance 3 delega el cálculo de commuting en los DAOs de consumo y commuting.
+
+### Servicio geográfico externo
+
+**`ServicioGeograficoORS`** implementa la interfaz `IServicioGeografico` y encapsula toda la comunicación con la API de OpenRouteService: construcción de peticiones HTTP, gestión de la clave API, deserialización JSON con Gson y cálculo de distancias por carretera. El uso de la interfaz permite sustituir el proveedor geográfico sin modificar el resto del sistema.
 
 ## 4. Tipos de datos
 
@@ -55,9 +71,11 @@ Representa un mandato activo de un empleado sobre un departamento. Un mandato ac
 ## 6. Separación de responsabilidades
 
 | Capa | Responsabilidad |
-|------|----------------|
+|---|---|
 | Model | Estructura y relaciones entre entidades (POJOs puros) |
 | DAO | Traducción entre objetos Java y tablas SQL |
-| Service | Cálculos de emisiones y geolocalización |
-| Controller | Gestión de eventos de usuario y navegación entre pantallas |
-| View (FXML) | Definición de la estructura visual |
+| Service (gestión) | CRUD por dominio; orquesta DAOs y geocodificación |
+| Service (cálculo) | Cálculos de emisiones por alcance y período |
+| Service (geográfico) | Comunicación con API ORS externa |
+| Controller | Gestiona eventos de usuario; llama únicamente a servicios |
+| View (FXML) | Definición declarativa de la estructura visual |

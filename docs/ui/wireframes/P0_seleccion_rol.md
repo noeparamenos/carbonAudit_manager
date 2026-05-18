@@ -42,6 +42,6 @@
 ## Comportamiento
 
 - Hover sobre tarjeta: sombra o borde resaltado.
-- Clic en *Administrador* → navega a PA1.
+- Clic en *Administrador* → navega a PA0.
 - Clic en *Responsable* → navega a PR0.
 - No hay botón de volver — es el punto de entrada de la app.

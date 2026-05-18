@@ -1,4 +1,4 @@
-# Wireframe · PA3 · Gestión de departamento
+# Wireframe · PA2 · Gestión de departamento
 
 ## Layout general
 

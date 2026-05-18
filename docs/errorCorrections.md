@@ -39,20 +39,20 @@
 11. Al modificar la dirección de un empleado o departamento, la distancia al trabajo no se recalculaba.
     - **Causa**: `AsignarDistanciaTrabajo()` solo llamaba a `completarCoordenadas()` cuando `latitud == null || longitud == null`. Como los controladores no detectaban si la dirección había cambiado, las coordenadas anteriores persistían y la distancia calculada era incorrecta.
     - **Solución**: `AsignarDistanciaTrabajo()` en `ServicioCalculoHuella` llama siempre a `completarCoordenadas()` para ambas direcciones (empleado y departamento), sin condición.
-13. Varios controladores llamaban directamente a DAOs, violando la separación de capas. Además, `PA2Controller` contenía lógica de negocio (cálculo del total de emisiones).
-    - **Causa**: Los controladores instanciaban y llamaban a DAOs directamente para obtener listas y persistir resultados. `PA2Controller.cargarConsumos()` calculaba además el total sin commuting con `stream().reduce()`. `PA3Controller` llamaba a `EmpleadoDAO` y `DireccionDAO` en los callbacks `onSucceeded` de los hilos asíncronos, y también en `onGuardarEmpleado()` y `onDarDeBaja()` para persistir el empleado.
+13. Varios controladores llamaban directamente a DAOs, violando la separación de capas. Además, `PA1Controller` contenía lógica de negocio (cálculo del total de emisiones).
+    - **Causa**: Los controladores instanciaban y llamaban a DAOs directamente para obtener listas y persistir resultados. `PA1Controller.cargarConsumos()` calculaba además el total sin commuting con `stream().reduce()`. `PA2Controller` llamaba a `EmpleadoDAO` y `DireccionDAO` en los callbacks `onSucceeded` de los hilos asíncronos, y también en `onGuardarEmpleado()` y `onDarDeBaja()` para persistir el empleado.
     - **Solución (fase 1)**: Se añaden métodos de acceso a `ServicioCalculoHuella` que encapsulan las llamadas al DAO, manteniendo la regla Controller → Service → DAO:
       - `getConsumosMensuales(idDept, mes, anio)` — consumos de un departamento (`PR1Controller`)
-      - `getConsumosMensualesEmpresa(idEmpresa, mes, anio)` — consumos mensuales de empresa (`PA2Controller`)
-      - `getConsumosAnualesEmpresa(idEmpresa, anio)` — consumos anuales de empresa (`PA2Controller`)
-      - `getTotalConsumos(consumos)` — total sin commuting; elimina lógica de negocio del controlador (`PA2Controller`)
+      - `getConsumosMensualesEmpresa(idEmpresa, mes, anio)` — consumos mensuales de empresa (`PA1Controller`)
+      - `getConsumosAnualesEmpresa(idEmpresa, anio)` — consumos anuales de empresa (`PA1Controller`)
+      - `getTotalConsumos(consumos)` — total sin commuting; elimina lógica de negocio del controlador (`PA1Controller`)
     - **Solución (fase 2)**: Se crea `ServicioGestionEmpleado` para centralizar el CRUD de empleados y la persistencia de coordenadas, separando estas responsabilidades de `ServicioCalculoHuella` (que queda dedicado exclusivamente a cálculos de huella):
-      - `crearEmpleado(empleado)` — INSERT de nuevo empleado (`PA3Controller`)
-      - `actualizarEmpleado(empleado)` — UPDATE de empleado existente (`PA3Controller`)
-      - `darDeBajaEmpleado(idEmpleado, fecha)` — soft delete (`PA3Controller`)
-      - `getEmpleadosDepartamento(idDept)` — lista de empleados activos (`PA3Controller`)
-      - `persistirCoordenadas(dir)` — persiste coordenadas geocodificadas tras geocodificar la dirección del departamento (`PA3Controller`)
-      - `persistirResultadoDistancia(empleado)` — persiste distancia al trabajo + coordenadas de ambas direcciones tras el cálculo ORS (`PA3Controller`)
+      - `crearEmpleado(empleado)` — INSERT de nuevo empleado (`PA2Controller`)
+      - `actualizarEmpleado(empleado)` — UPDATE de empleado existente (`PA2Controller`)
+      - `darDeBajaEmpleado(idEmpleado, fecha)` — soft delete (`PA2Controller`)
+      - `getEmpleadosDepartamento(idDept)` — lista de empleados activos (`PA2Controller`)
+      - `persistirCoordenadas(dir)` — persiste coordenadas geocodificadas tras geocodificar la dirección del departamento (`PA2Controller`)
+      - `persistirResultadoDistancia(empleado)` — persiste distancia al trabajo + coordenadas de ambas direcciones tras el cálculo ORS (`PA2Controller`)
     - En el hilo asíncrono de cálculo de distancia, `Task.call()` invoca `servicioHuella.AsignarDistanciaTrabajo()` (cálculo puro) seguido de `servicioGestion.persistirResultadoDistancia()` (persistencia), respetando la separación de responsabilidades.
 12. `PSQLException` por clave duplicada en `ConsumoMensualDAO.create()` no llegaba al controlador.
     - **Causa**: El `catch (SQLException e)` del DAO solo hacía `printStackTrace()` y no relanzaba nada. El controlador capturaba `IllegalArgumentException` para mostrar avisos al usuario, pero nunca recibía el error de la restricción `UNIQUE(id_dept, id_factor, mes, anio)`.

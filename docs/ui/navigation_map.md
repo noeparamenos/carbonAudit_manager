@@ -5,12 +5,12 @@
 ```
 P0 · Selección de rol
   ├── [Administrador]
-  │     PA1 · Lista de empresas
+  │     PA0 · Lista de empresas
   │       └── [clic en empresa]
-  │             PA2 · Vista empresa
+  │             PA1 · Vista empresa
   │                   ├── Tab: Departamentos
   │                   │     └── [clic en departamento]
-  │                   │           PA3 · Gestión del departamento
+  │                   │           PA2 · Gestión del departamento
   │                   │                 ├── Empleados (añadir / editar)
   │                   │                 └── Asignar responsable
   │                   ├── Tab: Consumos  (tabla por dpto., filtro mes/año)
@@ -45,11 +45,11 @@ en PR0 actúan como mecanismo de contexto:
 | Pantalla                     | Administrador | Responsable |
 |------------------------------|---------------|-------------|
 | P0 · Selección de rol        | Sí            | Sí          |
-| PA1 · Lista de empresas      | Sí            | No          |
-| PA2 · Tab Departamentos      | Sí            | No          |
-| PA2 · Tab Consumos empresa   | Sí            | No          |
-| PA2 · Tab Gráficos empresa   | Sí            | No          |
-| PA3 · Gestión departamento   | Sí            | No          |
+| PA0 · Lista de empresas      | Sí            | No          |
+| PA1 · Tab Departamentos      | Sí            | No          |
+| PA1 · Tab Consumos empresa   | Sí            | No          |
+| PA1 · Tab Gráficos empresa   | Sí            | No          |
+| PA2 · Gestión departamento   | Sí            | No          |
 | PR0 · Selección responsable  | No            | Sí          |
 | PR1 · Tab Consumos           | No            | Sí          |
 | PR1 · Tab Trabajadores       | No            | Sí          |
@@ -61,4 +61,4 @@ en PR0 actúan como mecanismo de contexto:
 - Los **formularios de alta/edición** de empleados y responsables se abren como panel lateral
   dentro de la misma vista, no como modales bloqueantes. La única excepción es la confirmación
   de borrado, que sí usa modal.
-- El selector de **mes/año** se mantiene al cambiar de tab, tanto en PA2 como en PR1.
+- El selector de **mes/año** se mantiene al cambiar de tab, tanto en PA1 como en PR1.

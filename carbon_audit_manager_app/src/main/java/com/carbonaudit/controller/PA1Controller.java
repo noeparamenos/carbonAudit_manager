@@ -1,10 +1,11 @@
 package com.carbonaudit.controller;
 
-import com.carbonaudit.model.Direccion;
-import com.carbonaudit.model.Empresa;
-import com.carbonaudit.model.FactorEmision;
+import com.carbonaudit.model.*;
+import com.carbonaudit.service.ServicioCalculoHuella;
+import com.carbonaudit.service.ServicioGestionDepartamento;
+import com.carbonaudit.service.ServicioGestionEmpleado;
 import com.carbonaudit.service.ServicioGestionEmpresa;
-import com.carbonaudit.service.ServicioGestionFactores;
+import com.carbonaudit.service.ServicioGestionResponsable;
 import com.carbonaudit.service.external.ServicioGeograficoORS;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -16,146 +17,238 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.util.StringConverter;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 /**
- * Controlador de PA1 · Lista de empresas.
+ * Controlador de PA1 · Vista empresa.
  *
  * Realiza:
- *   - Tab Empresas: listar empresas, crear nueva, navegar a PA2.
- *   - Tab Factores de emisión: listar, crear, editar y eliminar factores.
+ *   - Mostrar la cabecera de la empresa (nombre, CIF, ciudad).
+ *   - Gestionar el selector de período (mes/año) compartido entre tabs.
+ *   - Tab Departamentos: listar departamentos, nuevo dpto., navegar a PA2.
+ *   - Tab Consumos: mostrar consumos agregados de toda la empresa para el período.
+ *   - Editar y eliminar la empresa activa.
+ *   - Exportar consumos a CSV.
  */
 public class PA1Controller {
 
-    // ── Tab Empresas ──────────────────────────────────────────────────────
+    // ── Cabecera ─────────────────────────────────────────────────────────
 
-    @FXML private TableView<Empresa>        tablaEmpresas;
-    @FXML private TableColumn<Empresa, String> colNombre;
-    @FXML private TableColumn<Empresa, String> colCif;
-    @FXML private TableColumn<Empresa, String> colCiudad;
-    @FXML private TableColumn<Empresa, String> colSector;
+    @FXML private Label lblBreadcrumb;
+    @FXML private Label lblNombreEmpresa;
+    @FXML private Label lblInfoEmpresa;
 
-    // ── Tab Factores de emisión ───────────────────────────────────────────
+    // ── Selector de período ───────────────────────────────────────────────
+    /*
+     * combMes se deshabilita cuando el usuario marca "Año completo".
+     * combAnio siempre permanece activo.
+     */
+    @FXML private ComboBox<String>  combMes;
+    @FXML private ComboBox<Integer> combAnio;
+    @FXML private CheckBox chkAnioCompleto;
+    @FXML private CheckBox chkIncluirCommuting;
 
-    @FXML private TableView<FactorEmision>           tablaFactores;
-    @FXML private TableColumn<FactorEmision, String> colFactNombre;
-    @FXML private TableColumn<FactorEmision, String> colFactUnidad;
-    @FXML private TableColumn<FactorEmision, String> colFactValor;
-    @FXML private TableColumn<FactorEmision, String> colFactAlcance;
+    // ── TabPane ───────────────────────────────────────────────────────────
 
-    // ── Panel lateral: empresa ────────────────────────────────────────────
+    @FXML private TabPane tabPane;
+    @FXML private Tab     tabDepartamentos;
+    @FXML private Tab     tabConsumos;
 
-    @FXML private VBox      panelEmpresa;
-    @FXML private TextField campNombre;
-    @FXML private TextField campCif;
-    @FXML private TextField campTelefono;
-    @FXML private TextField campEmail;
-    @FXML private TextField campSector;
-    @FXML private TextField campCalle;
-    @FXML private TextField campNumero;
-    @FXML private TextField campCiudad;
-    @FXML private TextField campCp;
-    @FXML private TextField campProvincia;
+    // ========= Tab Departamentos ==========================
 
-    // ── Panel lateral: factor ─────────────────────────────────────────────
+    @FXML private TableView<Departamento>        tablaDepartamentos;
+    @FXML private TableColumn<Departamento, String> colDeptNombre;
+    @FXML private TableColumn<Departamento, String> colDeptLocalidad;
+    @FXML private TableColumn<Departamento, String> colDeptEmpleados;
+    @FXML private TableColumn<Departamento, String> colDeptResponsable;
 
-    @FXML private VBox      panelFactor;
-    @FXML private Label     panelFactorTitulo;
-    @FXML private TextField campFactNombre;
-    @FXML private TextField campFactUnidad;
-    @FXML private TextField campFactValor;
-    @FXML private ComboBox<String> combFactAlcance;
-    @FXML private Button    btnEliminarFactor;
+    @FXML private VBox  panelDpto;
+    @FXML private Label panelDptoTitulo;
+    @FXML private TextField campDptoNombre;
+    @FXML private TextField campDptoCalle;
+    @FXML private TextField campDptoNumero;
+    @FXML private TextField campDptoCiudad;
+    @FXML private TextField campDptoCp;
+    @FXML private TextField campDptoProvincia;
+
+    // ================== Tab Consumos ======================
+
+    @FXML private TableView<ConsumoMensual>        tablaConsumos;
+    @FXML private TableColumn<ConsumoMensual, String> colConsDept;
+    @FXML private TableColumn<ConsumoMensual, String> colConsRecurso;
+    @FXML private TableColumn<ConsumoMensual, String> colConsCantidad;
+    @FXML private TableColumn<ConsumoMensual, String> colConsUnidad;
+    @FXML private TableColumn<ConsumoMensual, String> colConsAlcance;
+    @FXML private TableColumn<ConsumoMensual, String> colConsEmision;
+    @FXML private Label lblTotalEmpresa;
+
+    // ========= Panel editar empresa =========
+
+    @FXML private VBox      panelEditEmpresa;
+    @FXML private TextField editNombre;
+    @FXML private TextField editCif;
+    @FXML private TextField editTelefono;
+    @FXML private TextField editEmail;
+    @FXML private TextField editSector;
+    @FXML private TextField editCalle;
+    @FXML private TextField editNumero;
+    @FXML private TextField editCiudad;
+    @FXML private TextField editCp;
+    @FXML private TextField editProvincia;
 
     // ── Servicios ─────────────────────────────────────────────────────────
 
-    private final ServicioGestionEmpresa  servicioEmpresa  = new ServicioGestionEmpresa();
-    private final ServicioGestionFactores servicioFactores = new ServicioGestionFactores();
-    private final ServicioGeograficoORS   geoService       = new ServicioGeograficoORS();
+    private final ServicioGestionEmpresa      servicioEmpresa      = new ServicioGestionEmpresa();
+    private final ServicioGestionDepartamento servicioDepartamento = new ServicioGestionDepartamento();
+    private final ServicioGestionResponsable  servicioResponsable  = new ServicioGestionResponsable();
+    private final ServicioGestionEmpleado     servicioGestion      = new ServicioGestionEmpleado();
+    private final ServicioGeograficoORS       geoService           = new ServicioGeograficoORS();
+    private final ServicioCalculoHuella       servicioHuella       = new ServicioCalculoHuella();
 
     // ── Estado ────────────────────────────────────────────────────────────
 
+    private Empresa empresa;
+
     /*
-     * Factor que se está editando. null indica modo "nuevo factor".
+     * Nombres de los meses en español. 0 = Enero
+     * Para el ComboBox y para convertir índice ↔ número de mes.
      */
-    private FactorEmision factorEditando;
+    private static final String[] NOMBRES_MESES = {
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    };
 
-    private final ObservableList<Empresa>       listaEmpresas = FXCollections.observableArrayList();
-    private final ObservableList<FactorEmision> listaFactores = FXCollections.observableArrayList();
-
-    private static final List<String> ALCANCES = List.of(
-            "1 · Combustión directa",
-            "2 · Energía (electricidad)",
-            "3 · Transporte y movilidad"
-    );
+    private final ObservableList<Departamento>   listaDepartamentos = FXCollections.observableArrayList();
+    private final ObservableList<ConsumoMensual> listaConsumos      = FXCollections.observableArrayList();
 
     // ── Inicialización ─────────────────────────────────────────────────────
 
+    /**
+     * Se ejecuta automáticamente cuando JavaFX termina de cargar el FXML.
+     * En este punto 'empresa' aún es null — se asigna después en setEmpresa().
+     * Solo se configuran las partes estáticas que no dependen de la empresa.
+     */
     @FXML
     public void initialize() {
-        configurarColumnasEmpresas();
-        configurarColumnasFactores();
-        configurarClicEnFilaEmpresas();
-        configurarClicEnFilaFactores();
-        combFactAlcance.setItems(FXCollections.observableArrayList(ALCANCES));
-        cargarEmpresas();
-        cargarFactores();
+
+        configurarSelectorPeriodo();
+        configurarColumnasDepartamentos();
+        configurarColumnasConsumos();
+        configurarClicEnFila();
+        configurarCambioTab();
     }
 
-    // ── Configuración de columnas ──────────────────────────────────────────
+    /**
+     * Recibe la empresa seleccionada desde PA0 y actualiza toda la pantalla.
+     *
+     * El controlador origen llama a este método
+     * DESPUÉS de cargar el FXML (loader.getController()) y ANTES de mostrar
+     * la escena, para pasar datos al controlador destino.
+     */
+    public void setEmpresa(Empresa empresa) {
+        this.empresa = empresa;
+        actualizarCabecera();
+        cargarDepartamentos();
+    }
 
-    private void configurarColumnasEmpresas() {
-        tablaEmpresas.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+    // ============== Configuración inicial ================
 
-        colNombre.setCellValueFactory(data ->
-                new SimpleStringProperty(data.getValue().getNombreSocial()));
+    /**
+     * Rellena los ComboBox de mes y año con los valores posibles y selecciona el período actual.
+     * Registra los listeners que recargan la pestaña activa al cambiar el período.
+     */
+    private void configurarSelectorPeriodo() {
+        combMes.getItems().addAll(NOMBRES_MESES);
+        // Seleccionar el mes actual (getMonthValue() devuelve 1-12; el índice emieza en 0)
+        combMes.getSelectionModel().select(LocalDate.now().getMonthValue() - 1);
 
-        colCif.setCellValueFactory(data ->
-                new SimpleStringProperty(data.getValue().getCif()));
+        // Se muestran solo los 4 ultimos años
+        int anioActual = LocalDate.now().getYear();
+        for (int a = anioActual; a >= anioActual - 4; a--) {
+            combAnio.getItems().add(a);
+        }
+        combAnio.getSelectionModel().selectFirst();
 
-        colCiudad.setCellValueFactory(data -> {
-            Empresa e = data.getValue();
-            String ciudad = (e.getDireccion() != null) ? e.getDireccion().getCiudad() : "";
-            return new SimpleStringProperty(ciudad);
+        // Al cambiar el período, recargar la pestaña activa
+        combMes.setOnAction(e -> refrescarTabActiva());
+        combAnio.setOnAction(e -> refrescarTabActiva());
+    }
+
+    /**
+     * Asocia cada columna de la tabla de departamentos con el campo del objeto que debe mostrar.
+     * La columna de empleados y la de responsable activo lanzan consultas a BD por cada fila.
+     */
+    private void configurarColumnasDepartamentos() {
+        tablaDepartamentos.setColumnResizePolicy(
+                TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+
+        colDeptNombre.setCellValueFactory(data -> //recibe el dept de la fila
+                new SimpleStringProperty(data.getValue().getNombre())); // devuelve su nombre
+
+        colDeptLocalidad.setCellValueFactory(data -> {
+            Direccion dir = data.getValue().getDireccion();
+            return new SimpleStringProperty(dir != null ? dir.getCiudad() : "—");
         });
 
-        colSector.setCellValueFactory(data -> {
-            String sector = data.getValue().getSector();
-            return new SimpleStringProperty(sector != null ? sector : "—");
+        // countEmpleadosDepartamento() lanza una consulta COUNT(*) por cada fila
+        colDeptEmpleados.setCellValueFactory(data -> {
+            int count = servicioGestion.countEmpleadosDepartamento(
+                    data.getValue().getIdDepartamento());
+            return new SimpleStringProperty(String.valueOf(count)); // Total de empleados en el Departamento
+        });
+
+        colDeptResponsable.setCellValueFactory(data -> {
+            Optional<Responsable> resp = servicioResponsable.getActivoByDepartamento(
+                    data.getValue().getIdDepartamento());
+            // Si no hay responsable activo, mostramos un guion
+            return new SimpleStringProperty(
+                    resp.map(r -> r.getEncargado().getNombre()).orElse("—"));
         });
     }
 
-    private void configurarColumnasFactores() {
-        tablaFactores.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+    /**
+     * Asocia cada columna de la tabla de consumos con el campo del objeto que debe mostrar.
+     * La emisión se calcula en el momento con calcularEmision() (cantidad × factor).
+     */
+    private void configurarColumnasConsumos() {
+        tablaConsumos.setColumnResizePolicy(
+                TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
-        colFactNombre.setCellValueFactory(data ->
-                new SimpleStringProperty(data.getValue().getNombre()));
+        colConsDept.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().getDepartamento().getNombre()));
 
-        colFactUnidad.setCellValueFactory(data ->
-                new SimpleStringProperty(data.getValue().getUnidad()));
+        colConsRecurso.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().getFactorEmision().getNombre()));
 
-        colFactValor.setCellValueFactory(data ->
-                new SimpleStringProperty(data.getValue().getValorFactor().toPlainString()));
+        colConsCantidad.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().getCantidad().toPlainString()));
 
-        colFactAlcance.setCellValueFactory(data -> {
-            int alcance = data.getValue().getAlcance();
-            String texto = switch (alcance) {
-                case 1 -> "Alcance 1 · Directo";
-                case 2 -> "Alcance 2 · Energía";
-                case 3 -> "Alcance 3 · Transporte";
-                default -> "—";
-            };
-            return new SimpleStringProperty(texto);
+        colConsUnidad.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().getFactorEmision().getUnidad()));
+
+        colConsAlcance.setCellValueFactory(data ->
+                new SimpleStringProperty("Alcance " + data.getValue().getFactorEmision().getAlcance()));
+
+        colConsEmision.setCellValueFactory(data -> {
+            BigDecimal emision = data.getValue().calcularEmision();
+            return new SimpleStringProperty(String.format("%.2f", emision));
         });
     }
 
-    private void configurarClicEnFilaEmpresas() {
-        tablaEmpresas.setRowFactory(tv -> {
-            TableRow<Empresa> fila = new TableRow<>();
+    /**
+     * Configura la navegación a PA2 con un clic en la fila del departamento.
+     */
+    private void configurarClicEnFila() {
+        tablaDepartamentos.setRowFactory(tv -> {
+            TableRow<Departamento> fila = new TableRow<>();
             fila.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 1 && !fila.isEmpty()) {
                     navegarAPA2(fila.getItem());
@@ -165,70 +258,155 @@ public class PA1Controller {
         });
     }
 
-    /** Clic en una fila de factores abre el panel en modo edición. */
-    private void configurarClicEnFilaFactores() {
-        tablaFactores.setRowFactory(tv -> {
-            TableRow<FactorEmision> fila = new TableRow<>();
-            fila.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 1 && !fila.isEmpty()) {
-                    abrirPanelEditarFactor(fila.getItem());
-                }
-            });
-            return fila;
-        });
+    /**
+     * Carga el tab de Consumos al seleccionarlo, evitando consultas innecesarias
+     * si el usuario no visita ese tab durante la sesión.
+     */
+    private void configurarCambioTab() {
+        tabPane.getSelectionModel().selectedItemProperty().addListener(
+                (obs, anterior, nuevo) -> {
+                    if (empresa == null || nuevo == null) return;
+                    if (nuevo == tabConsumos) cargarConsumos();
+                });
     }
 
-    // ── Carga de datos ────────────────────────────────────────────────────
+    // ── Carga de datos ─────────────────────────────────────────────────────
 
-    private void cargarEmpresas() {
-        listaEmpresas.setAll(servicioEmpresa.getEmpresas());
-        tablaEmpresas.setItems(listaEmpresas);
+    /** Actualiza los labels de cabecera con los datos de la empresa activa. */
+    private void actualizarCabecera() {
+        lblBreadcrumb.setText(empresa.getNombreSocial());
+        lblNombreEmpresa.setText(empresa.getNombreSocial());
+        String ciudad = (empresa.getDireccion() != null)
+                ? empresa.getDireccion().getCiudad() : "";
+        lblInfoEmpresa.setText("CIF: " + empresa.getCif() + "  ·  " + ciudad);
     }
 
-    private void cargarFactores() {
-        listaFactores.setAll(servicioFactores.getFactores());
-        tablaFactores.setItems(listaFactores);
+    /** Consulta todos los departamentos de la empresa activa y los muestra en la tabla. */
+    private void cargarDepartamentos() {
+        listaDepartamentos.setAll(
+                servicioDepartamento.getDepartamentosEmpresa(empresa.getIdEmpresa()));
+        tablaDepartamentos.setItems(listaDepartamentos);
     }
 
-    // ── Panel lateral: Nueva empresa ──────────────────────────────────────
+    /**
+     * Carga los consumos según el período y las opciones activas.
+     * Si "Año completo" está marcado, consulta los 12 meses; si no, solo el mes seleccionado.
+     * Si "Incluir commuting" está marcado, el total incluye Alcance 3 vía ServicioCalculoHuella.
+     */
+    private void cargarConsumos() {
+        if (empresa == null) return;
 
+        int anio = combAnio.getSelectionModel().getSelectedItem();
+        List<ConsumoMensual> consumos;
+        BigDecimal total;
+
+        // Calculo anualizado
+        if (chkAnioCompleto.isSelected()) {
+            // Obtiene consumos a través del Servicio (no del DAO directamente)
+            consumos = servicioHuella.getConsumosAnualesEmpresa(empresa.getIdEmpresa(), anio);
+            total = chkIncluirCommuting.isSelected()
+                    // Con commuting: Scope 1+2+3 (12 meses) vía Servicio
+                    ? servicioHuella.getHuellaAnualEmpresa(empresa, anio)
+                    // Sin commuting: suma de emisiones de la lista ya obtenida, sin nueva query
+                    : servicioHuella.getTotalConsumos(consumos);
+
+        // Calculo mensual
+        } else {
+            int mes = combMes.getSelectionModel().getSelectedIndex() + 1;
+            // Obtiene consumos a través del Servicio (no del DAO directamente)
+            consumos = servicioHuella.getConsumosMensualesEmpresa(empresa.getIdEmpresa(), mes, anio);
+            total = chkIncluirCommuting.isSelected()
+                    // Con commuting: Scope 1+2+3 para el mes seleccionado vía Servicio
+                    ? servicioHuella.getHuellaTotalEmpresaMes(empresa, mes, anio)
+                    // Sin commuting: suma de emisiones de la lista ya obtenida, sin nueva query
+                    : servicioHuella.getTotalConsumos(consumos);
+        }
+
+        listaConsumos.setAll(consumos);
+        tablaConsumos.setItems(listaConsumos);
+        lblTotalEmpresa.setText(String.format("%.2f kg CO₂e", total));
+    }
+
+    /** Activa o desactiva el modo año completo y deshabilita el combo de mes en consecuencia. */
     @FXML
-    private void onNuevaEmpresa() {
-        limpiarFormEmpresa();
-        cerrarPanelFactor();
-        panelEmpresa.setVisible(true);
-        panelEmpresa.setManaged(true);
+    private void onToggleAnioCompleto() {
+        combMes.setDisable(chkAnioCompleto.isSelected());
+        if (tabPane.getSelectionModel().getSelectedItem() == tabConsumos) {
+            cargarConsumos();
+        }
     }
 
+    /** Recalcula el total de la pestaña Consumos al marcar o desmarcar "Incluir commuting". */
     @FXML
-    private void onGuardarEmpresa() {
-        if (campNombre.getText().trim().isEmpty()   || campCif.getText().trim().isEmpty()
-                || campCalle.getText().trim().isEmpty()   || campNumero.getText().trim().isEmpty()
-                || campCiudad.getText().trim().isEmpty()  || campCp.getText().trim().isEmpty()
-                || campProvincia.getText().trim().isEmpty()) {
+    private void onToggleCommuting() {
+        if (tabPane.getSelectionModel().getSelectedItem() == tabConsumos) {
+            cargarConsumos();
+        }
+    }
+
+    /** Recarga los datos de la pestaña activa al cambiar el selector de período. */
+    private void refrescarTabActiva() {
+        if (empresa == null) return;
+        Tab activa = tabPane.getSelectionModel().getSelectedItem();
+        if (activa == tabConsumos) cargarConsumos();
+        // Gráficos: pendiente de implementar en una fase posterior
+    }
+
+    // =========== Panel lateral: NUEVO DEPARTAMENTO =======================
+
+    /**
+     * Abre el panel lateral de nuevo departamento con los campos de dirección
+     * pre-rellenos con los datos de la empresa activa como punto de partida.
+     */
+    @FXML
+    private void onNuevoDepartamento() {
+        // Pre-rellenar con la dirección de la empresa como punto de partida
+        campDptoNombre.clear();
+        if (empresa.getDireccion() != null) {
+            Direccion dir = empresa.getDireccion();
+            campDptoCalle.setText(dir.getCalle());
+            campDptoNumero.setText(String.valueOf(dir.getNumero()));
+            campDptoCiudad.setText(dir.getCiudad());
+            campDptoCp.setText(dir.getCodigoPostal());
+            campDptoProvincia.setText(dir.getProvincia() != null ? dir.getProvincia() : "");
+        }
+        cerrarPanelEditEmpresa();
+        panelDpto.setVisible(true);
+        panelDpto.setManaged(true);
+    }
+
+    /**
+     * Crea el departamento con una Dirección propia.
+     * Se crea siempre una Dirección nueva (idDireccion = 0) para que el departamento
+     * sea independiente de la empresa — si luego se edita una, la otra no cambia.
+     */
+    @FXML
+    private void onGuardarDpto() {
+        String nombre = campDptoNombre.getText().trim();
+        if (nombre.isEmpty()
+                || campDptoCalle.getText().trim().isEmpty()
+                || campDptoNumero.getText().trim().isEmpty()
+                || campDptoCiudad.getText().trim().isEmpty()
+                || campDptoCp.getText().trim().isEmpty()) {
             mostrarError("Los campos marcados con * son obligatorios.");
             return;
         }
         try {
+            // Dirección nueva con idDireccion = 0 → el DAO la inserta como registro propio
             Direccion dir = new Direccion();
-            dir.setCalle(campCalle.getText().trim());
-            dir.setNumero(Integer.parseInt(campNumero.getText().trim()));
-            dir.setCiudad(campCiudad.getText().trim());
-            dir.setCodigoPostal(campCp.getText().trim());
-            dir.setProvincia(campProvincia.getText().trim());
+            dir.setCalle(campDptoCalle.getText().trim());
+            dir.setNumero(Integer.parseInt(campDptoNumero.getText().trim()));
+            dir.setCiudad(campDptoCiudad.getText().trim());
+            dir.setCodigoPostal(campDptoCp.getText().trim());
+            dir.setProvincia(campDptoProvincia.getText().trim());
 
-            Empresa empresa = new Empresa();
-            empresa.setNombreSocial(campNombre.getText().trim());
-            empresa.setCif(campCif.getText().trim());
-            empresa.setTelefono(campTelefono.getText().trim());
-            empresa.setEmail(campEmail.getText().trim());
-            empresa.setSector(campSector.getText().trim());
-            empresa.setDireccion(dir);
-
-            servicioEmpresa.crearEmpresa(empresa);
-            cargarEmpresas();
-            cerrarPanelEmpresa();
-            geocodificarDireccionEnSegundoPlano(dir);
+            Departamento dpto = new Departamento();
+            dpto.setNombre(nombre);
+            dpto.setEmpresa(empresa);
+            dpto.setDireccion(dir);
+            servicioDepartamento.crearDepartamento(dpto);
+            cargarDepartamentos();
+            cerrarPanelDpto();
         } catch (NumberFormatException e) {
             mostrarError("El número de calle debe ser un valor numérico.");
         } catch (IllegalArgumentException e) {
@@ -237,118 +415,165 @@ public class PA1Controller {
     }
 
     @FXML
-    private void onCancelarEmpresa() {
-        cerrarPanelEmpresa();
+    private void onCancelarDpto() {
+        cerrarPanelDpto();
     }
 
-    // ── Panel lateral: Nuevo / Editar factor ──────────────────────────────
+    // ── Panel lateral: Editar empresa ──────────────────────────────────────
 
     @FXML
-    private void onNuevoFactor() {
-        factorEditando = null;
-        panelFactorTitulo.setText("Nuevo factor");
-        limpiarFormFactor();
-        btnEliminarFactor.setVisible(false);
-        btnEliminarFactor.setManaged(false);
-        cerrarPanelEmpresa();
-        panelFactor.setVisible(true);
-        panelFactor.setManaged(true);
-    }
-
-    private void abrirPanelEditarFactor(FactorEmision factor) {
-        factorEditando = factor;
-        panelFactorTitulo.setText("Editar factor");
-        campFactNombre.setText(factor.getNombre());
-        campFactUnidad.setText(factor.getUnidad());
-        campFactValor.setText(factor.getValorFactor().toPlainString());
-        combFactAlcance.getSelectionModel().select(factor.getAlcance() - 1);
-        btnEliminarFactor.setVisible(true);
-        btnEliminarFactor.setManaged(true);
-        cerrarPanelEmpresa();
-        panelFactor.setVisible(true);
-        panelFactor.setManaged(true);
+    private void onEditarEmpresa() {
+        // Pre-rellenar el formulario con los datos actuales de la empresa
+        editNombre.setText(empresa.getNombreSocial());
+        editCif.setText(empresa.getCif());
+        editTelefono.setText(empresa.getTelefono() != null ? empresa.getTelefono() : "");
+        editEmail.setText(empresa.getEmail()    != null ? empresa.getEmail()    : "");
+        editSector.setText(empresa.getSector()  != null ? empresa.getSector()   : "");
+        if (empresa.getDireccion() != null) {
+            Direccion dir = empresa.getDireccion();
+            editCalle.setText(dir.getCalle());
+            editNumero.setText(String.valueOf(dir.getNumero()));
+            editCiudad.setText(dir.getCiudad());
+            editCp.setText(dir.getCodigoPostal());
+            editProvincia.setText(dir.getProvincia());
+        }
+        cerrarPanelDpto();
+        panelEditEmpresa.setVisible(true);
+        panelEditEmpresa.setManaged(true);
     }
 
     @FXML
-    private void onGuardarFactor() {
-        String nombre = campFactNombre.getText().trim();
-        String unidad = campFactUnidad.getText().trim();
-        if (nombre.isEmpty() || unidad.isEmpty()
-                || campFactValor.getText().trim().isEmpty()
-                || combFactAlcance.getValue() == null) {
-            mostrarError("Todos los campos son obligatorios.");
+    private void onGuardarEditEmpresa() {
+        if (editNombre.getText().trim().isEmpty()  || editCif.getText().trim().isEmpty()
+                || editCalle.getText().trim().isEmpty()  || editNumero.getText().trim().isEmpty()
+                || editCiudad.getText().trim().isEmpty() || editCp.getText().trim().isEmpty()
+                || editProvincia.getText().trim().isEmpty()) {
+            mostrarError("Los campos marcados con * son obligatorios.");
             return;
         }
+        // Guardar originales para restaurar si la validación falla
+        String origNombre   = empresa.getNombreSocial();
+        String origCif      = empresa.getCif();
+        String origTelefono = empresa.getTelefono();
+        String origEmail    = empresa.getEmail();
+        String origSector   = empresa.getSector();
+        Direccion dir = empresa.getDireccion() != null ? empresa.getDireccion() : new Direccion();
+        String origCalle    = dir.getCalle();
+        int    origNumero   = dir.getNumero();
+        String origCiudad   = dir.getCiudad();
+        String origCp       = dir.getCodigoPostal();
+        String origProvincia = dir.getProvincia();
         try {
-            BigDecimal valor = new BigDecimal(campFactValor.getText().trim().replace(",", "."));
-            if (valor.compareTo(BigDecimal.ZERO) < 0) {
-                mostrarError("El factor de emisión no puede ser negativo.");
-                return;
-            }
-            int alcance = combFactAlcance.getSelectionModel().getSelectedIndex() + 1;
+            empresa.setNombreSocial(editNombre.getText().trim());
+            empresa.setCif(editCif.getText().trim());
+            empresa.setTelefono(editTelefono.getText().trim());
+            empresa.setEmail(editEmail.getText().trim());
+            empresa.setSector(editSector.getText().trim());
 
-            if (factorEditando == null) {
-                FactorEmision nuevo = new FactorEmision();
-                nuevo.setNombre(nombre);
-                nuevo.setUnidad(unidad);
-                nuevo.setValorFactor(valor);
-                nuevo.setAlcance(alcance);
-                servicioFactores.crearFactor(nuevo);
-            } else {
-                factorEditando.setNombre(nombre);
-                factorEditando.setUnidad(unidad);
-                factorEditando.setValorFactor(valor);
-                factorEditando.setAlcance(alcance);
-                servicioFactores.actualizarFactor(factorEditando);
-            }
+            dir.setCalle(editCalle.getText().trim());
+            dir.setNumero(Integer.parseInt(editNumero.getText().trim()));
+            dir.setCiudad(editCiudad.getText().trim());
+            dir.setCodigoPostal(editCp.getText().trim());
+            dir.setProvincia(editProvincia.getText().trim());
+            empresa.setDireccion(dir);
 
-            cargarFactores();
-            cerrarPanelFactor();
+            servicioEmpresa.actualizarEmpresa(empresa);
+            actualizarCabecera();
+            cerrarPanelEditEmpresa();
+            geocodificarDireccionEnSegundoPlano(dir);
         } catch (NumberFormatException e) {
-            mostrarError("El valor del factor debe ser un número decimal (usa punto como separador).");
+            restaurarEmpresa(empresa, dir,
+                    origNombre, origCif, origTelefono, origEmail, origSector,
+                    origCalle, origNumero, origCiudad, origCp, origProvincia);
+            mostrarError("El número de calle debe ser un valor numérico.");
         } catch (IllegalArgumentException e) {
+            restaurarEmpresa(empresa, dir,
+                    origNombre, origCif, origTelefono, origEmail, origSector,
+                    origCalle, origNumero, origCiudad, origCp, origProvincia);
             mostrarError(e.getMessage());
         }
     }
 
-    /**
-     * Elimina el factor si no está en uso. La BD rechazará el DELETE con una
-     * excepción de FK si algún empleado, consumo o commuting lo referencia;
-     * el DAO imprime el error y el controlador informa al usuario.
-     */
     @FXML
-    private void onEliminarFactor() {
-        if (factorEditando == null) return;
+    private void onCancelarEditEmpresa() {
+        cerrarPanelEditEmpresa();
+    }
+
+    // ── Eliminar empresa ───────────────────────────────────────────────────
+
+    @FXML
+    private void onEliminarEmpresa() {
+        List<Departamento> departamentos =
+                servicioDepartamento.getDepartamentosEmpresa(empresa.getIdEmpresa());
+        if (!departamentos.isEmpty()) {
+            mostrarError("No se puede eliminar la empresa porque tiene "
+                    + departamentos.size() + " departamento(s) asociado(s).\n"
+                    + "Elimina primero todos los departamentos.");
+            return;
+        }
 
         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
         confirmacion.setTitle("Confirmar eliminación");
-        confirmacion.setHeaderText("¿Eliminar \"" + factorEditando.getNombre() + "\"?");
-        confirmacion.setContentText(
-                "Solo es posible si ningún empleado ni consumo lo está usando.");
+        confirmacion.setHeaderText("¿Eliminar \"" + empresa.getNombreSocial() + "\"?");
+        confirmacion.setContentText("Esta acción no se puede deshacer.");
         confirmacion.showAndWait().ifPresent(respuesta -> {
             if (respuesta == ButtonType.OK) {
-                servicioFactores.eliminarFactor(factorEditando.getIdFactor());
-                cargarFactores();
-                cerrarPanelFactor();
+                servicioEmpresa.eliminarEmpresa(empresa.getIdEmpresa());
+                navegarAPA0();
             }
         });
     }
 
+    // ── Exportar CSV ───────────────────────────────────────────────────────
+
     @FXML
-    private void onCancelarFactor() {
-        cerrarPanelFactor();
+    private void onExportarCSV() {
+        if (listaConsumos.isEmpty()) {
+            mostrarError("No hay datos que exportar para el período seleccionado.");
+            return;
+        }
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Guardar CSV");
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Archivo CSV (*.csv)", "*.csv"));
+        fileChooser.setInitialFileName(
+                "consumos_" + empresa.getNombreSocial().replaceAll("\\s+", "_") + ".csv");
+
+        Stage stage = (Stage) tablaConsumos.getScene().getWindow();
+        java.io.File archivo = fileChooser.showSaveDialog(stage);
+        if (archivo == null) return;
+
+        try (FileWriter fw = new FileWriter(archivo)) {
+            fw.write("Departamento;Recurso;Cantidad;Unidad;Alcance;Emision_kgCO2e\n");
+            for (ConsumoMensual c : listaConsumos) {
+                fw.write(c.getDepartamento().getNombre() + ";"
+                        + c.getFactorEmision().getNombre()  + ";"
+                        + c.getCantidad()                   + ";"
+                        + c.getFactorEmision().getUnidad()  + ";"
+                        + c.getFactorEmision().getAlcance() + ";"
+                        + c.calcularEmision()               + "\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostrarError("Error al exportar el archivo: " + e.getMessage());
+        }
     }
 
     // ── Navegación ─────────────────────────────────────────────────────────
 
-    private void navegarAPA2(Empresa empresa) {
+    /** Vuelve a PA1 al hacer clic en "Empresas" del breadcrumb. */
+    @FXML
+    private void onVolverAPA0() {
+        navegarAPA0();
+    }
+
+    private void navegarAPA0() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/carbonaudit/view/pa2-empresa-view.fxml"));
+                    getClass().getResource("/com/carbonaudit/view/pa0-empresas-view.fxml"));
             Scene escena = new Scene(loader.load());
-            PA2Controller pa2 = loader.getController();
-            pa2.setEmpresa(empresa);
-            Stage stage = (Stage) tablaEmpresas.getScene().getWindow();
+            Stage stage = (Stage) lblNombreEmpresa.getScene().getWindow();
             stage.setScene(escena);
             stage.sizeToScene();
         } catch (Exception e) {
@@ -356,33 +581,51 @@ public class PA1Controller {
         }
     }
 
-    // ── Helpers ─────────────────────────────────────────────────────────────
-
-    private void cerrarPanelEmpresa() {
-        panelEmpresa.setVisible(false);
-        panelEmpresa.setManaged(false);
-        limpiarFormEmpresa();
+    /**
+     * Navega a PA2 pasando el departamento seleccionado al controlador destino.
+     * Mismo patrón que PA0 → PA1: cargar FXML, obtener controlador, pasar objeto, mostrar.
+     */
+    private void navegarAPA2(Departamento departamento) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/carbonaudit/view/pa2-departamento-view.fxml"));
+            Scene escena = new Scene(loader.load());
+            PA2Controller pa2 = loader.getController();
+            pa2.setDepartamento(departamento);
+            Stage stage = (Stage) tablaDepartamentos.getScene().getWindow();
+            stage.setScene(escena);
+            stage.sizeToScene();
+        } catch (Exception e) {
+            e.printStackTrace();
+            e.printStackTrace();
+        }
     }
 
-    private void cerrarPanelFactor() {
-        panelFactor.setVisible(false);
-        panelFactor.setManaged(false);
-        limpiarFormFactor();
-        factorEditando = null;
+    // ── Helpers ────────────────────────────────────────────────────────────
+
+    private void cerrarPanelDpto() {
+        panelDpto.setVisible(false);
+        panelDpto.setManaged(false);
+        campDptoNombre.clear();
+        campDptoCalle.clear();    campDptoNumero.clear();
+        campDptoCiudad.clear();   campDptoCp.clear();
+        campDptoProvincia.clear();
     }
 
-    private void limpiarFormEmpresa() {
-        campNombre.clear();   campCif.clear();
-        campTelefono.clear(); campEmail.clear();  campSector.clear();
-        campCalle.clear();    campNumero.clear(); campCiudad.clear();
-        campCp.clear();       campProvincia.clear();
+    private void cerrarPanelEditEmpresa() {
+        panelEditEmpresa.setVisible(false);
+        panelEditEmpresa.setManaged(false);
     }
 
-    private void limpiarFormFactor() {
-        campFactNombre.clear();
-        campFactUnidad.clear();
-        campFactValor.clear();
-        combFactAlcance.getSelectionModel().clearSelection();
+    private void restaurarEmpresa(Empresa emp, Direccion dir,
+                                   String nombre, String cif, String telefono,
+                                   String email, String sector,
+                                   String calle, int numero, String ciudad,
+                                   String cp, String provincia) {
+        emp.setNombreSocial(nombre); emp.setCif(cif);
+        emp.setTelefono(telefono);   emp.setEmail(email); emp.setSector(sector);
+        dir.setCalle(calle);         dir.setNumero(numero);
+        dir.setCiudad(ciudad);       dir.setCodigoPostal(cp); dir.setProvincia(provincia);
     }
 
     private void mostrarError(String mensaje) {

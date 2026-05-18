@@ -1,4 +1,4 @@
-# Wireframe · PA2 · Vista empresa
+# Wireframe · PA1 · Vista empresa
 
 ## Layout general
 
@@ -156,10 +156,10 @@
 ## Comportamiento
 
 - El selector de período (mes/año) se mantiene al cambiar de tab.
-- Clic en fila de departamentos → navega a PA3.
+- Clic en fila de departamentos → navega a PA2.
 - Clic en *Nuevo departamento* → panel lateral desde la derecha (solo campo Nombre).
 - *Guardar* departamento → valida que el nombre no esté vacío, inserta, refresca tabla, cierra panel.
-- *Editar empresa* → panel lateral con los mismos campos del formulario de PA1 rellenos.
+- *Editar empresa* → panel lateral con los mismos campos del formulario de PA0 rellenos.
 - *Eliminar empresa* → modal de confirmación; bloqueado si la empresa tiene departamentos.
 - Tab Consumos muestra datos del período seleccionado; si no hay consumos, tabla vacía con mensaje.
 - Tab Gráficos no tiene acciones; los gráficos se recalculan al cambiar el período.

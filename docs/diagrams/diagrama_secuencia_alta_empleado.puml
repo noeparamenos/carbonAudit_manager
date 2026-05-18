@@ -16,7 +16,7 @@ skinparam sequence {
 
 actor "Administrador" as Admin
 participant "Vista\n(JavaFX)" as UI
-participant "PA3Controller" as Ctrl
+participant "PA2Controller" as Ctrl
 participant "ServicioGestionEmpleado" as ServGestion
 participant "EmpleadoDAO" as EmpDAO
 participant "DireccionDAO" as DirDAO

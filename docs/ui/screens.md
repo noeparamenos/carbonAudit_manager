@@ -10,23 +10,23 @@ Listado de las pantallas de la aplicación.
 - **Objetivo:** elegir con qué rol se entra en la aplicación.
 - **Elementos:** logo, dos tarjetas grandes ("Administrador", "Responsable"), versión.
 - **Acciones:**
-  - Clic en *Administrador* → PA1
+  - Clic en *Administrador* → PA0
   - Clic en *Responsable* → PR0
 
 ---
 
 # Flujo Administrador
 
-## PA1 · Lista de empresas
+## PA0 · Lista de empresas
 
 - **Actor:** Administrador
 - **Objetivo:** ver y seleccionar la empresa con la que trabajar.
 - **Elementos:** lista/tabla de empresas (nombre, CIF), botón de nueva empresa.
 - **Acciones:**
-  - Clic en empresa → PA2 (departamentos de esa empresa)
+  - Clic en empresa → PA1 (departamentos de esa empresa)
   - Nueva empresa → formulario panel lateral
 
-## PA2 · Vista empresa
+## PA1 · Vista empresa
 
 - **Actor:** Administrador
 - **Objetivo:** punto central de gestión y consulta de una empresa; tres tabs.
@@ -36,7 +36,7 @@ Listado de las pantallas de la aplicación.
 
 - **Objetivo:** listar y gestionar los departamentos de la empresa.
 - **Elementos:** tabla de departamentos (nombre, nº empleados, responsable activo).
-- **Acciones:** Clic en departamento → PA3 · Nuevo departamento → formulario panel lateral.
+- **Acciones:** Clic en departamento → PA2 · Nuevo departamento → formulario panel lateral.
 
 ### Tab · Consumos
 
@@ -52,7 +52,7 @@ Listado de las pantallas de la aplicación.
 - **Elementos:** gráfico de evolución (12 meses), tarta por alcance, comparativa entre departamentos.
 - **Acciones:** —
 
-## PA3 · Gestión de departamento
+## PA2 · Gestión de departamento
 
 - **Actor:** Administrador
 - **Objetivo:** gestionar empleados y el responsable de un departamento concreto.
@@ -118,13 +118,13 @@ Listado de las pantallas de la aplicación.
 
 | Caso de uso    | Pantalla principal        | Secundarias |
 |----------------|---------------------------|-------------|
-| UC_Empresa     | PA1                         | PA2                  |
-| UC_Dept        | PA2-Departamentos           | PA3                  |
-| UC_Empleado    | PA3, PR1-Trabajadores       | —                    |
-| UC_AsignarResp | PA3                         | —                    |
-| UC_Consumo     | PR1-Consumos, PA2-Consumos  | —                    |
+| UC_Empresa     | PA0                         | PA1                  |
+| UC_Dept        | PA1-Departamentos           | PA2                  |
+| UC_Empleado    | PA2, PR1-Trabajadores       | —                    |
+| UC_AsignarResp | PA2                         | —                    |
+| UC_Consumo     | PR1-Consumos, PA1-Consumos  | —                    |
 | UC_Commuting   | PR1-Huella                  | —                    |
-| UC_Distancia   | PA3                         | —                    |
+| UC_Distancia   | PA2                         | —                    |
 | UC_Huella      | PR1-Huella                  | —                    |
-| UC_Dashboard   | PR1-Gráficos, PA2-Gráficos  | —                    |
+| UC_Dashboard   | PR1-Gráficos, PA1-Gráficos  | —                    |
 | UC_Informe     | PR1-Huella                  | —                    |

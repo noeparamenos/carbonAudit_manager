@@ -5,6 +5,7 @@ import com.carbonaudit.dao.EmpleadoDAO;
 import com.carbonaudit.model.Direccion;
 import com.carbonaudit.model.Empleado;
 import com.carbonaudit.service.external.IServicioGeografico;
+import com.carbonaudit.util.Validador;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -35,10 +36,14 @@ public class ServicioGestionEmpleado {
     // =========== CRUD EMPLEADO ==============
 
     public Empleado crearEmpleado(Empleado empleado) {
+        Validador.validarDiasPresenciales(empleado.getDiasPresenciales());
+        Validador.validarDireccion(empleado.getDireccion());
         return empleadoDAO.create(empleado);
     }
 
     public void actualizarEmpleado(Empleado empleado) {
+        Validador.validarDiasPresenciales(empleado.getDiasPresenciales());
+        Validador.validarDireccion(empleado.getDireccion());
         empleadoDAO.update(empleado);
     }
 

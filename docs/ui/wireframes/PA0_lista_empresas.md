@@ -1,4 +1,4 @@
-# Wireframe · PA1 · Lista de empresas
+# Wireframe · PA0 · Lista de empresas
 
 ## Estado normal (sin panel lateral)
 
@@ -52,7 +52,7 @@
 | Topbar           | HBox            | Nombre app a la izquierda, rol a la derecha    |
 | Título sección   | Label           | "Empresas"                                     |
 | Botón nueva      | Button          | Abre el panel lateral                          |
-| Tabla empresas   | TableView       | Columnas: Nombre, CIF, Ciudad. Clic en fila → PA2 |
+| Tabla empresas   | TableView       | Columnas: Nombre, CIF, Ciudad. Clic en fila → PA1 |
 | Texto de ayuda   | Label           | Solo visible cuando la tabla tiene datos       |
 | Panel lateral    | VBox            | Desliza desde la derecha al pulsar "Nueva"     |
 | Formulario       | GridPane        | Campos: Nombre, CIF, Ciudad, Calle, Número, CP, Provincia |
@@ -61,7 +61,7 @@
 
 ## Comportamiento
 
-- Clic en fila de la tabla → navega a PA2 (vista empresa).
+- Clic en fila de la tabla → navega a PA1 (vista empresa).
 - Clic en *Nueva empresa* → panel lateral se desliza desde la derecha.
 - Clic en *Cancelar* o fuera del panel → panel se cierra.
 - Clic en *Guardar* → valida campos, inserta empresa, refresca tabla, cierra panel.

@@ -80,9 +80,9 @@ Creación de la UI con JavaFX y visualización de resultados.
     - [x] Especificar cada pantalla: actores, objetivo, elementos y acciones (`screens.md`)
     - [ ] Crear wireframes de las pantallas principales
       - [x] P0 · Selección de rol
-      - [x] PA1 · Lista de empresas
-      - [x] PA2 · Vista empresa
-      - [x] PA3 · Gestión de departamento
+      - [x] PA0 · Lista de empresas
+      - [x] PA1 · Vista empresa
+      - [x] PA2 · Gestión de departamento
       - [x] PR0 · Selección de responsable
       - [x] PR1 · Vista responsable
     - [x] Ajustar tamaño y calidad del logo en P0
@@ -90,17 +90,17 @@ Creación de la UI con JavaFX y visualización de resultados.
   - **Implementación:**
     - [x] Diseñar pantallas (`.fxml`) y controladores
       - [x] P0 · Selección de rol
-      - [x] PA1 · Lista de empresas — tabla, panel lateral alta empresa, tab Factores de emisión, navegación a PA2
-      - [x] PA2 · Vista empresa — tabs: Departamentos, Consumos, Gráficos (Gráficos: placeholder)
-      - [x] PA3 · Gestión de departamento — tabs: Empleados (CRUD + cálculo distancia ORS), Responsable (asignar, finalizar, historial)
+      - [x] PA0 · Lista de empresas — tabla, panel lateral alta empresa, tab Factores de emisión, navegación a PA1
+      - [x] PA1 · Vista empresa — tabs: Departamentos, Consumos, Gráficos (Gráficos: placeholder)
+      - [x] PA2 · Gestión de departamento — tabs: Empleados (CRUD + cálculo distancia ORS), Responsable (asignar, finalizar, historial)
       - [x] PR0 · Selección de responsable activo
       - [x] PR1 · Vista responsable — tabs: Consumos, Trabajadores, Huella, Gráficos
-    - [x] Edición y borrado de empresas (desde PA2)
+    - [x] Edición y borrado de empresas (desde PA1)
     - [x] Crear formularios de alta/edición como paneles laterales deslizantes
     - [x] Script de seed de factores de emisión (`database/seed_factores_emision.sql`)
     - [x] Geocodificación automática en segundo plano al crear/modificar empresa, departamento y empleado
   - **Gráficos (actualmente placeholders):**
-    - [ ] PA2 · Tab Gráficos (Administrador) — evolución histórica de emisiones por departamento
+    - [ ] PA1 · Tab Gráficos (Administrador) — evolución histórica de emisiones por departamento
     - [ ] PR1 · Tab Gráficos (Responsable) — evolución histórica de emisiones del departamento por período
   - **Validaciones de integridad en la UI:**
     - [x] Al borrar un Departamento: comprobar si tiene Empleados activos asociados.

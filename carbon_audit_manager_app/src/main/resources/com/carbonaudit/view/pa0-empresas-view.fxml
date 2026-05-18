@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.*?>
 
 <!--
-    PA1 · Lista de empresas
+    PA0 · Lista de empresas
     Layout: BorderPane con topbar fija arriba y contenido central variable.
     El contenido central es un HBox con la zona principal (TabPane) y los
     paneles laterales (derecha, ocultos por defecto).
@@ -18,7 +18,7 @@
             styleClass="pantalla-interior"
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.carbonaudit.controller.PA1Controller">
+            fx:controller="com.carbonaudit.controller.PA0Controller">
 
     <stylesheets>
         <URL value="@estilos.css"/>

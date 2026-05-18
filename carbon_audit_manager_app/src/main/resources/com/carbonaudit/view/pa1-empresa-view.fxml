@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.*?>
 
 <!--
-    PA2 · Vista empresa
+    PA1 · Vista empresa
     Layout: BorderPane con topbar fija arriba y contenido central variable.
     El contenido central es un HBox con la zona principal (izquierda)
     y los paneles laterales (derecha, ocultos por defecto).
@@ -15,7 +15,7 @@
             styleClass="pantalla-interior"
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.carbonaudit.controller.PA2Controller">
+            fx:controller="com.carbonaudit.controller.PA1Controller">
 
     <stylesheets>
         <URL value="@estilos.css"/>
@@ -24,7 +24,7 @@
     <!-- =========== TOPBAR ========== -->
     <!--
         Breadcrumb: muestra la ruta de navegación.
-        "Empresas" es clicable y vuelve a PA1.
+        "Empresas" es clicable y vuelve a PA0.
         El separador " › " y el nombre de la empresa son etiquetas informativas.
     -->
     <top>
@@ -32,7 +32,7 @@
             <Label text="CarbonAudit Manager" styleClass="topbar-titulo"/>
             <Label text=" › " styleClass="topbar-sep"/>
             <Label text="Empresas" styleClass="topbar-breadcrumb-link"
-                   onMouseClicked="#onVolverAPA1"/>
+                   onMouseClicked="#onVolverAPA0"/>
             <Label text=" › " styleClass="topbar-sep"/>
             <Label fx:id="lblBreadcrumb" text="" styleClass="topbar-breadcrumb"/>
             <Region HBox.hgrow="ALWAYS"/>
@@ -268,7 +268,7 @@
 
             <!-- ── PANEL LATERAL: Editar empresa ────────────────────────── -->
             <!--
-                Mismo formulario que PA1 pero con los campos pre-rellenados.
+                Mismo formulario que PA0 pero con los campos pre-rellenados.
                 El controlador los rellena en onEditarEmpresa().
             -->
             <VBox fx:id="panelEditEmpresa" managed="false" visible="false"

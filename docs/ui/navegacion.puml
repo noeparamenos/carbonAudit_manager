@@ -9,14 +9,14 @@ skinparam state {
 [*] --> P0 : Arranque de la app
 
 state "P0 · Selección de rol"          as P0
-state "PA1 · Lista de empresas"        as PA1
-state "PA3 · Gestión departamento"     as PA3
+state "PA0 · Lista de empresas"        as PA0
+state "PA2 · Gestión departamento"     as PA2
 state "PR0 · Selección responsable"    as PR0
 
-state "PA2 · Vista empresa" as PA2 {
-    state "Tab: Departamentos" as PA2_depts
-    state "Tab: Consumos"      as PA2_consumos
-    state "Tab: Gráficos"      as PA2_graficos
+state "PA1 · Vista empresa" as PA1 {
+    state "Tab: Departamentos" as PA1_depts
+    state "Tab: Consumos"      as PA1_consumos
+    state "Tab: Gráficos"      as PA1_graficos
 }
 
 state "PR1 · Vista responsable" as PR1 {
@@ -26,12 +26,12 @@ state "PR1 · Vista responsable" as PR1 {
     state "Tab: Gráficos"           as PR1_graficos
 }
 
-P0  --> PA1 : Rol Administrador
+P0  --> PA0 : Rol Administrador
 P0  --> PR0 : Rol Responsable
 
-PA1 --> PA2 : clic en empresa
+PA0 --> PA1 : clic en empresa
 
-PA2_depts --> PA3 : clic en departamento
+PA1_depts --> PA2 : clic en departamento
 
 PR0 --> PR1 : responsable seleccionado
 

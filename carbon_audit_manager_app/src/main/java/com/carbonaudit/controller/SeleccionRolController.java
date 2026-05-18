@@ -39,7 +39,7 @@ public class SeleccionRolController {
      */
     @FXML
     private void onAdministradorClick(MouseEvent event) {
-        navegarA("/com/carbonaudit/view/pa1-empresas-view.fxml", event);
+        navegarA("/com/carbonaudit/view/pa0-empresas-view.fxml", event);
     }
 
     /**

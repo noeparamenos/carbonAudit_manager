@@ -73,9 +73,9 @@ package "com.carbonaudit.service.external" as ServiceExt {
 
 package "com.carbonaudit.controller" as Controller {
     [SeleccionRolController]
+    [PA0Controller]
     [PA1Controller]
     [PA2Controller]
-    [PA3Controller]
     [PR0Controller]
     [PR1Controller]
 }
