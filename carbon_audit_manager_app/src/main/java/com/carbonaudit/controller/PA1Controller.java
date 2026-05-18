@@ -54,7 +54,6 @@ public class PA1Controller {
     @FXML private ComboBox<String>  combMes;
     @FXML private ComboBox<Integer> combAnio;
     @FXML private CheckBox chkAnioCompleto;
-    @FXML private CheckBox chkIncluirCommuting;
 
     // ── TabPane ───────────────────────────────────────────────────────────
 
@@ -289,9 +288,9 @@ public class PA1Controller {
     }
 
     /**
-     * Carga los consumos según el período y las opciones activas.
+     * Carga los consumos según el período activo.
      * Si "Año completo" está marcado, consulta los 12 meses; si no, solo el mes seleccionado.
-     * Si "Incluir commuting" está marcado, el total incluye Alcance 3 vía ServicioCalculoHuella.
+     * El total incluye Alcance 3 solo para los departamentos que lo tengan habilitado.
      */
     private void cargarConsumos() {
         if (empresa == null) return;
@@ -302,24 +301,14 @@ public class PA1Controller {
 
         // Calculo anualizado
         if (chkAnioCompleto.isSelected()) {
-            // Obtiene consumos a través del Servicio (no del DAO directamente)
             consumos = servicioHuella.getConsumosAnualesEmpresa(empresa.getIdEmpresa(), anio);
-            total = chkIncluirCommuting.isSelected()
-                    // Con commuting: Scope 1+2+3 (12 meses) vía Servicio
-                    ? servicioHuella.getHuellaAnualEmpresa(empresa, anio)
-                    // Sin commuting: suma de emisiones de la lista ya obtenida, sin nueva query
-                    : servicioHuella.getTotalConsumos(consumos);
+            total    = servicioHuella.getHuellaAnualEmpresa(empresa, anio);
 
         // Calculo mensual
         } else {
             int mes = combMes.getSelectionModel().getSelectedIndex() + 1;
-            // Obtiene consumos a través del Servicio (no del DAO directamente)
             consumos = servicioHuella.getConsumosMensualesEmpresa(empresa.getIdEmpresa(), mes, anio);
-            total = chkIncluirCommuting.isSelected()
-                    // Con commuting: Scope 1+2+3 para el mes seleccionado vía Servicio
-                    ? servicioHuella.getHuellaTotalEmpresaMes(empresa, mes, anio)
-                    // Sin commuting: suma de emisiones de la lista ya obtenida, sin nueva query
-                    : servicioHuella.getTotalConsumos(consumos);
+            total    = servicioHuella.getHuellaTotalEmpresaMes(empresa, mes, anio);
         }
 
         listaConsumos.setAll(consumos);
@@ -331,14 +320,6 @@ public class PA1Controller {
     @FXML
     private void onToggleAnioCompleto() {
         combMes.setDisable(chkAnioCompleto.isSelected());
-        if (tabPane.getSelectionModel().getSelectedItem() == tabConsumos) {
-            cargarConsumos();
-        }
-    }
-
-    /** Recalcula el total de la pestaña Consumos al marcar o desmarcar "Incluir commuting". */
-    @FXML
-    private void onToggleCommuting() {
         if (tabPane.getSelectionModel().getSelectedItem() == tabConsumos) {
             cargarConsumos();
         }

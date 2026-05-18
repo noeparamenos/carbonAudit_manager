@@ -77,14 +77,6 @@
                         <ComboBox fx:id="combAnio" prefWidth="85.0"/>
                         <CheckBox fx:id="chkAnioCompleto" text="Año completo"
                                   styleClass="chk-periodo" onAction="#onToggleAnioCompleto"/>
-                        <Label text="|" styleClass="topbar-sep"/>
-                        <!--
-                            Cuando está marcado, el total incluye las emisiones de commuting
-                            (Alcance 3) calculadas por ServicioCalculoHuella.
-                            La tabla siempre muestra solo los registros de ConsumoMensual.
-                        -->
-                        <CheckBox fx:id="chkIncluirCommuting" text="Incluir commuting (Alcance 3)"
-                                  styleClass="chk-periodo" onAction="#onToggleCommuting"/>
                     </HBox>
                 </VBox>
 

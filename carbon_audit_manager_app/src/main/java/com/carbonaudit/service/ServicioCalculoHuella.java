@@ -3,7 +3,10 @@ package com.carbonaudit.service;
 import com.carbonaudit.dao.CommutingEmpleadoDAO;
 import com.carbonaudit.dao.ConsumoMensualDAO;
 import com.carbonaudit.dao.DepartamentoDAO;
+import com.carbonaudit.dao.EmpleadoDAO;
 import com.carbonaudit.model.*;
+
+import java.time.LocalDate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -16,11 +19,13 @@ public class ServicioCalculoHuella {
     private final ConsumoMensualDAO    consumoDAO;
     private final CommutingEmpleadoDAO commutingDAO;
     private final DepartamentoDAO      departamentoDAO;
+    private final EmpleadoDAO          empleadoDAO;
 
     public ServicioCalculoHuella() {
         this.consumoDAO      = new ConsumoMensualDAO();
         this.commutingDAO    = new CommutingEmpleadoDAO();
         this.departamentoDAO = new DepartamentoDAO();
+        this.empleadoDAO     = new EmpleadoDAO();
     }
 
     // =========== COMMUTING DE EMPLEADO (cálculo puro, sin persistencia) ==============
@@ -104,6 +109,7 @@ public class ServicioCalculoHuella {
 
         // SCOPE 3: Commuting de empleados (solo si el departamento lo incluye)
         if (departamento.isIncluirAlcance3()) {
+            garantizarRegistrosCommuting(departamento.getIdDepartamento(), mes, anio);
             List<CommutingEmpleado> commutings = commutingDAO.getCommutingsDepartamentoMes(
                     departamento.getIdDepartamento(), mes, anio);
 
@@ -142,6 +148,27 @@ public class ServicioCalculoHuella {
         BigDecimal emision = kmTotalesMes.multiply(commuting.getMedioTransporte().getValorFactor());
 
         return emision.setScale(2, RoundingMode.HALF_UP); //Redondeo
+    }
+
+    /**
+     * Genera registros de commuting en COMMUTING_EMPLEADO para el período indicado
+     * si aún no existen, tomando como snapshot los datos actuales de los empleados activos.
+     * No actúa sobre períodos futuros ni si ya hay registros para ese departamento/mes/año.
+     */
+    private void garantizarRegistrosCommuting(int idDepartamento, int mes, int anio) {
+        LocalDate ahora = LocalDate.now();
+        if (anio > ahora.getYear() || (anio == ahora.getYear() && mes > ahora.getMonthValue())) {
+            return;
+        }
+        if (!commutingDAO.getCommutingsDepartamentoMes(idDepartamento, mes, anio).isEmpty()) {
+            return;
+        }
+        for (Empleado emp : empleadoDAO.findAllByDepartamento(idDepartamento)) {
+            if (emp.getDistanciaTrabajo() == null || emp.getMedioTransporte() == null) continue;
+            commutingDAO.create(new CommutingEmpleado(
+                    emp, emp.getMedioTransporte(), emp.getDistanciaTrabajo(),
+                    emp.getDiasPresenciales(), mes, anio));
+        }
     }
 
     // =========== CÁLCULO DE HUELLA POR EMPRESA ==============
@@ -194,6 +221,7 @@ public class ServicioCalculoHuella {
 
         // Scope 3: commuting (solo si está habilitado)
         if (departamento.isIncluirAlcance3()) {
+            garantizarRegistrosCommuting(departamento.getIdDepartamento(), mes, anio);
             List<CommutingEmpleado> commutings = commutingDAO.getCommutingsDepartamentoMes(
                     departamento.getIdDepartamento(), mes, anio);
             for (CommutingEmpleado commuting : commutings) {

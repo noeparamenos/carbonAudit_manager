@@ -150,9 +150,7 @@ public class DepartamentoDAO implements DAO<Departamento, Integer> {
      */
     @Override
     public void update(Departamento departamento) {
-        //VALIDAR RESTRICCIONES
         validarDepartamento(departamento);
-        // Actualizamos dirección primero
         if (departamento.getDireccion() != null) {
             direccionDAO.update(departamento.getDireccion());
         }
@@ -170,7 +168,7 @@ public class DepartamentoDAO implements DAO<Departamento, Integer> {
 
             pstmt.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Error al guardar el departamento en la base de datos: " + e.getMessage(), e);
         }
     }
 

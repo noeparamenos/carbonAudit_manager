@@ -529,6 +529,8 @@ public class PA2Controller {
             mostrarError("El número de calle debe ser un valor numérico.");
         } catch (IllegalArgumentException e) {
             mostrarError(e.getMessage());
+        } catch (RuntimeException e) {
+            mostrarError("Error al guardar: " + e.getMessage());
         }
     }
 
