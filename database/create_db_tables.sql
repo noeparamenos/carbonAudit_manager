@@ -42,7 +42,7 @@ CREATE TABLE DEPARTAMENTO
     descripcion      TEXT,
     incluir_alcance3 BOOLEAN DEFAULT TRUE,
     id_direccion     INT          NOT NULL REFERENCES DIRECCION (id_direccion),
-    id_empresa       INT          NOT NULL REFERENCES EMPRESA (id_empresa),
+    id_empresa       INT          NOT NULL REFERENCES EMPRESA (id_empresa) ON DELETE CASCADE,
     CONSTRAINT depto_unique_empresa_nombre UNIQUE (id_empresa, nombre)
 );
 
@@ -66,7 +66,7 @@ CREATE TABLE EMPLEADO
     medio_transporte  INT          NOT NULL REFERENCES FACTOR_EMISION (id_factor),
     dias_presenciales INT          NOT NULL CHECK ( dias_presenciales BETWEEN 1 AND 31) DEFAULT 20,
     id_direccion      INT          NOT NULL REFERENCES DIRECCION (id_direccion),
-    id_dept           INT          NOT NULL REFERENCES DEPARTAMENTO (id_departamento),
+    id_dept           INT          NOT NULL REFERENCES DEPARTAMENTO (id_departamento) ON DELETE CASCADE,
     CONSTRAINT empleado_fechas_check CHECK (fecha_baja IS NULL OR fecha_baja >= fecha_alta)
 );
 
@@ -76,8 +76,8 @@ CREATE TABLE RESPONSABLE
     id_asignacion SERIAL PRIMARY KEY,
     fecha_inicio  DATE NOT NULL,
     fecha_fin     DATE,
-    id_dept       INT  NOT NULL REFERENCES DEPARTAMENTO (id_departamento),
-    id_empleado   INT  NOT NULL REFERENCES EMPLEADO (id_empleado),
+    id_dept       INT  NOT NULL REFERENCES DEPARTAMENTO (id_departamento) ON DELETE CASCADE,
+    id_empleado   INT  NOT NULL REFERENCES EMPLEADO (id_empleado)        ON DELETE CASCADE,
     CONSTRAINT responsable_unico_por_dept UNIQUE (id_dept, fecha_fin)
 );
 
@@ -88,7 +88,7 @@ CREATE TABLE CONSUMO_MENSUAL
     cantidad   DECIMAL(12, 2) NOT NULL,
     mes        INT            NOT NULL CHECK (mes BETWEEN 1 AND 12),
     anio       INT            NOT NULL CHECK (anio >= 1950),
-    id_dept    INT            NOT NULL REFERENCES DEPARTAMENTO (id_departamento),
+    id_dept    INT            NOT NULL REFERENCES DEPARTAMENTO (id_departamento) ON DELETE CASCADE,
     id_factor  INT            NOT NULL REFERENCES FACTOR_EMISION (id_factor),
     CONSTRAINT consumo_unico UNIQUE (id_dept, id_factor, mes, anio)
 );
@@ -96,7 +96,7 @@ CREATE TABLE CONSUMO_MENSUAL
 
 CREATE TABLE COMMUTING_EMPLEADO
 (
-    id_empleado           INT           NOT NULL REFERENCES EMPLEADO (id_empleado),
+    id_empleado           INT           NOT NULL REFERENCES EMPLEADO (id_empleado) ON DELETE CASCADE,
     id_factor             INT           NOT NULL REFERENCES FACTOR_EMISION (id_factor),
     distancia_diaria_km   DECIMAL(6, 2) NOT NULL,
     dias_presenciales_mes INT           NOT NULL,

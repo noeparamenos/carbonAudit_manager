@@ -49,6 +49,19 @@ La navegación entre pantallas sigue siempre el mismo patrón:
 3. Pasar el objeto de contexto llamando a un método del controlador (ej: `setEmpresa()`, `setResponsable()`)
 4. Mostrar la nueva escena en el mismo `Stage`
 
+## Política de borrado de datos
+
+El sistema aplica una estrategia híbrida consciente que distingue entre eventos de negocio y acciones administrativas:
+
+### Soft-delete en `EMPLEADO`
+Cuando un empleado causa baja se escribe `fecha_baja = hoy` pero la fila permanece en la BD. Esto preserva el historial de commuting (`COMMUTING_EMPLEADO`) y los mandatos de responsabilidad (`RESPONSABLE`) necesarios para reproducir cálculos de huella de períodos pasados. Las consultas operativas filtran siempre `WHERE fecha_baja IS NULL`.
+
+### Hard-delete con CASCADE en `DEPARTAMENTO` y `EMPRESA`
+Eliminar un departamento o empresa es una acción administrativa destructiva e irreversible. Las FKs llevan `ON DELETE CASCADE`, por lo que un único `DELETE` limpia toda la jerarquía dependiente (empleados, consumos, responsables, commutings). Esta pérdida de historial es aceptada: un departamento activo con datos de auditoría reales nunca debería eliminarse.
+
+### Consecuencia y regla de uso
+El soft-delete de un empleado tiene sentido dentro del ciclo de vida de su departamento, pero no sobrevive a la eliminación del departamento padre. La UI advierte explícitamente de esta pérdida antes de confirmar el borrado de una entidad padre. Los `FACTOR_EMISION` y `DIRECCION` no tienen CASCADE: los primeros son datos de referencia globales; las segundas se convierten en huérfanas pero no causan errores de integridad.
+
 ## Modelo de emisiones
 
 El sistema calcula emisiones según el estándar:

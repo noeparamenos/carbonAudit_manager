@@ -63,6 +63,21 @@
       - `DepartamentoDAO.update()` ahora relanza el `SQLException` como `RuntimeException`, y `PA2Controller` lo captura mostrando un diálogo de error al usuario.
       - Se introduce generación **lazy** de registros de commuting: `ServicioCalculoHuella.garantizarRegistrosCommuting()` comprueba antes de cada cálculo de scope 3 si existen registros en `COMMUTING_EMPLEADO` para el período consultado. Si no existen (y el período no es futuro), genera el snapshot desde los datos actuales de los empleados activos y los persiste. Las consultas posteriores al mismo período usan los registros ya guardados, preservando el historial.
       - Se elimina `chkIncluirCommuting` de PA1 (era un toggle de UI sin persistencia que confundía con el flag `incluirAlcance3` por departamento). El total de PA1 ahora llama siempre a `getHuellaTotalEmpresaMes()` / `getHuellaAnualEmpresa()`, que respetan la configuración por departamento.
+16. El soft-delete de empleados bloqueaba la eliminación de departamentos y empresas desde la UI.
+    - **Causa**: El esquema usaba FKs estrictas sin `ON DELETE CASCADE`. El soft-delete de `EMPLEADO` (campo `fecha_baja`) no elimina la fila física, por lo que la FK seguía activa y PostgreSQL rechazaba el `DELETE` del padre con `PSQLException: violates foreign key constraint`. La guarda de la UI solo contaba empleados activos (`fecha_baja IS NULL`), dejando pasar el intento de borrado que luego fallaba en la BD.
+    - **Solución**: Se añade `ON DELETE CASCADE` a las FKs del árbol de dependencias en `create_db_tables.sql` y se aplica mediante migración a la BD existente:
+      - `DEPARTAMENTO.id_empresa` → CASCADE
+      - `EMPLEADO.id_dept` → CASCADE
+      - `CONSUMO_MENSUAL.id_dept` → CASCADE
+      - `RESPONSABLE.id_dept` e `id_empleado` → CASCADE
+      - `COMMUTING_EMPLEADO.id_empleado` → CASCADE
+    - **Comportamiento resultante**: los empleados mantienen soft-delete durante su ciclo de vida normal (preserva historial de commuting y responsabilidades). Cuando el administrador decide eliminar explícitamente un departamento o empresa, el CASCADE limpia toda la jerarquía de una sola vez. El flujo correcto en la UI es: dar de baja a todos los empleados activos → eliminar el departamento (el CASCADE borra el resto).
+    - **Nota**: `FACTOR_EMISION` y `DIRECCION` no tienen CASCADE — los factores son datos de referencia que no deben borrarse por accidente, y las direcciones huérfanas no causan errores de FK.
+    - **Decisión de diseño (Opción B)**: la aplicación mezcla conscientemente soft-delete y hard-delete para dos casos de uso distintos:
+      - **Soft-delete en `EMPLEADO`** (`fecha_baja`): modela un evento de negocio (el empleado causa baja). Su historial de commuting y mandatos de responsabilidad se preserva para reproducir cálculos de períodos pasados.
+      - **Hard-delete con CASCADE en `DEPARTAMENTO` y `EMPRESA`**: modela una acción administrativa destructiva e irreversible. Al borrar un departamento se destruye todo su historial de auditoría (empleados, consumos, commutings). Esta pérdida es aceptada y esperada — un departamento activo con historial real nunca debería eliminarse.
+      - **Consecuencia**: el soft-delete de empleados tiene sentido dentro del ciclo de vida de un departamento, pero no sobrevive a la eliminación del departamento padre. La UI debe advertir explícitamente de esta pérdida antes de confirmar el borrado.
+
 15. **[MEJORA FUTURA]** Los registros de commuting se generan con los empleados activos en el momento de la consulta, no con los que estaban activos durante el mes del período histórico.
     - **Causa**: `garantizarRegistrosCommuting()` usa `EmpleadoDAO.findAllByDepartamento()`, que filtra por `fecha_baja IS NULL` (activos ahora). Si un empleado se da de baja hoy y después se consulta un mes pasado que aún no tenía snapshot, ese empleado no aparecerá en el registro aunque sí estuviera activo ese mes.
     - **Mejora propuesta** (dos partes):
