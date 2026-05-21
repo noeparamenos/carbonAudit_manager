@@ -116,6 +116,7 @@ Refinado del software y preparación del proyecto final.
   - [ ] Optimización de consultas SQL en PostgreSQL.
   - [ ] Finalizar la memoria del proyecto detallando la arquitectura y el cumplimiento de requerimientos.
   - [ ] Empaquetado para distribución
+    - [ ] **Configuración inicial en primer arranque**: detectar ausencia de credenciales de BD y mostrar una pantalla de configuración donde el usuario introduzca la URL, usuario y contraseña de su PostgreSQL. Guardarlas en un fichero local (`.env` o `config.properties`) que no se incluya en la distribución. Actualmente las credenciales se leen de un `.env` que el usuario tendría que crear manualmente.
   - **Sistema de autenticación (opcional, si queda margen):**
     - [ ] Nueva tabla `usuarios` en BD (username, password hash, rol, referencia a empleado)
     - [ ] Clase `Usuario` (POJO) y `UsuarioDAO`

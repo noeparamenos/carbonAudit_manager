@@ -62,6 +62,33 @@ Eliminar un departamento o empresa es una acción administrativa destructiva e i
 ### Consecuencia y regla de uso
 El soft-delete de un empleado tiene sentido dentro del ciclo de vida de su departamento, pero no sobrevive a la eliminación del departamento padre. La UI advierte explícitamente de esta pérdida antes de confirmar el borrado de una entidad padre. Los `FACTOR_EMISION` y `DIRECCION` no tienen CASCADE: los primeros son datos de referencia globales; las segundas se convierten en huérfanas pero no causan errores de integridad.
 
+## Desnormalización deliberada en `COMMUTING_EMPLEADO`
+
+La tabla `COMMUTING_EMPLEADO` almacena `distancia_diaria_km`, `dias_presenciales_mes`
+e `id_factor` aunque esos mismos datos ya existen en `EMPLEADO`. Esta redundancia es
+intencionada y responde a un requisito de trazabilidad de auditoría.
+
+### Por qué se duplican los datos
+
+Si `COMMUTING_EMPLEADO` solo almacenara `(id_empleado, mes, anio)` y en el cálculo
+se leyera la distancia y el transporte directamente de `EMPLEADO`, cualquier cambio
+posterior en los datos del empleado (nuevo domicilio, cambio de vehículo) alteraría
+retroactivamente todos los períodos históricos no cerrados. Una auditoría de enero
+de 2024 devolvería resultados distintos según cuándo se consultara.
+
+Al copiar los valores en el momento de generar el snapshot, cada registro de
+`COMMUTING_EMPLEADO` congela el estado del empleado para ese período concreto.
+Las consultas de auditoría son reproducibles con independencia de los cambios
+posteriores. Es el mismo principio que las líneas de pedido en e-commerce: se
+guarda el precio en el momento de la compra, no una referencia al precio actual.
+
+### Cuándo se genera el snapshot
+
+El método `garantizarRegistrosCommuting()` en `ServicioCalculoHuella` aplica
+creación *lazy*: genera los registros la primera vez que se consulta un período
+histórico sin snapshot. Los períodos futuros nunca se precargan. Una vez creado
+el snapshot de un período, ninguna operación posterior lo modifica.
+
 ## Modelo de emisiones
 
 El sistema calcula emisiones según el estándar:

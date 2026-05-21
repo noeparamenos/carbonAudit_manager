@@ -424,4 +424,212 @@ cargas a hilos de fondo (ver Sección 7). Una solución estructural sería usar
 consultas con `JOIN` en los DAOs para recuperar el grafo completo en una sola
 consulta SQL.
 
+### 4.4 Consulta y mapeo: `findById` y `mapResultSetToEmpresa`
+
+El par `findById` + `mapResultSetToEmpresa` de `EmpresaDAO` ilustra el ciclo
+completo de una consulta en la capa DAO: preparar la query parametrizada,
+ejecutarla, convertir la fila en objeto Java y gestionar la ausencia de resultado.
+
+[[codigo:EmpresaDAO#findById]]
+*EmpresaDAO.java — consulta por clave primaria con Optional y composición.*
+
+```java
+public Optional<Empresa> findById(Integer id) {
+    String sql = "SELECT * FROM EMPRESA WHERE id_empresa = ?";
+    try (Connection conn = DatabaseManager.getInstance().getConnection();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+        pstmt.setInt(1, id);       // parámetro enlazado: evita SQL injection
+        ResultSet rs = pstmt.executeQuery();
+
+        if (rs.next()) {           // fila encontrada
+            // mapea la fila y envuelve el objeto en un Optional
+            return Optional.of(mapResultSetToEmpresa(rs));
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return Optional.empty();       // empresa no encontrada
+}
+
+private Empresa mapResultSetToEmpresa(ResultSet rs) throws SQLException {
+    Empresa e = new Empresa();
+    e.setIdEmpresa(rs.getInt("id_empresa"));
+    e.setNombreSocial(rs.getString("nombre_social"));
+    // ... resto de campos escalares ...
+
+    // COMPOSICIÓN: resuelve la FK cargando el objeto Direccion completo
+    int idDir = rs.getInt("id_direccion");
+    direccionDAO.findById(idDir).ifPresent(e::setDireccion);
+    return e;
+}
+```
+
+**`PreparedStatement` y SQL injection:** los parámetros se pasan con `setInt` /
+`setString`, nunca concatenados al SQL. PostgreSQL separa la query de los datos,
+por lo que un valor malicioso en `id` no puede alterar la consulta.
+
+**`Optional.of` vs `Optional.empty`:** el llamador recibe un contenedor que le
+obliga a decidir explícitamente qué hacer si la empresa no existe — sin posibilidad
+de recibir un `null` desapercibido que cause un `NullPointerException` más adelante.
+
+**`ifPresent` en la composición:** `direccionDAO.findById(idDir)` también devuelve
+un `Optional`. Con `ifPresent` se asigna la dirección solo si existe, sin necesidad
+de comprobar nulos manualmente.
+
+---
+
+## 5. Capa de servicio — Motor de cálculo
+
+La capa de servicio centraliza toda la lógica de negocio del sistema. Ningún
+controlador accede directamente a un DAO; toda llamada de la UI pasa primero
+por un servicio. Esto garantiza que si la fórmula de cálculo cambia, o si
+una regla de negocio evoluciona, la modificación afecta a un único fichero.
+
+`ServicioCalculoHuella` es el servicio más relevante: implementa las tres
+categorías del GHG Protocol Corporate Standard y calcula las emisiones tanto
+por departamento como por empresa, tanto mensual como anualmente.
+
+[[diagramaSecuenciaHuella]]
+*Figura 5. Diagrama de secuencia: consulta de huella total de un departamento.*
+
+### 5.1 El GHG Protocol y los tres Scopes
+
+El GHG Protocol clasifica las emisiones en tres categorías:
+
+- **Scope 1** — combustión directa: gas natural, gasóleo, propano...
+- **Scope 2** — energía adquirida: electricidad consumida de la red.
+- **Scope 3** — cadena de valor: en este sistema, los desplazamientos al trabajo
+  (*commuting*) de los empleados.
+
+La fórmula base es la misma para Scope 1 y 2:
+
+```
+Emisión = Cantidad consumida × Factor de emisión (kgCO₂e/unidad)
+```
+
+Para Scope 3 (commuting):
+
+```
+Emisión mensual = Distancia_diaria_km × 2 (ida y vuelta)
+               × Días_presenciales_mes × Factor_transporte (kgCO₂e/km)
+```
+
+### 5.2 BigDecimal y precisión de auditoría
+
+En Java, `double` y `float` representan números en coma flotante binaria, lo que
+introduce errores de redondeo acumulativos. En un contexto de auditoría
+medioambiental estos errores son inaceptables — las emisiones reportadas deben
+ser reproducibles con exactitud aritmética.
+
+`BigDecimal` almacena el número en decimal exacto y requiere especificar la
+escala y el modo de redondeo en cada operación. Las tres operaciones utilizadas
+en el motor:
+
+```java
+// multiply: producto exacto entre dos BigDecimal
+BigDecimal resultado = cantidad.multiply(factor.getValorFactor());
+
+// add: suma acumulativa inicializada en ZERO (constante predefinida de BigDecimal)
+totalEmisiones = totalEmisiones.add(emisionConsumo);
+
+// setScale + HALF_UP: redondeo estándar a 2 decimales en el resultado final
+return totalEmisiones.setScale(2, RoundingMode.HALF_UP);
+```
+
+### 5.3 Método principal: `getHuellaTotalDepartamentoMes`
+
+[[codigo:ServicioCalculoHuella#getHuellaTotalDepartamentoMes]]
+*ServicioCalculoHuella.java — método central del motor de cálculo GHG Protocol.*
+
+```java
+public BigDecimal getHuellaTotalDepartamentoMes(Departamento departamento,
+                                                 int mes, int anio) {
+    BigDecimal totalEmisiones = BigDecimal.ZERO;
+
+    // Scope 1 + 2: consumos energéticos del departamento
+    List<ConsumoMensual> consumos = consumoDAO.getConsumosDepartamentoMes(
+            departamento.getIdDepartamento(), mes, anio);
+    for (ConsumoMensual consumo : consumos) {
+        BigDecimal emision = consumo.calcularEmision(); // cantidad × factor
+        if (emision != null) totalEmisiones = totalEmisiones.add(emision);
+    }
+
+    // Scope 3: commuting (solo si el departamento lo tiene habilitado)
+    if (departamento.isIncluirAlcance3()) {
+        garantizarRegistrosCommuting(departamento.getIdDepartamento(), mes, anio);
+        List<CommutingEmpleado> commutings = commutingDAO
+                .getCommutingsDepartamentoMes(departamento.getIdDepartamento(),
+                                              mes, anio);
+        for (CommutingEmpleado c : commutings) {
+            BigDecimal emision = calcularEmisionCommuting(c);
+            if (emision != null) totalEmisiones = totalEmisiones.add(emision);
+        }
+    }
+
+    return totalEmisiones.setScale(2, RoundingMode.HALF_UP);
+}
+```
+
+El flag `incluirAlcance3` se almacena por departamento en la BD
+(`BOOLEAN DEFAULT TRUE`), permitiendo que cada departamento decida
+de forma independiente si incluye el commuting en sus emisiones.
+
+### 5.4 Generación lazy de snapshots de commuting
+
+La tabla `COMMUTING_EMPLEADO` almacena registros **inmutables**: una vez
+creados para un período, no se modifican aunque cambien los datos del empleado.
+Esto garantiza que una auditoría de un mes pasado devuelva siempre los mismos
+números.
+
+`garantizarRegistrosCommuting` implementa la creación *lazy*: genera el snapshot
+únicamente la primera vez que se consulta un período histórico. Si ya existen
+registros, los reutiliza; si el período es futuro, no actúa.
+
+```java
+private void garantizarRegistrosCommuting(int idDepartamento, int mes, int anio) {
+    LocalDate ahora = LocalDate.now();
+    // No generar datos para períodos futuros
+    if (anio > ahora.getYear() ||
+       (anio == ahora.getYear() && mes > ahora.getMonthValue())) return;
+
+    // Si ya existe el snapshot, reutilizarlo
+    if (!commutingDAO.getCommutingsDepartamentoMes(idDepartamento, mes, anio)
+                     .isEmpty()) return;
+
+    // Crear el snapshot con los empleados activos en este momento
+    for (Empleado emp : empleadoDAO.findAllByDepartamento(idDepartamento)) {
+        if (emp.getDistanciaTrabajo() == null || emp.getMedioTransporte() == null)
+            continue;
+        commutingDAO.create(new CommutingEmpleado(
+                emp, emp.getMedioTransporte(), emp.getDistanciaTrabajo(),
+                emp.getDiasPresenciales(), mes, anio));
+    }
+}
+```
+
+> **Limitación conocida:** el snapshot captura los empleados activos en el
+> momento de la primera consulta. Si un empleado causa baja y después se
+> consulta un período sin snapshot previo, ese empleado no aparecerá en el
+> registro. La corrección requeriría filtrar por `fecha_alta` y `fecha_baja`
+> relativas al período consultado (ver `errorCorrections.md`, entrada 15).
+
+### 5.5 Desglose por Scope y cálculo anual
+
+Además del total mensual, el servicio expone dos variantes para los gráficos:
+
+- **`getHuellaPorScope(departamento, mes, anio)`** — devuelve un
+  `Map<Integer, BigDecimal>` con las emisiones desglosadas por Scope (1, 2 y 3).
+  Usa `Map.merge()` para acumular valores por clave sin comprobar si ya existe
+  una entrada:
+
+  ```java
+  // Si "scope" ya está en el mapa, suma; si no, inserta directamente
+  resultado.merge(scope, consumo.calcularEmision(), BigDecimal::add);
+  ```
+
+- **`getHuellaAnualDepartamento` / `getHuellaAnualEmpresa`** — iteran sobre
+  los 12 meses reutilizando `getHuellaTotalDepartamentoMes`. La empresa agrega
+  además sobre todos sus departamentos.
+
 ---

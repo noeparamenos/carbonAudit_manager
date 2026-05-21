@@ -101,3 +101,14 @@
          - `23505` (unique_violation) → "Ya existe un/a X con ese/a Y."
          - `23502` (not_null_violation) → "Faltan campos obligatorios en…"
     - **Archivos modificados**: `EmpresaDAO`, `DepartamentoDAO`, `EmpleadoDAO`, `ResponsableDAO`, `FactorEmisionDAO`, `DireccionDAO`, `ServicioGestionEmpresa`, `ServicioGestionDepartamento`, `ServicioGestionEmpleado`, `ServicioGestionFactores`, `ServicioGestionResponsable`, `Validador`.
+
+19. Credenciales de base de datos en texto plano en el código fuente.
+    - **Causa**: `DatabaseManager` tenía la URL, el usuario y la contraseña de PostgreSQL como constantes `static final String` directamente en el código. Al estar versionadas en Git, cualquier persona con acceso al repositorio podía leer las credenciales.
+    - **Solución**: Las tres variables se mueven al fichero `.env` (ya existente para la clave ORS) y se leen en tiempo de arranque con `Dotenv.load()`, el mismo mecanismo que usa `ServicioGeograficoORS`:
+      ```
+      DB_URL=jdbc:postgresql://localhost:5432/carbon_audit
+      DB_USER=<usuario>
+      DB_PASSWORD=<contraseña>
+      ```
+      `DatabaseManager` pasa a leer `dotenv.get("DB_URL")`, `dotenv.get("DB_USER")` y `dotenv.get("DB_PASSWORD")`. El fichero `.env` está en `.gitignore` y nunca se sube al repositorio.
+    - **Archivos modificados**: `DatabaseManager.java`, `.env`.

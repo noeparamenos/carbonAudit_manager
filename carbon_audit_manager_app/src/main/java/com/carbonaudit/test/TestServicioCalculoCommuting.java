@@ -34,8 +34,13 @@ public class TestServicioCalculoCommuting {
             System.out.println("Calculando distancia entre casa y oficina...");
             System.out.println("Distancia detectada: " + empleado.getDistanciaTrabajo() + " km");
 
-            // test calculo Commuting
-            BigDecimal huellaMensual = calculoService.getCommutingMensual(empleado);
+            // test calculo Commuting — se calcula siempre desde el snapshot (CommutingEmpleado)
+            CommutingEmpleado snapshot = new CommutingEmpleado(
+                    empleado, empleado.getMedioTransporte(),
+                    empleado.getDistanciaTrabajo(), empleado.getDiasPresenciales(),
+                    LocalDate.now().getMonthValue(), LocalDate.now().getYear());
+
+            BigDecimal huellaMensual = calculoService.calcularEmisionCommuting(snapshot);
 
             System.out.println("Huella para " + empleado.getDiasPresenciales() + " días: " + huellaMensual + " kgCO2e");
 
