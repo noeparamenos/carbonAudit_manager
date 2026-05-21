@@ -23,8 +23,6 @@ public class ResponsableDAO implements DAO<Responsable, Integer> {
      */
     @Override
     public Responsable create(Responsable responsable) {
-        // Integridad: validación de valores NOT NULL
-        validarResponsable(responsable);
         // INSERTAR
         String sql = "INSERT INTO RESPONSABLE (fecha_inicio, fecha_fin, id_dept, id_empleado) VALUES (?, ?, ?, ?) RETURNING id_asignacion";
 
@@ -49,23 +47,11 @@ public class ResponsableDAO implements DAO<Responsable, Integer> {
                 responsable.setIdAsignacion(rs.getInt(1));
             }
         } catch (SQLException e) {
-            // Si se intenta insertar otro responsable con fecha fin NULL
-            e.printStackTrace();
+            if ("23505".equals(e.getSQLState()))
+                throw new IllegalArgumentException("Ya existe un responsable activo para este departamento.");
+            throw new RuntimeException("Error al crear el responsable.", e);
         }
         return responsable;
-    }
-
-    /**
-     * Valida las restricciones de integridad de la tabla Responsable
-     * @param responsable a validar
-     */
-    private void validarResponsable(Responsable responsable) {
-        if (responsable.getFechaInicio() == null) {
-            throw new IllegalArgumentException("La fecha de inicio es obligatoria (NOT NULL).");
-        }
-        if (responsable.getDepartamento() == null || responsable.getEncargado() == null) {
-            throw new IllegalArgumentException("Un registro de responsabilidad necesita un Departamento y un Empleado.");
-        }
     }
 
     /**
@@ -145,9 +131,6 @@ public class ResponsableDAO implements DAO<Responsable, Integer> {
      */
     @Override
     public void update(Responsable responsable) {
-        //RESTRICCIONES DE INTEGRIDAD
-        validarResponsable(responsable);
-        //UPDATE
         String sql = "UPDATE RESPONSABLE SET fecha_inicio = ?, fecha_fin = ?, id_dept = ?, id_empleado = ? WHERE id_asignacion = ?";
         try (Connection conn = DatabaseManager.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {

@@ -22,12 +22,20 @@ public class ServicioGestionFactores {
     // =========== CRUD FACTOR ==============
 
     public void crearFactor(FactorEmision factor) {
+        if (factor.getNombre() == null || factor.getNombre().isBlank())
+            throw new IllegalArgumentException("El nombre del factor es obligatorio.");
+        if (factor.getUnidad() == null || factor.getUnidad().isBlank())
+            throw new IllegalArgumentException("La unidad es obligatoria.");
         Validador.validarValorFactor(factor.getValorFactor());
         Validador.validarAlcance(factor.getAlcance());
         factorDAO.create(factor);
     }
 
     public void actualizarFactor(FactorEmision factor) {
+        if (factor.getNombre() == null || factor.getNombre().isBlank())
+            throw new IllegalArgumentException("El nombre del factor es obligatorio.");
+        if (factor.getUnidad() == null || factor.getUnidad().isBlank())
+            throw new IllegalArgumentException("La unidad es obligatoria.");
         Validador.validarValorFactor(factor.getValorFactor());
         Validador.validarAlcance(factor.getAlcance());
         factorDAO.update(factor);

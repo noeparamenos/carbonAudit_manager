@@ -62,8 +62,8 @@ public class ConsumoMensual {
      */
     public BigDecimal calcularEmision() {
         if (cantidad != null && factorEmision != null && factorEmision.getValorFactor() != null) {
-            return cantidad.multiply(factorEmision.getValorFactor());
+            return cantidad.multiply(factorEmision.getValorFactor()); //Usando operadores de BigDecimal
         }
-        return BigDecimal.ZERO;
+        return BigDecimal.ZERO; //Equivale a new BigDecimal("0")
     }
 }

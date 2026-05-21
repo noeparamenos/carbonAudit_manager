@@ -30,6 +30,17 @@ public class ServicioGestionResponsable {
 
     // =========== CRUD RESPONSABLE ==============
 
-    public void crearResponsable(Responsable responsable)    { responsableDAO.create(responsable); }
-    public void actualizarResponsable(Responsable responsable) { responsableDAO.update(responsable); }
+    public void crearResponsable(Responsable responsable) {
+        if (responsable.getFechaInicio() == null)
+            throw new IllegalArgumentException("La fecha de inicio del mandato es obligatoria.");
+        if (responsable.getDepartamento() == null || responsable.getEncargado() == null)
+            throw new IllegalArgumentException("El mandato requiere un departamento y un empleado.");
+        responsableDAO.create(responsable);
+    }
+
+    public void actualizarResponsable(Responsable responsable) {
+        if (responsable.getFechaInicio() == null)
+            throw new IllegalArgumentException("La fecha de inicio del mandato es obligatoria.");
+        responsableDAO.update(responsable);
+    }
 }

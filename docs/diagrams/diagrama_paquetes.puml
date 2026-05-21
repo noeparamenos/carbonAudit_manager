@@ -1,6 +1,6 @@
 @startuml Diagrama de Paquetes - CarbonAudit Manager
 
-top to bottom direction
+left to right direction
 skinparam packageStyle rectangle
 skinparam package {
     BackgroundColor #FAFAFA
@@ -33,15 +33,31 @@ package "com.carbonaudit" as Root {
     [Main]
 }
 
-package "com.carbonaudit.model" as Model {
-    [Empresa]
-    [Departamento]
-    [Empleado]
-    [Responsable]
-    [Direccion]
-    [ConsumoMensual]
-    [CommutingEmpleado]
-    [FactorEmision]
+package "com.carbonaudit.controller" as Controller {
+    [SeleccionRolController]
+    [PA0Controller]
+    [PA1Controller]
+    [PA2Controller]
+    [PR0Controller]
+    [PR1Controller]
+}
+
+package "com.carbonaudit.service" as Service {
+    [ServicioCalculoHuella]
+    [ServicioGestionEmpleado]
+    [ServicioGestionEmpresa]
+    [ServicioGestionDepartamento]
+    [ServicioGestionResponsable]
+    [ServicioGestionFactores]
+
+    package "com.carbonaudit.service.external" as ServiceExt {
+        [IServicioGeografico]
+        [ServicioGeograficoORS]
+    }
+}
+
+package "com.carbonaudit.util" as Util {
+    [Validador]
 }
 
 package "com.carbonaudit.dao" as Dao {
@@ -57,27 +73,15 @@ package "com.carbonaudit.dao" as Dao {
     [FactorEmisionDAO]
 }
 
-package "com.carbonaudit.service" as Service {
-    [ServicioCalculoHuella]
-    [ServicioGestionEmpleado]
-    [ServicioGestionEmpresa]
-    [ServicioGestionDepartamento]
-    [ServicioGestionResponsable]
-    [ServicioGestionFactores]
-}
-
-package "com.carbonaudit.service.external" as ServiceExt {
-    [IServicioGeografico]
-    [ServicioGeograficoORS]
-}
-
-package "com.carbonaudit.controller" as Controller {
-    [SeleccionRolController]
-    [PA0Controller]
-    [PA1Controller]
-    [PA2Controller]
-    [PR0Controller]
-    [PR1Controller]
+package "com.carbonaudit.model" as Model {
+    [Empresa]
+    [Departamento]
+    [Empleado]
+    [Responsable]
+    [Direccion]
+    [ConsumoMensual]
+    [CommutingEmpleado]
+    [FactorEmision]
 }
 
 ' ========================= SISTEMAS EXTERNOS =========================
@@ -85,21 +89,18 @@ package "com.carbonaudit.controller" as Controller {
 database "PostgreSQL" as DB
 cloud "OpenRouteService\nAPI (REST)" as ORS
 
-' ========================= ORDEN VERTICAL (enlaces ocultos) ==========
+' ========================= ORDEN HORIZONTAL (enlaces ocultos) ========
 
-Root       -[hidden]d-> Model
-Model      -[hidden]d-> Dao
-Dao        -[hidden]d-> Service
-Service    -[hidden]d-> ServiceExt
-ServiceExt -[hidden]d-> Controller
+Root       -[hidden]r-> Controller
+Controller -[hidden]r-> Service
+Service    -[hidden]r-> Util
+Util       -[hidden]r-> Dao
+Dao        -[hidden]r-> Model
 
-' ========================= NOTAS DESCRIPTIVAS =========================
+' ========================= DEPENDENCIAS CON SISTEMAS EXTERNOS =========
 
-note bottom of Root       : Punto de entrada · Launcher pattern
-note bottom of Model      : Capa de Modelo · POJOs puros sin lógica de negocio
-note bottom of Dao        : Capa DAO · Acceso a la base de datos vía JDBC
-note bottom of Service    : Capa de Servicio · Lógica de negocio y gestión de entidades
-note bottom of ServiceExt : Servicio externo · Geolocalización y rutas (ORS API)
-note bottom of Controller : Capa de Presentación · Controladores JavaFX (MVC)
+Dao        --> DB
+ServiceExt --> ORS
+
 
 @enduml

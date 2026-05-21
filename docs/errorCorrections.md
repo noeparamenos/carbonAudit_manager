@@ -91,3 +91,13 @@
     - **Mejora propuesta** (dos partes):
       1. **Lista de empleados por período**: la pestaña Trabajadores de PR1 debe mostrar los empleados que estaban de alta ese mes concreto, no los activos en este momento. Requiere un nuevo método `EmpleadoDAO.findAllByDepartamentoEnPeriodo(idDepartamento, mes, anio)` que filtre por `fecha_alta <= último día del mes` y (`fecha_baja IS NULL` OR `fecha_baja >= primer día del mes`).
       2. **Cálculo de commuting por período**: `garantizarRegistrosCommuting()` debe llamar a ese mismo método en lugar de `findAllByDepartamento()`, de forma que el snapshot refleje únicamente los empleados que estaban activos durante el mes auditado.
+
+18. Los DAOs mezclaban validación de reglas de negocio con lógica de persistencia, violando la separación de capas.
+    - **Causa**: Cada DAO tenía un método privado `validarXxx()` (p.ej. `validarEmpresa()`, `validarEmpleado()`) que comprobaba nulos y formatos antes de ejecutar la query SQL. Esto colocaba lógica de negocio dentro de la capa DAO, que debería ser exclusivamente de persistencia. `DireccionDAO` además duplicaba comprobaciones ya cubiertas (o que deberían estar) en `Validador`.
+    - **Solución**: Se distribuye la validación en tres niveles según su naturaleza:
+      1. **Capa Service** (`ServicioGestionEmpresa`, `ServicioGestionDepartamento`, `ServicioGestionEmpleado`, `ServicioGestionFactores`, `ServicioGestionResponsable`): valida campos obligatorios de negocio (nulos, blancos, relaciones requeridas) antes de llamar al DAO.
+      2. **`Validador`** (clase utilitaria): se amplía `validarDireccion()` para lanzar excepción si `dir == null` y validar todos sus campos obligatorios (calle, número > 0, ciudad, código postal de 5 dígitos). `DireccionDAO` no tiene servicio propio porque la UI nunca gestiona `Direccion` directamente — siempre es parte de un formulario de Empresa/Departamento/Empleado, cuyos servicios ya llaman a `Validador.validarDireccion()`.
+      3. **Capa DAO** (última barrera): los bloques `catch (SQLException e)` comprueban el `SQLState` de PostgreSQL y relanza como `IllegalArgumentException` con mensaje legible:
+         - `23505` (unique_violation) → "Ya existe un/a X con ese/a Y."
+         - `23502` (not_null_violation) → "Faltan campos obligatorios en…"
+    - **Archivos modificados**: `EmpresaDAO`, `DepartamentoDAO`, `EmpleadoDAO`, `ResponsableDAO`, `FactorEmisionDAO`, `DireccionDAO`, `ServicioGestionEmpresa`, `ServicioGestionDepartamento`, `ServicioGestionEmpleado`, `ServicioGestionFactores`, `ServicioGestionResponsable`, `Validador`.

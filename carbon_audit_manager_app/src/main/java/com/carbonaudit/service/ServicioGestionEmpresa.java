@@ -22,6 +22,8 @@ public class ServicioGestionEmpresa {
 
     public List<Empresa> getEmpresas()              { return empresaDAO.findAll(); }
     public void crearEmpresa(Empresa empresa) {
+        if (empresa.getNombreSocial() == null || empresa.getNombreSocial().isBlank())
+            throw new IllegalArgumentException("El nombre social es obligatorio.");
         Validador.validarCIF(empresa.getCif());
         Validador.validarEmail(empresa.getEmail());
         Validador.validarTelefono(empresa.getTelefono());
@@ -30,6 +32,8 @@ public class ServicioGestionEmpresa {
     }
 
     public void actualizarEmpresa(Empresa empresa) {
+        if (empresa.getNombreSocial() == null || empresa.getNombreSocial().isBlank())
+            throw new IllegalArgumentException("El nombre social es obligatorio.");
         Validador.validarCIF(empresa.getCif());
         Validador.validarEmail(empresa.getEmail());
         Validador.validarTelefono(empresa.getTelefono());

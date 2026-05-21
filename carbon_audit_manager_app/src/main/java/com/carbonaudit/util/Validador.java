@@ -89,18 +89,26 @@ public final class Validador {
     }
 
 
-    /** Valida el código postal (5 dígitos) y que el número de calle sea positivo. */
+    /** Valida los campos obligatorios y el formato de una dirección. */
     public static void validarDireccion(Direccion dir) {
-        if (dir == null) return;
+        if (dir == null)
+            throw new IllegalArgumentException("La dirección es obligatoria.");
 
-        String cp = dir.getCodigoPostal();
-        if (cp != null && !cp.isBlank() && !cp.trim().matches("\\d{5}"))
-            throw new IllegalArgumentException(
-                    "El código postal «" + cp + "» debe tener exactamente 5 dígitos.");
+        if (dir.getCalle() == null || dir.getCalle().isBlank())
+            throw new IllegalArgumentException("La calle es obligatoria.");
 
         if (dir.getNumero() <= 0)
+            throw new IllegalArgumentException("El número de la dirección debe ser un valor positivo.");
+
+        if (dir.getCiudad() == null || dir.getCiudad().isBlank())
+            throw new IllegalArgumentException("La ciudad es obligatoria.");
+
+        if (dir.getCodigoPostal() == null || dir.getCodigoPostal().isBlank())
+            throw new IllegalArgumentException("El código postal es obligatorio.");
+
+        if (!dir.getCodigoPostal().trim().matches("\\d{5}"))
             throw new IllegalArgumentException(
-                    "El número de la dirección debe ser un valor positivo.");
+                    "El código postal «" + dir.getCodigoPostal() + "» debe tener exactamente 5 dígitos.");
     }
 
     // Empleado
@@ -114,11 +122,11 @@ public final class Validador {
 
     // Factor de emisión
 
-    /** Valida que el valor del factor sea estrictamente mayor que cero. */
+    /** Valida que el valor del factor sea cero o positivo (ej: bicicleta = 0 kg CO₂e/km). */
     public static void validarValorFactor(BigDecimal valor) {
-        if (valor == null || valor.compareTo(BigDecimal.ZERO) <= 0)
+        if (valor == null || valor.compareTo(BigDecimal.ZERO) < 0)
             throw new IllegalArgumentException(
-                    "El factor de emisión debe ser un valor mayor que cero.");
+                    "El factor de emisión no puede ser nulo ni negativo.");
     }
 
     /** Valida que el alcance sea 1, 2 ó 3 (GHG Protocol). */

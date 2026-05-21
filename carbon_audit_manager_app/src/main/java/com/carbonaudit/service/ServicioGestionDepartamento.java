@@ -21,11 +21,17 @@ public class ServicioGestionDepartamento {
     }
 
     public void crearDepartamento(Departamento departamento) {
+        if (departamento.getNombre() == null || departamento.getNombre().isBlank())
+            throw new IllegalArgumentException("El nombre del departamento es obligatorio.");
+        if (departamento.getEmpresa() == null)
+            throw new IllegalArgumentException("El departamento debe estar vinculado a una empresa.");
         Validador.validarDireccion(departamento.getDireccion());
         departamentoDAO.create(departamento);
     }
 
     public void actualizarDepartamento(Departamento departamento) {
+        if (departamento.getNombre() == null || departamento.getNombre().isBlank())
+            throw new IllegalArgumentException("El nombre del departamento es obligatorio.");
         Validador.validarDireccion(departamento.getDireccion());
         departamentoDAO.update(departamento);
     }

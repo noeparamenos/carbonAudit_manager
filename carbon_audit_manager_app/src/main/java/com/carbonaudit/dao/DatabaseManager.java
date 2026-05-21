@@ -1,32 +1,48 @@
 package com.carbonaudit.dao;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import io.github.cdimascio.dotenv.Dotenv;
+
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DatabaseManager {
 
     private static DatabaseManager instance;
 
-    // Credenciales para el acceso a la BD
-    private static final String URL = "jdbc:postgresql://localhost:5432/carbon_audit";
-    private static final String USER = "ntcdev";
-    private static final String PASSWORD = "Grandvalira2020";
+    private static final Dotenv dotenv   = Dotenv.load();
+    private static final String URL      = dotenv.get("DB_URL");
+    private static final String USER     = dotenv.get("DB_USER");
+    private static final String PASSWORD = dotenv.get("DB_PASSWORD");
 
+    // Pool de conexiones
+    private final HikariDataSource pool;
 
-    // Constructor privado
-    // Solo habra una sola instancia (Architectura Singleton) que se conseguira a traves del métod
+    /**
+     * Constructor privado. Inicializa el pool de conexiones HikariCP con los
+     * parámetros de conexión y los límites de tamaño, tiempo de espera y vida útil.
+     */
     private DatabaseManager() {
-        try {
-            // Aseguramos que el driver de PostgreSQL esté cargado en memoria
-            Class.forName("org.postgresql.Driver");
-        } catch (ClassNotFoundException e) {
-            System.err.println("Error crítico: Driver JDBC de PostgreSQL no encontrado.");
-            e.printStackTrace();
-        }
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(URL);
+        config.setUsername(USER);
+        config.setPassword(PASSWORD);
+        config.setMaximumPoolSize(10); //Maximo de conexiones
+        config.setMinimumIdle(2); // Minimo de conexiones abiertas
+        config.setConnectionTimeout(30_000);  // máximo esperando una conexión libre del pool
+        config.setIdleTimeout(600_000);        // antes de cerrar una conexión ociosa
+        config.setMaxLifetime(1_800_000);      // vida máxima de una conexión (evita conexiones zombie)
+        this.pool = new HikariDataSource(config);
     }
 
-    // Métod sincronizado para obtener la única instancia del manager
+    /**
+     * Devuelve la instancia única del gestor de base de datos (Singleton).
+     * {@code synchronized} evita que dos hilos creen instancias simultáneas
+     * durante el primer acceso al arrancar la aplicación.
+     *
+     * @return instancia única de {@code DatabaseManager}
+     */
     public static synchronized DatabaseManager getInstance() {
         if (instance == null) {
             instance = new DatabaseManager();
@@ -34,8 +50,14 @@ public class DatabaseManager {
         return instance;
     }
 
-    // Métod que los DAOs llamarán para obtener una conexión a la BD
+    /**
+     * Obtiene una conexión del pool. El llamador es responsable de cerrarla
+     * (preferiblemente con try-with-resources) para devolverla al pool.
+     *
+     * @return conexión activa a la base de datos
+     * @throws SQLException si el pool no puede proporcionar una conexión
+     */
     public Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+        return pool.getConnection();
     }
 }

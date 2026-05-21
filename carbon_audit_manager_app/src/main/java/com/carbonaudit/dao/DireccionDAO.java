@@ -22,9 +22,6 @@ public class DireccionDAO implements DAO<Direccion, Integer> {
      */
     @Override
     public Direccion create(Direccion direccion) {
-        // VALIDACIÓN DE RESTRICCIONES
-        validarDireccion(direccion);
-
         // INSERCION
         String sql = "INSERT INTO DIRECCION (calle, numero, ciudad, codigo_postal, provincia, latitud, longitud) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id_direccion";
 
@@ -46,24 +43,11 @@ public class DireccionDAO implements DAO<Direccion, Integer> {
                 direccion.setIdDireccion(rs.getInt(1)); // Recuperar el id autogenerado
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            if ("23502".equals(e.getSQLState()))
+                throw new IllegalArgumentException("Faltan campos obligatorios en la dirección.");
+            throw new RuntimeException("Error al guardar la dirección.", e);
         }
         return direccion;
-    }
-
-    /**
-     * Valida las restricciones de integridad de la BD (NOT NULL)
-     * @param d direccion a analizar
-     */
-    private void validarDireccion(Direccion d) {
-        if (d.getCalle() == null || d.getCalle().trim().isEmpty())
-            throw new IllegalArgumentException("La calle es obligatoria.");
-        if (d.getNumero() <= 0)
-            throw new IllegalArgumentException("El número debe ser un valor positivo.");
-        if (d.getCiudad() == null || d.getCiudad().trim().isEmpty())
-            throw new IllegalArgumentException("La ciudad es obligatoria.");
-        if (d.getCodigoPostal() == null || d.getCodigoPostal().trim().isEmpty())
-            throw new IllegalArgumentException("El código postal es obligatorio para el geocoding.");
     }
 
     /**
@@ -136,8 +120,6 @@ public class DireccionDAO implements DAO<Direccion, Integer> {
      */
     @Override
     public void update(Direccion direccion) {
-        validarDireccion(direccion);
-
         String sql = "UPDATE DIRECCION SET calle=?, numero=?, ciudad=?, codigo_postal=?, provincia=?, latitud=?, longitud=? WHERE id_direccion=?";
         try (Connection conn = DatabaseManager.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {

@@ -18,9 +18,7 @@ public class Departamento {
 
     // ======== CONSTRUCTORES ==============
     public Departamento() {
-        // Por defecto activamos el alcance 3
-        // No es necesario según la legislación actual. Se podrá editar desde la UI
-        this.incluirAlcance3 = true;
+        this.incluirAlcance3 = true; // Incluido el alcance 3 por defecto
     }
 
     // Constructor para facilitar la creación de nuevos departamentos

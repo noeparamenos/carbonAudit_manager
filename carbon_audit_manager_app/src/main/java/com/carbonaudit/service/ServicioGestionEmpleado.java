@@ -36,12 +36,22 @@ public class ServicioGestionEmpleado {
     // =========== CRUD EMPLEADO ==============
 
     public Empleado crearEmpleado(Empleado empleado) {
+        if (empleado.getNombre() == null || empleado.getNombre().isBlank())
+            throw new IllegalArgumentException("El nombre del empleado es obligatorio.");
+        if (empleado.getMedioTransporte() == null)
+            throw new IllegalArgumentException("El medio de transporte es obligatorio.");
+        if (empleado.getDepartamento() == null)
+            throw new IllegalArgumentException("El departamento es obligatorio.");
         Validador.validarDiasPresenciales(empleado.getDiasPresenciales());
         Validador.validarDireccion(empleado.getDireccion());
         return empleadoDAO.create(empleado);
     }
 
     public void actualizarEmpleado(Empleado empleado) {
+        if (empleado.getNombre() == null || empleado.getNombre().isBlank())
+            throw new IllegalArgumentException("El nombre del empleado es obligatorio.");
+        if (empleado.getMedioTransporte() == null)
+            throw new IllegalArgumentException("El medio de transporte es obligatorio.");
         Validador.validarDiasPresenciales(empleado.getDiasPresenciales());
         Validador.validarDireccion(empleado.getDireccion());
         empleadoDAO.update(empleado);

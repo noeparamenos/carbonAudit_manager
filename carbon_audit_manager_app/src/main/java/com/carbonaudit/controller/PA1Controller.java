@@ -312,10 +312,19 @@ public class PA1Controller {
         final boolean anioCompleto = chkAnioCompleto.isSelected();
         final int     mes         = anioCompleto ? 1 : combMes.getSelectionModel().getSelectedIndex() + 1;
 
+        // Arrays de un solo elemento: truco para compartir datos entre el lambda (call) y el hilo principal.
+        // Las lambdas en Java solo pueden capturar variables "effectively final"; un array sí lo es aunque
+        // se modifique su contenido, por lo que usamos [0] como variable mutable dentro del lambda.
         @SuppressWarnings("unchecked")
         final List<ConsumoMensual>[] consumosHolder = new List[1];
         final BigDecimal[]           totalHolder    = new BigDecimal[1];
 
+        // Task<Void>: unidad de trabajo asíncrono de JavaFX.
+        //   · call()          → se ejecuta en el hilo de fondo (NO en el hilo de JavaFX).
+        //                        Aquí van todas las consultas a BD que bloquearían la UI.
+        //   · setOnSucceeded  → se ejecuta en el hilo de JavaFX cuando call() termina sin excepción.
+        //                        Aquí se actualizan los componentes visuales (tabla, labels…).
+        //   · setOnFailed     → se ejecuta en el hilo de JavaFX si call() lanza una excepción.
         Task<Void> tarea = new Task<>() {
             @Override
             protected Void call() {
@@ -330,6 +339,7 @@ public class PA1Controller {
             }
         };
 
+        // Actualizar la UI solo cuando los datos ya están listos (hilo de JavaFX)
         tarea.setOnSucceeded(e -> {
             listaConsumos.setAll(consumosHolder[0]);
             tablaConsumos.setItems(listaConsumos);
@@ -340,6 +350,7 @@ public class PA1Controller {
                 mostrarError("Error al cargar los consumos: " + tarea.getException().getMessage()));
 
         Thread hilo = new Thread(tarea);
+        // Daemon: el hilo muere automáticamente si se cierra la aplicación; no bloquea el JVM al salir.
         hilo.setDaemon(true);
         hilo.start();
     }

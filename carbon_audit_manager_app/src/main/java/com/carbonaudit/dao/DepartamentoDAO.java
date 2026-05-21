@@ -28,9 +28,7 @@ public class DepartamentoDAO implements DAO<Departamento, Integer> {
      */
     @Override
     public Departamento create(Departamento departamento) {
-        // 1. VALIDACIONES DE INTEGRIDAD
-        validarDepartamento(departamento);
-        // 2. GESTIÓN DE DIRECCIÓN EN CASCADA
+        // GESTIÓN DE DIRECCIÓN EN CASCADA
         if (departamento.getDireccion().getIdDireccion() == 0) {
             Direccion nuevaDir = direccionDAO.create(departamento.getDireccion());
             departamento.setDireccion(nuevaDir);
@@ -53,27 +51,11 @@ public class DepartamentoDAO implements DAO<Departamento, Integer> {
                 departamento.setIdDepartamento(rs.getInt(1));
             }
         } catch (SQLException e) {
-            // Manejo de UNIQUE (id_empresa, nombre)
-            e.printStackTrace();
+            if ("23505".equals(e.getSQLState()))
+                throw new IllegalArgumentException("Ya existe un departamento con ese nombre en esta empresa.");
+            throw new RuntimeException("Error al crear el departamento.", e);
         }
         return departamento;
-    }
-
-    /**
-     * Valida las restricciones de integridad en la tabla departamento
-     * @param departamento
-     */
-    private void validarDepartamento(Departamento departamento) {
-        if (departamento.getNombre() == null || departamento.getNombre().trim().isEmpty()) {
-            throw new IllegalArgumentException("El nombre del departamento es obligatorio.");
-        }
-        if (departamento.getEmpresa() == null || departamento.getEmpresa().getIdEmpresa() == 0) {
-            throw new IllegalArgumentException("El departamento debe estar vinculado a una empresa válida.");
-        }
-        if (departamento.getDireccion() == null) {
-            throw new IllegalArgumentException("La ubicación física del departamento es obligatoria (NOT NULL).");
-        }
-
     }
 
     /**
@@ -150,7 +132,6 @@ public class DepartamentoDAO implements DAO<Departamento, Integer> {
      */
     @Override
     public void update(Departamento departamento) {
-        validarDepartamento(departamento);
         if (departamento.getDireccion() != null) {
             direccionDAO.update(departamento.getDireccion());
         }
