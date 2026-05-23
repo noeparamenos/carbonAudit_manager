@@ -86,7 +86,7 @@ Creación de la UI con JavaFX y visualización de resultados.
       - [x] PR0 · Selección de responsable
       - [x] PR1 · Vista responsable
     - [x] Ajustar tamaño y calidad del logo en P0
-    - [x] Resolver centrado de ventana P0 en el primer arranque en frío (ver error 8)
+    - [x] Resolver centrado de ventana P0 en el primer arranque en frío (ver error 6)
   - **Implementación:**
     - [x] Diseñar pantallas (`.fxml`) y controladores
       - [x] P0 · Selección de rol
