@@ -121,7 +121,7 @@ public class EmpresaDAO implements DAO<Empresa, Integer> {
                 empresas.add(mapResultSetToEmpresa(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            if (!"42P01".equals(e.getSQLState())) e.printStackTrace(); // 42P01 = tabla no existe (BD vacía)
         }
         return empresas;
     }

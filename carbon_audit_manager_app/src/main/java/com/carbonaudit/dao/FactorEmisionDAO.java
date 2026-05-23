@@ -96,7 +96,7 @@ public class FactorEmisionDAO implements DAO<FactorEmision, Integer> {
                 factores.add(mapResultSetToFactor(rs)); // Mapeado a Objetos
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            if (!"42P01".equals(e.getSQLState())) e.printStackTrace(); // 42P01 = tabla no existe (BD vacía)
         }
         return factores;
     }

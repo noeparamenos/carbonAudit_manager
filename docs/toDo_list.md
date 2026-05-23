@@ -112,6 +112,8 @@ Creación de la UI con JavaFX y visualización de resultados.
 
 ## Fase 4: Pruebas Finales y Documentación
 Refinado del software y preparación del proyecto final.
+  - [ ] Refactorizar código duplicado entre `PA1Controller` y `PR1Controller` en una clase `util/UIHelper`: `mostrarError()`, `NOMBRES_MESES`, patrón de navegación (`FXMLLoader` + `Stage`), patrón `Task<Void>` en background, `configurarSelectorPeriodo()` y diálogo de confirmación antes de borrar.
+  - [ ] Exportación a CSV en `PR1Controller` (placeholder actual): reutilizar lógica de `PA1Controller.onExportarCSV()` adaptando nombre de fichero y columnas al contexto de departamento.
   - [ ] Pruebas de compatibilidad en el sistema operativo Linux.
   - [ ] Optimización de consultas SQL en PostgreSQL.
     - [ ] **Métodos de reporting en DAOs con JOIN**: añadir métodos específicos en `ConsumoMensualDAO` y `CommutingEmpleadoDAO` que devuelvan las emisiones ya agregadas mediante queries con JOIN y GROUP BY, sin reconstruir el grafo completo de objetos. Actualizar `ServicioCalculoHuella` para que `getHuellaTotalEmpresaMes`, `getHuellaPorScope` y los métodos anuales usen estos nuevos métodos. Actualmente cada llamada mensual genera ~107 queries por la composición en cadena de los DAOs; con esta mejora se reducirían a ~2. El CRUD de composición existente no se toca.

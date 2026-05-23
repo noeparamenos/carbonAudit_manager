@@ -542,7 +542,7 @@ public class PA1Controller {
         });
     }
 
-    // ── Exportar CSV ───────────────────────────────────────────────────────
+    // Exportar CSV
 
     @FXML
     private void onExportarCSV() {
@@ -551,17 +551,19 @@ public class PA1Controller {
             return;
         }
 
+        // Mostrar el elector de carpetas
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Guardar CSV");
-        fileChooser.getExtensionFilters().add(
+        fileChooser.getExtensionFilters().add( //Solo muestra los .cvs
                 new FileChooser.ExtensionFilter("Archivo CSV (*.csv)", "*.csv"));
-        fileChooser.setInitialFileName(
+        fileChooser.setInitialFileName( // Nombre sugerido con '_'
                 "consumos_" + empresa.getNombreSocial().replaceAll("\\s+", "_") + ".csv");
 
-        Stage stage = (Stage) tablaConsumos.getScene().getWindow();
-        java.io.File archivo = fileChooser.showSaveDialog(stage);
+        Stage stage = (Stage) tablaConsumos.getScene().getWindow(); //Ventana principal
+        java.io.File archivo = fileChooser.showSaveDialog(stage); //Muestra la ventana y devuelve la ruta del archivo
         if (archivo == null) return;
 
+        //Rellenar el archivo con los datos
         try (FileWriter fw = new FileWriter(archivo)) {
             fw.write("Departamento;Recurso;Cantidad;Unidad;Alcance;Emision_kgCO2e\n");
             for (ConsumoMensual c : listaConsumos) {
@@ -578,7 +580,7 @@ public class PA1Controller {
         }
     }
 
-    // ── Gráficos ───────────────────────────────────────────────────────────
+    // ── Gráficos
 
     private void cargarGraficos() {
         if (empresa == null) return;

@@ -35,7 +35,7 @@ import java.util.Optional;
  */
 public class PA2Controller {
 
-    // ── Breadcrumb ────────────────────────────────────────────────────────
+    // ── Breadcrumb ================================
 
     @FXML private Label lblBreadcrumbEmpresa;
     @FXML private Label lblBreadcrumbDpto;
@@ -675,7 +675,7 @@ public class PA2Controller {
         hilo.start();
     }
 
-    // ── Helpers ─────────────────────────────────────────────────────────────
+    // ── Helpers ==================
 
     private void cerrarPanelEmpleado() {
         panelEmpleado.setVisible(false);

@@ -11,7 +11,7 @@ public class DatabaseManager {
 
     private static DatabaseManager instance;
     //busca el .env en el directorio de trabajo actual del proceso Java en el momento de ejecutarse
-    private static final Dotenv dotenv   = Dotenv.load();
+    private static final Dotenv dotenv   = Dotenv.configure().ignoreIfMissing().load();
     private static final String URL      = dotenv.get("DB_URL");
     private static final String USER     = dotenv.get("DB_USER");
     private static final String PASSWORD = dotenv.get("DB_PASSWORD");

@@ -73,6 +73,11 @@
       3. **Capa DAO**: los `catch (SQLException e)` comprueban el `SQLState` de PostgreSQL y relanza como `IllegalArgumentException` con mensaje legible:
          - `23505` (unique_violation) - `23502` (not_null_violation)
 
+18. No es posible generar un ejecutable distribuible directamente desde `mvn clean package`.
+    - **Causa**: El JAR generado por Maven no incluye JavaFX. Las librerías de JavaFX son módulos nativos (`.jar` + binarios `.so`/`.dll` según el sistema operativo) que Maven descarga para compilar y ejecutar, pero no empaqueta dentro del JAR final. Si se intenta ejecutar con `java -jar`, el JVM lanza: `Error: JavaFX runtime components are missing`.
+      - A diferencia de una app Java sin JavaFX (que puede empaquetarse como fat JAR), los módulos de JavaFX tienen partes nativas que varían por OS y requieren declararse explícitamente en el module path al arrancar.
+    - **Solución prevista**: usar `jpackage` (incluido en el JDK 14+) para generar un instalador nativo (`.deb` en Linux, `.exe` en Windows, `.dmg` en macOS) que incluya la JVM completa. El usuario final no necesitaría tener Java instalado. Pendiente de implementar (ver toDo_list.md).
+
 17. Credenciales de base de datos en texto plano en el código fuente.
     - **Causa**: `DatabaseManager` tenía la URL, el usuario y la contraseña de PostgreSQL como constantes `static final String` directamente en el código. Al estar versionadas en Git, cualquier persona con acceso al repositorio podía leer las credenciales.
     - **Solución**: Las tres variables se mueven al fichero `.env` y se leen en tiempo de arranque con `Dotenv.load()`.

@@ -17,6 +17,9 @@ import javafx.stage.Stage;
 import javafx.util.StringConverter;
 
 import javafx.concurrent.Task;
+import javafx.stage.FileChooser;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -664,10 +667,37 @@ public class PR1Controller {
         mostrarError("La exportación a PDF estará disponible próximamente.");
     }
 
-    /** Placeholder: TODO: exportación a CSV pendiente de implementar. */
     @FXML
     private void onExportarCSV() {
-        mostrarError("La exportación a CSV estará disponible próximamente.");
+        if (listaConsumos.isEmpty()) {
+            mostrarError("No hay datos que exportar para el período seleccionado.");
+            return;
+        }
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Guardar CSV");
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Archivo CSV (*.csv)", "*.csv"));
+        fileChooser.setInitialFileName(
+                "consumos_" + departamento.getNombre().replaceAll("\\s+", "_") + ".csv");
+
+        Stage stage = (Stage) tablaConsumos.getScene().getWindow();
+        java.io.File archivo = fileChooser.showSaveDialog(stage);
+        if (archivo == null) return;
+
+        try (FileWriter fw = new FileWriter(archivo)) {
+            fw.write("Recurso;Cantidad;Unidad;Alcance;Emision_kgCO2e\n");
+            for (ConsumoMensual c : listaConsumos) {
+                fw.write(c.getFactorEmision().getNombre()  + ";"
+                        + c.getCantidad()                  + ";"
+                        + c.getFactorEmision().getUnidad() + ";"
+                        + c.getFactorEmision().getAlcance() + ";"
+                        + c.calcularEmision()              + "\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostrarError("Error al exportar el archivo: " + e.getMessage());
+        }
     }
 
     // ============ Navegación entre pantallas ============
