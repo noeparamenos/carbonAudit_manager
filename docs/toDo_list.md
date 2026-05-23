@@ -78,7 +78,7 @@ Creación de la UI con JavaFX y visualización de resultados.
     - [x] Definir el flujo de navegación entre pantallas con un diagráma
     - [x] Documentar el mapa de navegación 
     - [x] Especificar cada pantalla: actores, objetivo, elementos y acciones (`screens.md`)
-    - [ ] Crear wireframes de las pantallas principales
+    - [x] Crear wireframes de las pantallas principales
       - [x] P0 · Selección de rol
       - [x] PA0 · Lista de empresas
       - [x] PA1 · Vista empresa
@@ -116,7 +116,7 @@ Refinado del software y preparación del proyecto final.
   - [ ] Optimización de consultas SQL en PostgreSQL.
     - [ ] **Métodos de reporting en DAOs con JOIN**: añadir métodos específicos en `ConsumoMensualDAO` y `CommutingEmpleadoDAO` que devuelvan las emisiones ya agregadas mediante queries con JOIN y GROUP BY, sin reconstruir el grafo completo de objetos. Actualizar `ServicioCalculoHuella` para que `getHuellaTotalEmpresaMes`, `getHuellaPorScope` y los métodos anuales usen estos nuevos métodos. Actualmente cada llamada mensual genera ~107 queries por la composición en cadena de los DAOs; con esta mejora se reducirían a ~2. El CRUD de composición existente no se toca.
     - [ ] **Eliminar hilos de fondo en controladores**: una vez implementados los métodos con JOIN, la latencia de carga se reducirá lo suficiente para que `cargarConsumos()` y `cargarGraficos()` puedan ejecutarse directamente en el Application Thread sin `Task`. Los métodos `geocodificarDireccionEnSegundoPlano` y `calcularDistanciaEnSegundoPlano` sí deben conservar el hilo (dependen de una API externa).
-  - [ ] Finalizar la memoria del proyecto detallando la arquitectura y el cumplimiento de requerimientos.
+  - [x] Finalizar la memoria del proyecto detallando la arquitectura y el cumplimiento de requerimientos.
   - [ ] Empaquetado para distribución
     - [ ] **Configuración inicial en primer arranque**: detectar ausencia de credenciales de BD y mostrar una pantalla de configuración donde el usuario introduzca la URL, usuario y contraseña de su PostgreSQL. Guardarlas en un fichero local (`.env` o `config.properties`) que no se incluya en la distribución. Actualmente las credenciales se leen de un `.env` que el usuario tendría que crear manualmente.
   - **Sistema de autenticación (opcional, si queda margen):**

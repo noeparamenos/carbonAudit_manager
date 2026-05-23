@@ -105,10 +105,13 @@ CREATE TABLE COMMUTING_EMPLEADO
     PRIMARY KEY (id_empleado, mes, anio)
 );
 
--- ÍNDICES
--- para mejorar consultas frecuentes
+-- ÍNDICES para mejorar consultas frecuentes
+-- Por fecha: acelera filtros por mes/año en las consultas de consumo
 CREATE INDEX idx_consumo_anio_mes ON CONSUMO_MENSUAL (anio, mes);
+-- Índice por departamento: acelera la carga de consumos de un departamento concreto
 CREATE INDEX idx_consumo_id_dept ON CONSUMO_MENSUAL (id_dept);
 
+-- Índice por empleado: acelera la búsqueda de commutings de un empleado
 CREATE INDEX idx_commuting_id_empleado ON COMMUTING_EMPLEADO (id_empleado);
+-- Índice por fecha: acelera filtros por mes/año en las consultas de commuting
 CREATE INDEX idx_commuting_anio_mes ON COMMUTING_EMPLEADO (anio, mes);

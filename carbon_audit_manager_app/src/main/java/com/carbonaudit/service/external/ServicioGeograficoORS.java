@@ -56,8 +56,9 @@ public class ServicioGeograficoORS implements IServicioGeografico {
 
         // Construccion de la URL del endpoint de Geocoding
         String url = BASE_URL + "/geocode/search?api_key=" + //URL
-                API_KEY + "&text=" + direccionCodificada + "&limit=1"; //Parámetros
+                API_KEY + "&text=" + direccionCodificada + "&limit=1"; //Parámetros (espera solo 1 respuesta)
 
+        //Creación de petición HTTP inmutable
         HttpRequest peticion = HttpRequest.newBuilder()
                 .uri(URI.create(url)) // Convierte el String de la URL en un objeto URI
                 .GET() //Metodo HTTP

@@ -1,11 +1,5 @@
--- =============================================================================
--- seed_empresa_demo.sql
 -- Datos de demostración: empresa, departamentos, empleados, responsables
 -- y consumos mensuales de todo el año 2024.
---
--- Empresa ficticia: Talleres Renovables Ibérica, S.L.
---   · Departamento "Operaciones"   — 4 empleados, taller y logística en Alcobendas
---   · Departamento "Administración" — 3 empleados, oficinas en Madrid
 --
 -- Prerequisito: seed_factores_emision.sql debe haberse ejecutado antes.
 --
@@ -14,7 +8,9 @@
 -- =============================================================================
 
 DO $$
+   --Declaración de variables locales (del bloque
 DECLARE
+
     -- Factores de emisión (cargados del seed de factores)
     v_f_elect        INT;   -- Electricidad red española (kWh, alcance 2)
     v_f_gas          INT;   -- Gas natural             (m³,  alcance 1)
@@ -56,13 +52,13 @@ DECLARE
 
 BEGIN
 
-    -- ── Guardia: abortar si la empresa ya existe ──────────────────────────────
+    -- Guardia: abortar si la empresa ya existe
     IF EXISTS (SELECT 1 FROM EMPRESA WHERE cif = 'B12345678') THEN
         RAISE NOTICE 'El seed ya fue ejecutado (CIF B12345678 ya existe). Sin cambios.';
         RETURN;
     END IF;
 
-    -- ── Resolución de factores de emisión ─────────────────────────────────────
+    --  Asignación de factores a variables
     SELECT id_factor INTO v_f_elect      FROM FACTOR_EMISION WHERE nombre = 'Electricidad red española';
     SELECT id_factor INTO v_f_gas        FROM FACTOR_EMISION WHERE nombre = 'Gas natural';
     SELECT id_factor INTO v_f_diesel_veh FROM FACTOR_EMISION WHERE nombre = 'Diésel (vehículo)';
@@ -73,28 +69,24 @@ BEGIN
     SELECT id_factor INTO v_f_autobus    FROM FACTOR_EMISION WHERE nombre = 'Autobús urbano';
     SELECT id_factor INTO v_f_bici       FROM FACTOR_EMISION WHERE nombre = 'Bicicleta / a pie';
 
+    -- Aviso y fin de ejecución
     IF v_f_elect IS NULL THEN
         RAISE EXCEPTION 'Factores de emisión no encontrados. Ejecuta seed_factores_emision.sql primero.';
     END IF;
 
     -- ══════════════════════════════════════════════════════════════════════════
-    -- EMPRESA
-    -- ══════════════════════════════════════════════════════════════════════════
-
+    -- Dirección
     INSERT INTO DIRECCION (calle, numero, ciudad, codigo_postal, provincia)
     VALUES ('Gran Vía', 45, 'Madrid', '28013', 'Madrid')
-    RETURNING id_direccion INTO v_dir_empresa;
+    RETURNING id_direccion INTO v_dir_empresa; -- Guarda el ID de la direccion
 
+-- Empresa
     INSERT INTO EMPRESA (nombre_social, cif, telefono, email, sector, id_direccion)
     VALUES ('Talleres Renovables Ibérica, S.L.', 'B12345678',
-            '915550100', 'info@trisl.es', 'Energía', v_dir_empresa)
-    RETURNING id_empresa INTO v_empresa;
+            '915550100', 'info@trisl.es', 'Energía', v_dir_empresa) -- Gurada el ID direccion
+    RETURNING id_empresa INTO v_empresa; --Guarda el ID autogenerado
 
-    -- ══════════════════════════════════════════════════════════════════════════
     -- DEPARTAMENTO: Operaciones
-    -- Taller de instalación y flota de vehículos. Alcance 3 habilitado.
-    -- ══════════════════════════════════════════════════════════════════════════
-
     INSERT INTO DIRECCION (calle, numero, ciudad, codigo_postal, provincia)
     VALUES ('Calle Industria', 12, 'Alcobendas', '28100', 'Madrid')
     RETURNING id_direccion INTO v_dir_dept_ops;
@@ -103,9 +95,7 @@ BEGIN
     VALUES ('Operaciones', 'Taller, instalaciones y logística', TRUE, v_dir_dept_ops, v_empresa)
     RETURNING id_departamento INTO v_dept_ops;
 
-    -- ── Empleados Operaciones ─────────────────────────────────────────────────
-
-    -- Luis García Martínez · Coche gasolina · 14,8 km · 20 días/mes
+    -- Empleados Operaciones
     INSERT INTO DIRECCION (calle, numero, ciudad, codigo_postal, provincia)
     VALUES ('Calle Alcalá', 120, 'Madrid', '28009', 'Madrid')
     RETURNING id_direccion INTO v_dir_e1_ops;
@@ -114,7 +104,6 @@ BEGIN
     VALUES ('Luis García Martínez', '2022-03-01', 14.80, v_f_coche_gas, 20, v_dir_e1_ops, v_dept_ops)
     RETURNING id_empleado INTO v_emp1_ops;
 
-    -- María Rodríguez López · Tren / metro · 23,5 km · 20 días/mes
     INSERT INTO DIRECCION (calle, numero, ciudad, codigo_postal, provincia)
     VALUES ('Calle Fuencarral', 78, 'Madrid', '28004', 'Madrid')
     RETURNING id_direccion INTO v_dir_e2_ops;
@@ -141,11 +130,8 @@ BEGIN
     VALUES ('Ana Jiménez Torres', '2023-01-10', 2.10, v_f_bici, 20, v_dir_e4_ops, v_dept_ops)
     RETURNING id_empleado INTO v_emp4_ops;
 
-    -- ══════════════════════════════════════════════════════════════════════════
+    -- ===========================
     -- DEPARTAMENTO: Administración
-    -- Gestión, contabilidad y RRHH. Alcance 3 habilitado.
-    -- ══════════════════════════════════════════════════════════════════════════
-
     INSERT INTO DIRECCION (calle, numero, ciudad, codigo_postal, provincia)
     VALUES ('Gran Vía', 45, 'Madrid', '28013', 'Madrid')
     RETURNING id_direccion INTO v_dir_dept_adm;
@@ -154,9 +140,7 @@ BEGIN
     VALUES ('Administración', 'Gestión, contabilidad y RRHH', TRUE, v_dir_dept_adm, v_empresa)
     RETURNING id_departamento INTO v_dept_adm;
 
-    -- ── Empleados Administración ──────────────────────────────────────────────
-
-    -- Elena Castro Ruiz · Tren / metro · 17,2 km · 20 días/mes
+    --  Empleados Administración
     INSERT INTO DIRECCION (calle, numero, ciudad, codigo_postal, provincia)
     VALUES ('Calle Serrano', 210, 'Madrid', '28016', 'Madrid')
     RETURNING id_direccion INTO v_dir_e1_adm;
@@ -165,7 +149,6 @@ BEGIN
     VALUES ('Elena Castro Ruiz', '2019-04-01', 17.20, v_f_tren, 20, v_dir_e1_adm, v_dept_adm)
     RETURNING id_empleado INTO v_emp1_adm;
 
-    -- Javier Moreno Díaz · Coche híbrido · 19,8 km · 18 días/mes
     INSERT INTO DIRECCION (calle, numero, ciudad, codigo_postal, provincia)
     VALUES ('Avenida de América', 55, 'Madrid', '28028', 'Madrid')
     RETURNING id_direccion INTO v_dir_e2_adm;
@@ -174,7 +157,6 @@ BEGIN
     VALUES ('Javier Moreno Díaz', '2021-02-15', 19.80, v_f_coche_hibr, 18, v_dir_e2_adm, v_dept_adm)
     RETURNING id_empleado INTO v_emp2_adm;
 
-    -- Sofía Fernández Gil · Autobús urbano · 11,5 km · 20 días/mes
     INSERT INTO DIRECCION (calle, numero, ciudad, codigo_postal, provincia)
     VALUES ('Calle Princesa', 33, 'Madrid', '28008', 'Madrid')
     RETURNING id_direccion INTO v_dir_e3_adm;
@@ -183,31 +165,18 @@ BEGIN
     VALUES ('Sofía Fernández Gil', '2022-11-01', 11.50, v_f_autobus, 20, v_dir_e3_adm, v_dept_adm)
     RETURNING id_empleado INTO v_emp3_adm;
 
-    -- ══════════════════════════════════════════════════════════════════════════
+    -- ===============================================
     -- RESPONSABLES (mandatos activos desde 01/01/2024)
-    -- ══════════════════════════════════════════════════════════════════════════
-
     INSERT INTO RESPONSABLE (fecha_inicio, fecha_fin, id_dept, id_empleado)
     VALUES ('2024-01-01', NULL, v_dept_ops, v_emp1_ops);   -- Luis García → Operaciones
 
     INSERT INTO RESPONSABLE (fecha_inicio, fecha_fin, id_dept, id_empleado)
     VALUES ('2024-01-01', NULL, v_dept_adm, v_emp1_adm);   -- Elena Castro → Administración
 
-    -- ══════════════════════════════════════════════════════════════════════════
+    -- ==========================================
     -- CONSUMOS MENSUALES 2024
-    -- ══════════════════════════════════════════════════════════════════════════
-    --
-    -- Operaciones:
-    --   · Electricidad  — taller + oficinas del polígono (patrón estacional)
-    --   · Gas natural   — calefacción taller           (pico invierno)
-    --   · Diésel vehículo — flota de furgonetas        (baja en agosto)
-    --
-    -- Administración:
-    --   · Electricidad  — oficinas Madrid              (patrón estacional suavizado)
-    --   · Gas natural   — calefacción oficinas         (solo meses fríos)
-    --
 
-    -- ── Operaciones · Electricidad (kWh) ──────────────────────────────────────
+    --  Operaciones · Electricidad (kWh)
     INSERT INTO CONSUMO_MENSUAL (cantidad, mes, anio, id_dept, id_factor) VALUES
         (2200.00,  1, 2024, v_dept_ops, v_f_elect),
         (2100.00,  2, 2024, v_dept_ops, v_f_elect),
@@ -222,7 +191,7 @@ BEGIN
         (2000.00, 11, 2024, v_dept_ops, v_f_elect),
         (2300.00, 12, 2024, v_dept_ops, v_f_elect);
 
-    -- ── Operaciones · Gas natural (m³) ────────────────────────────────────────
+    -- ── Operaciones · Gas natural
     INSERT INTO CONSUMO_MENSUAL (cantidad, mes, anio, id_dept, id_factor) VALUES
         (750.00,  1, 2024, v_dept_ops, v_f_gas),
         (680.00,  2, 2024, v_dept_ops, v_f_gas),
@@ -237,7 +206,7 @@ BEGIN
         (500.00, 11, 2024, v_dept_ops, v_f_gas),
         (720.00, 12, 2024, v_dept_ops, v_f_gas);
 
-    -- ── Operaciones · Diésel vehículo — flota furgonetas (litros) ────────────
+    -- ── Operaciones · Diésel vehículo — flota furgonetas
     INSERT INTO CONSUMO_MENSUAL (cantidad, mes, anio, id_dept, id_factor) VALUES
         (380.00,  1, 2024, v_dept_ops, v_f_diesel_veh),
         (360.00,  2, 2024, v_dept_ops, v_f_diesel_veh),
@@ -280,6 +249,7 @@ BEGIN
         (260.00, 11, 2024, v_dept_adm, v_f_gas),
         (360.00, 12, 2024, v_dept_adm, v_f_gas);
 
+    -- Aviso de fin
     RAISE NOTICE 'Seed completado: empresa "Talleres Renovables Ibérica, S.L." creada con 2 departamentos, 7 empleados y consumos 2024.';
 
 END $$;

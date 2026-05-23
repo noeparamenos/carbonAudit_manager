@@ -1,5 +1,3 @@
--- =============================================================================
--- seed_factores_emision.sql
 -- Datos de referencia iniciales para la tabla FACTOR_EMISION.
 --
 -- Fuentes:
