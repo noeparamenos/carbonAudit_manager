@@ -84,9 +84,14 @@ public class PA0Controller {
      */
     private FactorEmision factorEditando;
 
+    /*
+     * Listas observadas por tablaEmpresas y tablaFactores respectivamente.
+     * Un setAll() notifica a la tabla suscrita, que se refresca automáticamente.
+     */
     private final ObservableList<Empresa>       listaEmpresas = FXCollections.observableArrayList();
     private final ObservableList<FactorEmision> listaFactores = FXCollections.observableArrayList();
 
+    // Opciones del ComboBox de alcance en el panel de factores
     private static final List<String> ALCANCES = List.of(
             "1 · Combustión directa",
             "2 · Energía (electricidad)",
@@ -106,7 +111,7 @@ public class PA0Controller {
         cargarFactores();
     }
 
-    // ── Configuración de columnas ──────────────────────────────────────────
+    // ============ Configuración de columnas ============
 
     private void configurarColumnasEmpresas() {
         tablaEmpresas.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
@@ -153,6 +158,7 @@ public class PA0Controller {
         });
     }
 
+    /** Un clic en una fila de empresas navega directamente a PA1 con esa empresa. */
     private void configurarClicEnFilaEmpresas() {
         tablaEmpresas.setRowFactory(tv -> {
             TableRow<Empresa> fila = new TableRow<>();
@@ -178,13 +184,15 @@ public class PA0Controller {
         });
     }
 
-    // ── Carga de datos ────────────────────────────────────────────────────
+    // ── Carga de datos ============
 
+    /** Consulta todas las empresas y suscribe la tabla a la lista observable. */
     private void cargarEmpresas() {
         listaEmpresas.setAll(servicioEmpresa.getEmpresas());
         tablaEmpresas.setItems(listaEmpresas);
     }
 
+    /** Consulta todos los factores de emisión y suscribe la tabla a la lista observable. */
     private void cargarFactores() {
         listaFactores.setAll(servicioFactores.getFactores());
         tablaFactores.setItems(listaFactores);
@@ -200,6 +208,10 @@ public class PA0Controller {
         panelEmpresa.setManaged(true);
     }
 
+    /**
+     * Crea la empresa con los datos del formulario y lanza la geocodificación en segundo plano.
+     * La empresa se persiste inmediatamente; las coordenadas se añaden cuando la API responde.
+     */
     @FXML
     private void onGuardarEmpresa() {
         if (campNombre.getText().trim().isEmpty()   || campCif.getText().trim().isEmpty()
@@ -341,15 +353,21 @@ public class PA0Controller {
 
     // ── Navegación ─────────────────────────────────────────────────────────
 
+    /**
+     * Navega a PA1 pasando la empresa seleccionada al controlador destino.
+     * Patron: cargar FXML, obtener controlador, pasar objeto, mostrar.
+     *
+     * @param empresa la empresa seleccionada en la tabla
+     */
     private void navegarAPA1(Empresa empresa) {
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/carbonaudit/view/pa1-empresa-view.fxml"));
-            Scene escena = new Scene(loader.load());
-            PA1Controller pa1 = loader.getController();
-            pa1.setEmpresa(empresa);
+            Scene escena = new Scene(loader.load()); // Carga el FXML de destion
+            PA1Controller pa1 = loader.getController(); //Obtiene su controlador
+            pa1.setEmpresa(empresa); // Le pasa el contexto
             Stage stage = (Stage) tablaEmpresas.getScene().getWindow();
-            stage.setScene(escena);
+            stage.setScene(escena); // Muestra la nueva escena en la ventana
             stage.sizeToScene();
         } catch (Exception e) {
             e.printStackTrace();
@@ -397,15 +415,16 @@ public class PA0Controller {
         Task<Void> tarea = new Task<>() {
             @Override
             protected Void call() throws Exception {
-                geoService.completarCoordenadas(dir);
+                geoService.completarCoordenadas(dir); // hilo secundario: llama a la API ORS
                 return null;
             }
         };
-        tarea.setOnSucceeded(e -> servicioEmpresa.persistirCoordenadas(dir));
+        tarea.setOnSucceeded(e -> servicioEmpresa.persistirCoordenadas(dir)); // hilo JavaFX: persiste coords
         tarea.setOnFailed(e -> Platform.runLater(() ->
                 mostrarError("No se pudo geocodificar la dirección de la empresa.")));
+        // Lanzar el Hilo
         Thread hilo = new Thread(tarea);
-        hilo.setDaemon(true);
+        hilo.setDaemon(true); // muere si la app se cierra
         hilo.start();
     }
 }

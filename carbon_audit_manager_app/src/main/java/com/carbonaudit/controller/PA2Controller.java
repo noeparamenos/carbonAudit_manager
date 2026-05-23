@@ -114,6 +114,11 @@ public class PA2Controller {
      */
     private Empleado empleadoEditando;
 
+    /*
+     * listaEmpleados: observada por tablaEmpleados.
+     * listaHistorial: observada por tablaHistorial (historial de responsables del departamento).
+     * Un setAll() en cualquiera de ellas refresca su tabla automáticamente.
+     */
     private final ObservableList<Empleado>    listaEmpleados = FXCollections.observableArrayList();
     private final ObservableList<Responsable> listaHistorial = FXCollections.observableArrayList();
 
@@ -138,6 +143,8 @@ public class PA2Controller {
     public void setDepartamento(Departamento departamento) {
         this.departamento = departamento;
         actualizarCabecera();
+        tablaEmpleados.setItems(listaEmpleados); // suscripción única
+        tablaHistorial.setItems(listaHistorial);
         cargarEmpleados();
         cargarResponsable();
     }
@@ -214,6 +221,7 @@ public class PA2Controller {
 
     // ── Carga de datos ────────────────────────────────────────────────────
 
+    /** Actualiza los labels de breadcrumb y cabecera con los datos del departamento activo. */
     private void actualizarCabecera() {
         String empresa = departamento.getEmpresa() != null
                 ? departamento.getEmpresa().getNombreSocial() : "";
@@ -226,9 +234,9 @@ public class PA2Controller {
         lblInfoDpto.setText("Empresa: " + empresa + "  ·  " + ciudad);
     }
 
+    /** Consulta los empleados activos del departamento y refresca la tabla. */
     private void cargarEmpleados() {
         listaEmpleados.setAll(servicioGestion.getEmpleadosDepartamento(departamento.getIdDepartamento()));
-        tablaEmpleados.setItems(listaEmpleados);
     }
 
     /**
@@ -253,11 +261,11 @@ public class PA2Controller {
 
         listaHistorial.setAll(
                 servicioResponsable.getAllByDepartamento(departamento.getIdDepartamento()));
-        tablaHistorial.setItems(listaHistorial);
     }
 
     // ── Panel lateral: Nuevo empleado ─────────────────────────────────────
 
+    /** Abre el panel lateral en modo "nuevo empleado" con todos los campos limpios. */
     @FXML
     private void onNuevoEmpleado() {
         empleadoEditando = null;
@@ -391,6 +399,7 @@ public class PA2Controller {
         });
     }
 
+    /** Cierra el panel lateral sin guardar cambios. */
     @FXML
     private void onCancelarEmpleado() {
         cerrarPanelEmpleado();
@@ -575,6 +584,7 @@ public class PA2Controller {
         navegarAPA1();
     }
 
+    /** Vuelve a PA0 (lista de empresas) al hacer clic en el breadcrumb de empresa. */
     private void navegarAPA0() {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -618,18 +628,18 @@ public class PA2Controller {
         Task<Void> tarea = new Task<>() {
             @Override
             protected Void call() throws Exception {
-                geoService.completarCoordenadas(dir);
+                geoService.completarCoordenadas(dir); // hilo secundario: llama a la API ORS
                 return null;
             }
         };
 
-        tarea.setOnSucceeded(e -> servicioGestion.persistirCoordenadas(dir));
+        tarea.setOnSucceeded(e -> servicioGestion.persistirCoordenadas(dir)); // hilo JavaFX: persiste coords
         tarea.setOnFailed(e -> Platform.runLater(() ->
                 mostrarError("No se pudo geocodificar la dirección del departamento "
                         + "(comprueba la conexión y la clave API ORS).")));
 
         Thread hilo = new Thread(tarea);
-        hilo.setDaemon(true);
+        hilo.setDaemon(true); // muere si la app se cierra
         hilo.start();
     }
 
@@ -642,6 +652,7 @@ public class PA2Controller {
      * Si la API falla, el empleado queda guardado pero con distancia nula.
      */
     private void calcularDistanciaEnSegundoPlano(Empleado empleado) {
+        //Runeable con la tarea a ejecutar (metodo call()). NO se toca la UI durante la tarea
         Task<Void> tarea = new Task<>() {
             @Override
             protected Void call() throws Exception {
@@ -649,17 +660,18 @@ public class PA2Controller {
                 return null;
             }
         };
+        // Se ejecuta cuando call() termina. Podemos modificar la UI (la tarea pesada ya acabó)
+        tarea.setOnSucceeded(e -> cargarEmpleados()); //Refresca la tabla
 
-        tarea.setOnSucceeded(e -> cargarEmpleados());
-
-        tarea.setOnFailed(e -> Platform.runLater(() -> {
+        tarea.setOnFailed(e -> Platform.runLater(() -> { // Mensjaje de error
             mostrarError("El empleado se guardó, pero no se pudo calcular la distancia al trabajo "
                     + "(comprueba la conexión y la clave API ORS).");
             cargarEmpleados();
         }));
 
+        //Crear y Lanzar el Hilo con el runeable
         Thread hilo = new Thread(tarea);
-        hilo.setDaemon(true);
+        hilo.setDaemon(true); // muere si la app se cierra
         hilo.start();
     }
 

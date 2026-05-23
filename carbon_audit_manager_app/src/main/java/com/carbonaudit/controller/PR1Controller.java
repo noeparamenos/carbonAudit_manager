@@ -167,6 +167,9 @@ public class PR1Controller {
         this.responsable   = responsable;
         this.departamento  = responsable.getDepartamento();
         actualizarCabecera();
+        tablaConsumos.setItems(listaConsumos); // suscripción única — setAll() la refresca desde aquí
+        tablaHuella.setItems(listaConsumos);
+        tablaEmpleados.setItems(listaEmpleados);
         cargarConsumos();
         cargarEmpleados();
     }
@@ -179,7 +182,7 @@ public class PR1Controller {
      */
     private void configurarSelectorPeriodo() {
         combMes.getItems().addAll(NOMBRES_MESES);
-        combMes.getSelectionModel().select(LocalDate.now().getMonthValue() - 1); // Carga el més actual
+        combMes.getSelectionModel().select(LocalDate.now().getMonthValue() - 1); // Seleciona el més actual
 
         // Muestra los 4 últimos años
         int anioActual = LocalDate.now().getYear();
@@ -202,7 +205,7 @@ public class PR1Controller {
         tablaConsumos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         // Configuración de cada columna.
         // - Para cada fila usa la función anonima que recibe la fila actual `data` (java la pasa automáticamente)
-        // - Extrae el objeto de data y devuelve el campo correspondiente
+        // - Extrae el objeto de data y devuelve el campo correspondiente a la columna
         colConsRecurso.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().getFactorEmision().getNombre()));
 
@@ -346,16 +349,13 @@ public class PR1Controller {
      */
     private void cargarConsumos() {
         if (departamento == null) return;
-
+        // Periodo Seleccionado
         int mes  = combMes.getSelectionModel().getSelectedIndex() + 1;
         int anio = combAnio.getSelectionModel().getSelectedItem();
-
+        // Guardar consumos en la lista observable
         listaConsumos.setAll(servicioHuella.getConsumosMensuales(
                 departamento.getIdDepartamento(), mes, anio));
-
-        tablaConsumos.setItems(listaConsumos);
-        tablaHuella.setItems(listaConsumos);
-
+        //Mostrar el total
         lblTotalDpto.setText(String.format("%.2f kg CO₂e",
                 servicioHuella.getTotalConsumos(listaConsumos)));
     }
@@ -366,7 +366,6 @@ public class PR1Controller {
      */
     private void cargarEmpleados() {
         listaEmpleados.setAll(servicioGestion.getEmpleadosDepartamento(departamento.getIdDepartamento()));
-        tablaEmpleados.setItems(listaEmpleados);
     }
 
     /**
@@ -380,7 +379,7 @@ public class PR1Controller {
         int mes  = combMes.getSelectionModel().getSelectedIndex() + 1;
         int anio = combAnio.getSelectionModel().getSelectedItem();
 
-        // Refrescar consumos a través del Servicio (no del DAO directamente)
+        // Refrescar consumos
         listaConsumos.setAll(servicioHuella.getConsumosMensuales(
                 departamento.getIdDepartamento(), mes, anio));
 
@@ -417,6 +416,7 @@ public class PR1Controller {
         final List<BigDecimal>                 tendencia       = new ArrayList<>(12);
         final Map<String, Map<String, Double>> datosPorRecurso = new LinkedHashMap<>();
 
+        //Descripción de Task, (runneable)
         Task<Void> tarea = new Task<>() {
             @Override
             protected Void call() {
@@ -438,6 +438,7 @@ public class PR1Controller {
             }
         };
 
+        //Rellenar los widgets con los datos
         tarea.setOnSucceeded(e -> {
             // Tarta
             grafPorScope.getData().clear();
@@ -471,6 +472,7 @@ public class PR1Controller {
         tarea.setOnFailed(e ->
                 mostrarError("Error al cargar los gráficos: " + tarea.getException().getMessage()));
 
+        // Lanzar el Hilo
         Thread hilo = new Thread(tarea);
         hilo.setDaemon(true);
         hilo.start();

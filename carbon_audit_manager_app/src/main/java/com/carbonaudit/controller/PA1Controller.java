@@ -167,6 +167,8 @@ public class PA1Controller {
     public void setEmpresa(Empresa empresa) {
         this.empresa = empresa;
         actualizarCabecera();
+        tablaDepartamentos.setItems(listaDepartamentos); // suscripción única
+        tablaConsumos.setItems(listaConsumos);
         cargarDepartamentos();
     }
 
@@ -297,7 +299,6 @@ public class PA1Controller {
     private void cargarDepartamentos() {
         listaDepartamentos.setAll(
                 servicioDepartamento.getDepartamentosEmpresa(empresa.getIdEmpresa()));
-        tablaDepartamentos.setItems(listaDepartamentos);
     }
 
     /**
@@ -342,7 +343,6 @@ public class PA1Controller {
         // Actualizar la UI solo cuando los datos ya están listos (hilo de JavaFX)
         tarea.setOnSucceeded(e -> {
             listaConsumos.setAll(consumosHolder[0]);
-            tablaConsumos.setItems(listaConsumos);
             lblTotalEmpresa.setText(String.format("%.2f kg CO₂e", totalHolder[0]));
         });
 
