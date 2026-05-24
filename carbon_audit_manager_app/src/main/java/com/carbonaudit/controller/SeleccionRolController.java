@@ -69,6 +69,8 @@ public class SeleccionRolController {
             stage.setResizable(true);
             stage.setScene(nuevaEscena); // reemplaza el contenido de la ventana
             stage.sizeToScene();
+            stage.setMinWidth(800);
+            stage.setMinHeight(580);
             stage.centerOnScreen();
 
         } catch (Exception e) {

@@ -35,13 +35,13 @@ public class Main extends Application {
 
 		primaryStage.show();
 
-		// Encola el centrado tras el ciclo de renderizado, cuando la ventana ya tiene posición real.
-		// Recibe un runneable (lambda sin paŕametros)
-		Platform.runLater(() -> {
+		// Doble runLater: el WM de Linux reposiciona la ventana después del primer ciclo,
+		// el segundo callback se ejecuta tras ese reposicionamiento y gana la carrera.
+		Platform.runLater(() -> Platform.runLater(() -> {
 			Rectangle2D pantalla = Screen.getPrimary().getVisualBounds();
 			primaryStage.setX((pantalla.getWidth()  - primaryStage.getWidth())  / 2);
 			primaryStage.setY((pantalla.getHeight() - primaryStage.getHeight()) / 2);
-		});
+		}));
 	}
 
 	// Punto de entrada de la aplicación (main tradicional de Java)
