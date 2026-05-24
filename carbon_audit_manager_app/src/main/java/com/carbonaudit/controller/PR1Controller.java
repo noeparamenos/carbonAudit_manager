@@ -7,6 +7,7 @@ import com.carbonaudit.service.ServicioGestionFactores;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.scene.chart.*;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -189,7 +190,7 @@ public class PR1Controller {
 
         // Muestra los 4 últimos años
         int anioActual = LocalDate.now().getYear();
-        for (int a = anioActual; a >= anioActual - 4; a--) {
+        for (int a = anioActual; a >= anioActual - 10; a--) {
             combAnio.getItems().add(a);
         }
         combAnio.getSelectionModel().selectFirst(); // Selecciona el año actual
@@ -319,15 +320,52 @@ public class PR1Controller {
      * Se muestra nombre + unidad para facilitar la identificación del recurso.
      */
     private void cargarFactores() {
-        List<FactorEmision> factores = servicioFactores.getFactores();
-        combFactor.setItems(FXCollections.observableArrayList(factores)); //exige observable (aunque aqui no es necesario)
-        // extraer la información para rellenar el combobox. (sin llamar al toString original)
-        combFactor.setConverter(new StringConverter<>() {
-            //Usa esta función en lugar del toString original (sin modificarlo)
+
+        // Obtenemos todos y los metemos en un ObservableList. para que se actualizen los elementos que lo usen
+        ObservableList<FactorEmision> todos = FXCollections.observableArrayList(servicioFactores.getFactores());
+
+        // FilteredList apunta a la lista y aplica un predicad para decidir qué elementos son visibles.
+        // predicado inicial `true`: mostrar todo. Cuando el predicado cambia, el ComboBox se actualiza solo.
+        FilteredList<FactorEmision> filtrados = new FilteredList<>(todos, f -> true);
+
+        // Asignamos la lista filtrada al ComboBox; solo verá los elementos que pasen el predicado.
+        combFactor.setItems(filtrados);
+        // convierte el ComboBox en un campo de texto + desplegable:
+        combFactor.setEditable(true);
+
+        // traductor en ambos sentidos:
+        StringConverter<FactorEmision> converter = new StringConverter<>() {
+            // De Objeto a texto para mostrar
             @Override public String toString(FactorEmision f) {
+                // Mostramos "Nombre  (Unidad)" para que sea fácil identificar el recurso.
                 return f != null ? f.getNombre() + "  (" + f.getUnidad() + ")" : "";
             }
-            @Override public FactorEmision fromString(String s) { return null; } //no se usa
+            //De texto a Objeto (cuando el usuario escribe el texto y pulsa entre)
+            @Override public FactorEmision fromString(String s) {
+                // Buscamos en la lista COMPLETA el primer factor que coincida con lo escrito.
+                return todos.stream().filter(f -> toString(f).equals(s)).findFirst().orElse(null);
+            }
+        };
+        combFactor.setConverter(converter);
+
+        // textProperty() es una "propiedad observable": cuando cambia el texto,
+        // llama al listener con el valor anterior (oldVal) y el nuevo (newVal).
+        combFactor.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
+
+            // Guardia: si el texto nuevo coincide exactamente con el item ya seleccionado,
+            // es porque el propio ComboBox acaba de escribir el nombre del item elegido.
+            // Salimos sin filtrar para no entrar en un bucle infinito
+            FactorEmision seleccionado = combFactor.getSelectionModel().getSelectedItem();
+            if (seleccionado != null && converter.toString(seleccionado).equals(newVal)) return;
+
+            // Convertimos el texto a minúsculas
+            String filtro = newVal == null ? "" : newVal.toLowerCase();
+
+            // predicado: factores que se muestran al escribir. setPredicate() notifica al ComboBox, que redibuja la lista
+            filtrados.setPredicate(f -> filtro.isEmpty() || f.getNombre().toLowerCase().contains(filtro));
+
+            // mostramos el desplegable si hay resultados
+            if (!filtrados.isEmpty()) combFactor.show();
         });
     }
 
@@ -715,6 +753,9 @@ public class PR1Controller {
             Stage stage = (Stage) lblNombreResponsable.getScene().getWindow();
             stage.setScene(escena);
             stage.sizeToScene();
+            stage.setResizable(false);
+            stage.setMinWidth(0);
+            stage.setMinHeight(0);
             stage.centerOnScreen();
         } catch (Exception e) {
             e.printStackTrace();
@@ -733,6 +774,8 @@ public class PR1Controller {
             Stage stage = (Stage) lblNombreResponsable.getScene().getWindow();
             stage.setScene(escena);
             stage.sizeToScene();
+            stage.setMinWidth(800);
+            stage.setMinHeight(580);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -741,6 +784,7 @@ public class PR1Controller {
     // ==== Métodos Auxiliares =========================
 
     private void cerrarPanelConsumo() {
+        combFactor.hide();
         panelConsumo.setVisible(false);
         panelConsumo.setManaged(false);
         consumoEditando = null;

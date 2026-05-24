@@ -366,9 +366,30 @@ public class PA0Controller {
             Scene escena = new Scene(loader.load()); // Carga el FXML de destion
             PA1Controller pa1 = loader.getController(); //Obtiene su controlador
             pa1.setEmpresa(empresa); // Le pasa el contexto
+
             Stage stage = (Stage) tablaEmpresas.getScene().getWindow();
             stage.setScene(escena); // Muestra la nueva escena en la ventana
             stage.sizeToScene();
+            stage.setMinWidth(800);
+            stage.setMinHeight(580);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    private void onVolverAP0() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/carbonaudit/view/p0-seleccion-rol-view.fxml"));
+            Scene escena = new Scene(loader.load());
+            Stage stage = (Stage) tablaEmpresas.getScene().getWindow();
+            stage.setScene(escena);
+            stage.sizeToScene();
+            stage.setResizable(false);
+            stage.setMinWidth(0);
+            stage.setMinHeight(0);
+            stage.centerOnScreen();
         } catch (Exception e) {
             e.printStackTrace();
         }

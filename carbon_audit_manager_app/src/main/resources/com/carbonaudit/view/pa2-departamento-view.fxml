@@ -15,7 +15,7 @@
       - panelResponsable → asignar nuevo responsable
       - panelEditDpto   → editar datos del departamento
 -->
-<BorderPane prefWidth="1000.0" prefHeight="700.0"
+<BorderPane prefWidth="1000.0" prefHeight="700.0" minWidth="700.0" minHeight="500.0"
             styleClass="pantalla-interior"
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
@@ -34,6 +34,9 @@
     <top>
         <HBox styleClass="topbar">
             <Label text="CarbonAudit Manager" styleClass="topbar-titulo"/>
+            <Label text=" › " styleClass="topbar-sep"/>
+            <Label text="Inicio" styleClass="topbar-breadcrumb-link"
+                   onMouseClicked="#onVolverAP0"/>
             <Label text=" › " styleClass="topbar-sep"/>
             <Label text="Empresas" styleClass="topbar-breadcrumb-link"
                    onMouseClicked="#onVolverAPA0"/>
@@ -68,8 +71,7 @@
                             <Label fx:id="lblNombreDpto" text="" styleClass="empresa-nombre"/>
                             <Label fx:id="lblInfoDpto"   text="" styleClass="empresa-info"/>
                         </VBox>
-                        <Button text="Editar"   styleClass="btn-secundario" onAction="#onEditarDpto"/>
-                        <Button text="Eliminar" styleClass="btn-peligro"    onAction="#onEliminarDpto"/>
+                        <Button text="Editar" styleClass="btn-secundario" onAction="#onEditarDpto"/>
                     </HBox>
                 </VBox>
 
@@ -265,13 +267,13 @@
                     </GridPane>
                 </ScrollPane>
 
-                <HBox spacing="8.0">
-                    <Button text="Guardar"      styleClass="btn-primario"   onAction="#onGuardarEmpleado"/>
-                    <Button fx:id="btnDarDeBaja" text="Dar de baja"
-                            styleClass="btn-peligro" visible="false" managed="false"
-                            onAction="#onDarDeBaja"/>
-                    <Button text="Cancelar"     styleClass="btn-secundario" onAction="#onCancelarEmpleado"/>
+                <HBox spacing="8.0" alignment="CENTER">
+                    <Button text="Guardar"  styleClass="btn-primario"   onAction="#onGuardarEmpleado"/>
+                    <Button text="Cancelar" styleClass="btn-secundario" onAction="#onCancelarEmpleado"/>
                 </HBox>
+                <Button fx:id="btnDarDeBaja" text="Dar de baja al empleado"
+                        styleClass="btn-peligro" visible="false" managed="false"
+                        maxWidth="Infinity" onAction="#onDarDeBaja"/>
             </VBox>
 
             <!-- ── PANEL LATERAL: Asignar responsable ───────────────────── -->
@@ -311,7 +313,7 @@
 
                 <Region VBox.vgrow="ALWAYS"/>
 
-                <HBox spacing="10.0">
+                <HBox spacing="10.0" alignment="CENTER">
                     <Button text="Guardar"  styleClass="btn-primario"   onAction="#onGuardarResponsable"/>
                     <Button text="Cancelar" styleClass="btn-secundario" onAction="#onCancelarResponsable"/>
                 </HBox>
@@ -387,10 +389,12 @@
                     </GridPane>
                 </ScrollPane>
 
-                <HBox spacing="10.0">
+                <HBox spacing="10.0" alignment="CENTER">
                     <Button text="Guardar"  styleClass="btn-primario"   onAction="#onGuardarEditDpto"/>
                     <Button text="Cancelar" styleClass="btn-secundario" onAction="#onCancelarEditDpto"/>
                 </HBox>
+                <Button text="Eliminar departamento" styleClass="btn-peligro"
+                        maxWidth="Infinity" onAction="#onEliminarDpto"/>
             </VBox>
 
         </HBox>

@@ -183,9 +183,9 @@ public class PA1Controller {
         // Seleccionar el mes actual (getMonthValue() devuelve 1-12; el índice emieza en 0)
         combMes.getSelectionModel().select(LocalDate.now().getMonthValue() - 1);
 
-        // Se muestran solo los 4 ultimos años
+        // Se muestran solo los 10 ultimos años
         int anioActual = LocalDate.now().getYear();
-        for (int a = anioActual; a >= anioActual - 4; a--) {
+        for (int a = anioActual; a >= anioActual - 10; a--) {
             combAnio.getItems().add(a);
         }
         combAnio.getSelectionModel().selectFirst();
@@ -668,6 +668,24 @@ public class PA1Controller {
         navegarAPA0();
     }
 
+    @FXML
+    private void onVolverAP0() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/carbonaudit/view/p0-seleccion-rol-view.fxml"));
+            Scene escena = new Scene(loader.load());
+            Stage stage = (Stage) lblNombreEmpresa.getScene().getWindow();
+            stage.setScene(escena);
+            stage.sizeToScene();
+            stage.setResizable(false);
+            stage.setMinWidth(0);
+            stage.setMinHeight(0);
+            stage.centerOnScreen();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void navegarAPA0() {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -676,6 +694,8 @@ public class PA1Controller {
             Stage stage = (Stage) lblNombreEmpresa.getScene().getWindow();
             stage.setScene(escena);
             stage.sizeToScene();
+            stage.setMinWidth(800);
+            stage.setMinHeight(580);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -695,8 +715,9 @@ public class PA1Controller {
             Stage stage = (Stage) tablaDepartamentos.getScene().getWindow();
             stage.setScene(escena);
             stage.sizeToScene();
+            stage.setMinWidth(800);
+            stage.setMinHeight(580);
         } catch (Exception e) {
-            e.printStackTrace();
             e.printStackTrace();
         }
     }

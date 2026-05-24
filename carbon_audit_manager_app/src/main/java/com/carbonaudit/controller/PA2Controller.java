@@ -585,6 +585,24 @@ public class PA2Controller {
     }
 
     /** Vuelve a PA0 (lista de empresas) al hacer clic en el breadcrumb de empresa. */
+    @FXML
+    private void onVolverAP0() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/carbonaudit/view/p0-seleccion-rol-view.fxml"));
+            Scene escena = new Scene(loader.load());
+            Stage stage = (Stage) lblNombreDpto.getScene().getWindow();
+            stage.setScene(escena);
+            stage.sizeToScene();
+            stage.setResizable(false);
+            stage.setMinWidth(0);
+            stage.setMinHeight(0);
+            stage.centerOnScreen();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void navegarAPA0() {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -593,6 +611,8 @@ public class PA2Controller {
             Stage stage = (Stage) lblNombreDpto.getScene().getWindow();
             stage.setScene(escena);
             stage.sizeToScene();
+            stage.setMinWidth(800);
+            stage.setMinHeight(580);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -612,6 +632,8 @@ public class PA2Controller {
             Stage stage = (Stage) lblNombreDpto.getScene().getWindow();
             stage.setScene(escena);
             stage.sizeToScene();
+            stage.setMinWidth(800);
+            stage.setMinHeight(580);
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -12,7 +12,7 @@
     El contenido central es un HBox con la zona principal (izquierda)
     y los paneles laterales (derecha, ocultos por defecto).
 -->
-<BorderPane prefWidth="1000.0" prefHeight="700.0"
+<BorderPane prefWidth="1000.0" prefHeight="700.0" minWidth="700.0" minHeight="500.0"
             styleClass="pantalla-interior"
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
@@ -31,6 +31,9 @@
     <top>
         <HBox styleClass="topbar">
             <Label text="CarbonAudit Manager" styleClass="topbar-titulo"/>
+            <Label text=" › " styleClass="topbar-sep"/>
+            <Label text="Inicio" styleClass="topbar-breadcrumb-link"
+                   onMouseClicked="#onVolverAP0"/>
             <Label text=" › " styleClass="topbar-sep"/>
             <Label text="Empresas" styleClass="topbar-breadcrumb-link"
                    onMouseClicked="#onVolverAPA0"/>
@@ -63,8 +66,7 @@
                             <Label fx:id="lblNombreEmpresa" text="" styleClass="empresa-nombre"/>
                             <Label fx:id="lblInfoEmpresa"   text="" styleClass="empresa-info"/>
                         </VBox>
-                        <Button text="Editar"   styleClass="btn-secundario" onAction="#onEditarEmpresa"/>
-                        <Button text="Eliminar" styleClass="btn-peligro"    onAction="#onEliminarEmpresa"/>
+                        <Button text="Editar" styleClass="btn-secundario" onAction="#onEditarEmpresa"/>
                     </HBox>
 
                     <!-- Selector de período (mes y año). Compartido entre todos los tabs. -->
@@ -277,7 +279,7 @@
                     </GridPane>
                 </ScrollPane>
 
-                <HBox spacing="10.0">
+                <HBox spacing="10.0" alignment="CENTER">
                     <Button text="Guardar"  styleClass="btn-primario"   onAction="#onGuardarDpto"/>
                     <Button text="Cancelar" styleClass="btn-secundario" onAction="#onCancelarDpto"/>
                 </HBox>
@@ -342,10 +344,12 @@
                     </GridPane>
                 </ScrollPane>
 
-                <HBox spacing="10.0">
+                <HBox spacing="10.0" alignment="CENTER">
                     <Button text="Guardar"  styleClass="btn-primario"   onAction="#onGuardarEditEmpresa"/>
                     <Button text="Cancelar" styleClass="btn-secundario" onAction="#onCancelarEditEmpresa"/>
                 </HBox>
+                <Button text="Eliminar empresa" styleClass="btn-peligro"
+                        maxWidth="Infinity" onAction="#onEliminarEmpresa"/>
             </VBox>
 
         </HBox>
