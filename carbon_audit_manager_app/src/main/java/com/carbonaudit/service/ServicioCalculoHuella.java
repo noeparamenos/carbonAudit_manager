@@ -3,8 +3,10 @@ package com.carbonaudit.service;
 import com.carbonaudit.dao.CommutingEmpleadoDAO;
 import com.carbonaudit.dao.ConsumoMensualDAO;
 import com.carbonaudit.dao.DepartamentoDAO;
+import com.carbonaudit.dao.EmpleadoDAO;
 import com.carbonaudit.model.*;
-import com.carbonaudit.service.external.IServicioGeografico;
+
+import java.time.LocalDate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -14,89 +16,70 @@ import java.util.Map;
 
 public class ServicioCalculoHuella {
 
-    private final IServicioGeografico geoService; // Interfaz
-    private final ConsumoMensualDAO consumoDAO;
+    private final ConsumoMensualDAO    consumoDAO;
     private final CommutingEmpleadoDAO commutingDAO;
-    private final DepartamentoDAO departamentoDAO;
+    private final DepartamentoDAO      departamentoDAO;
+    private final EmpleadoDAO          empleadoDAO;
 
-    /**
-     * Constructor que recibe la interfaz de geoService para poder usar distintas formas de calcular las distancias
-     * @param geoService
-     */
-    public ServicioCalculoHuella(IServicioGeografico geoService) {
-        this.geoService = geoService;
-        this.consumoDAO = new ConsumoMensualDAO();
-        this.commutingDAO = new CommutingEmpleadoDAO();
+    public ServicioCalculoHuella() {
+        this.consumoDAO      = new ConsumoMensualDAO();
+        this.commutingDAO    = new CommutingEmpleadoDAO();
         this.departamentoDAO = new DepartamentoDAO();
+        this.empleadoDAO     = new EmpleadoDAO();
     }
 
-    // =========== COMMUTING DE EMPLEADOS ==============
+    // =========== ACCESO A CONSUMOS (encapsula el DAO para que el controlador no lo toque) ==============
+    // Estos métodos evitan que la capa Controller llame al DAO directamente,
 
-    /**
-     * Válida que todos los campos estén presentes para evitar `NullPointerException`
-     * @param emp a validar los datos
-     */
-    private void validarDatosEmpleado(Empleado emp) {
-        // 1. Validaciones de seguridad
-        if (emp.getDepartamento().getDireccion() == null) {
-            throw new IllegalStateException("El empleado no tiene un departamento con dirección valida asignada.");
-        }
-        if (emp.getDireccion() == null) {
-            throw new IllegalStateException("El empleado no tiene una dirección válida.");
-        }
-        if (emp.getMedioTransporte() == null || emp.getMedioTransporte().getValorFactor() == null) {
-            throw new IllegalStateException("El empleado no tiene un medio de transporte o factor de emisión válido asignado.");
-        }
+    /** Consumos de un departamento para un mes concreto. */
+    public List<ConsumoMensual> getConsumosMensuales(int idDepartamento, int mes, int anio) {
+        return consumoDAO.getConsumosDepartamentoMes(idDepartamento, mes, anio);
     }
 
+    public void crearConsumo(ConsumoMensual consumo)      { consumoDAO.create(consumo); }
+    public void actualizarConsumo(ConsumoMensual consumo) { consumoDAO.update(consumo); }
+    public void eliminarConsumo(int idConsumo)            { consumoDAO.delete(idConsumo); }
 
+    /** Consumos de una empresa para un mes concreto (todos sus departamentos). */
+    public List<ConsumoMensual> getConsumosMensualesEmpresa(int idEmpresa, int mes, int anio) {
+        return consumoDAO.getConsumosByEmpresaMes(idEmpresa, mes, anio);
+    }
 
-    /**
-     * Calcula la distancia real entre la casa del empleado y su departamento de trabajo,
-     * actualiza el campo km
-     *
-     * @param empleado El empleado a procesar.
-     * @throws Exception Si faltan datos o falla la conexión con el servicio de mapas.
-     */
-    public void AsignarDistanciaTrabajo(Empleado empleado) throws Exception {
-
-
-        // Datos de direcciones
-        Direccion dirEmpleado = empleado.getDireccion();
-        Direccion dirDepartamento = empleado.getDepartamento().getDireccion();
-
-        // Llamamos a la API de Geocoding si la dirección aún no tiene coordenadas.
-        if (dirEmpleado.getLatitud() == null || dirEmpleado.getLongitud() == null) {
-            geoService.completarCoordenadas(dirEmpleado);
-        }
-        if (dirDepartamento.getLatitud() == null || dirDepartamento.getLongitud() == null) {
-            geoService.completarCoordenadas(dirDepartamento);
-        }
-
-        // Calculo y actualizacion de km al trabajo
-        BigDecimal distanciaEnKm = geoService.calcularDistancia(dirEmpleado, dirDepartamento);
-        empleado.setDistanciaTrabajo(distanciaEnKm);
+    /** Consumos de una empresa para un año completo (todos sus departamentos, los 12 meses). */
+    public List<ConsumoMensual> getConsumosAnualesEmpresa(int idEmpresa, int anio) {
+        return consumoDAO.getConsumosByEmpresaAnio(idEmpresa, anio);
     }
 
     /**
-     * Calcula y devuelve la huella generada por un empleado al mes en su transporte al trabajo.
-     * Resultado expresado en kgCO2e.
-     * @param emp Empleado del que se quiere calcular el commuting mensual
+     * Guarda registros de commuting en COMMUTING_EMPLEADO para el período indicado
+     * si aún no existen, tomando como snapshot los datos actuales de los empleados activos.
+     * No actúa sobre períodos futuros ni si ya hay registros para ese departamento/mes/año.
      */
-    public BigDecimal getCommutingMensual(Empleado emp) throws Exception {
-
-        validarDatosEmpleado(emp);
-
-        // KM totales realizados en un mes (Ida y vuelta * días)
-        BigDecimal kmTotalesMes = emp.getDistanciaTrabajo()
-                .multiply(new BigDecimal("2"))
-                .multiply(new BigDecimal(emp.getDiasPresenciales()));
-
-        // 3. Resultado: km * factor_conversion
-        BigDecimal emisiones = kmTotalesMes.multiply(emp.getMedioTransporte().getValorFactor());
-
-        // 4. Redondeo a 2 decimales para la vista del usuario
-        return emisiones.setScale(2, RoundingMode.HALF_UP);
+    private void guardarCommutingsDepartamentoMes(int idDepartamento, int mes, int anio) {
+        LocalDate ahora = LocalDate.now();
+        if (anio > ahora.getYear() || (anio == ahora.getYear() && mes > ahora.getMonthValue())) {
+            return; //Las fechas futuras no se calculan
+        }
+        if (!commutingDAO.getCommutingsDepartamentoMes(idDepartamento, mes, anio).isEmpty()) {
+            return; //Ya estaban guardados los registros para ese mes
+        }
+        //Guardar todos los commutings de todos los empleados del departamento
+        for (Empleado emp : empleadoDAO.findAllByDepartamento(idDepartamento)) {
+            if (emp.getDistanciaTrabajo() == null || emp.getMedioTransporte() == null) continue;
+            commutingDAO.create(new CommutingEmpleado(
+                    emp, emp.getMedioTransporte(), emp.getDistanciaTrabajo(),
+                    emp.getDiasPresenciales(), mes, anio));
+        }
+    }
+    /**
+     * Suma las emisiones de una lista de consumos sin incluir commuting (Scope 1 + 2).
+     * Necesario para mostrar la tabla de consumos en la UI
+     */
+    public BigDecimal getTotalConsumos(List<ConsumoMensual> consumos) {
+        return consumos.stream()
+                .map(ConsumoMensual::calcularEmision)
+                .reduce(BigDecimal.ZERO, (a, b) -> a.add(b))
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
     // =========== CÁLCULO DE HUELLA POR DEPARTAMENTO ==============
@@ -111,7 +94,7 @@ public class ServicioCalculoHuella {
      * @return Total de emisiones en kgCO2e con 2 decimales
      */
     public BigDecimal getHuellaTotalDepartamentoMes(Departamento departamento, int mes, int anio) {
-        BigDecimal totalEmisiones = BigDecimal.ZERO;
+        BigDecimal totalEmisiones = BigDecimal.ZERO; //Suma desde 0
 
         // SCOPE 1 + SCOPE 2: Consumos del departamento (energía, combustible, etc.)
         List<ConsumoMensual> consumos = consumoDAO.getConsumosDepartamentoMes(
@@ -126,6 +109,7 @@ public class ServicioCalculoHuella {
 
         // SCOPE 3: Commuting de empleados (solo si el departamento lo incluye)
         if (departamento.isIncluirAlcance3()) {
+            guardarCommutingsDepartamentoMes(departamento.getIdDepartamento(), mes, anio);
             List<CommutingEmpleado> commutings = commutingDAO.getCommutingsDepartamentoMes(
                     departamento.getIdDepartamento(), mes, anio);
 
@@ -148,7 +132,7 @@ public class ServicioCalculoHuella {
      * @param commuting Registro de commuting del empleado
      * @return Emisión en kgCO2e
      */
-    private BigDecimal calcularEmisionCommuting(CommutingEmpleado commuting) {
+    public BigDecimal calcularEmisionCommuting(CommutingEmpleado commuting) {
         // Comprobamos que exitan los requisitos para el cálculo
         if (commuting.getDistanciaDiariaKm() == null ||
             commuting.getMedioTransporte() == null ||
@@ -165,6 +149,8 @@ public class ServicioCalculoHuella {
 
         return emision.setScale(2, RoundingMode.HALF_UP); //Redondeo
     }
+
+
 
     // =========== CÁLCULO DE HUELLA POR EMPRESA ==============
 
@@ -208,19 +194,19 @@ public class ServicioCalculoHuella {
         List<ConsumoMensual> consumos = consumoDAO.getConsumosDepartamentoMes(
                 departamento.getIdDepartamento(), mes, anio);
         for (ConsumoMensual consumo : consumos) {
-            // Extraer el alcance al que pertenece el consumo
-            int scope = consumo.getFactorEmision().getAlcance();
-            // Añadir al total del alcance la emisión de este consumo
-            resultado.merge(scope, consumo.calcularEmision(), BigDecimal::add);
+            int alcance = consumo.getFactorEmision().getAlcance();
+            //Suma al total la emision de cada conusmo y asigna el nuevo total al scope
+            resultado.put(alcance, resultado.get(alcance).add(consumo.calcularEmision()));
         }
 
         // Scope 3: commuting (solo si está habilitado)
         if (departamento.isIncluirAlcance3()) {
+            guardarCommutingsDepartamentoMes(departamento.getIdDepartamento(), mes, anio);
             List<CommutingEmpleado> commutings = commutingDAO.getCommutingsDepartamentoMes(
                     departamento.getIdDepartamento(), mes, anio);
             for (CommutingEmpleado commuting : commutings) {
-                // Añadir la emisión de cada commuting de cada empleado del departamento
-                resultado.merge(3, calcularEmisionCommuting(commuting), BigDecimal::add);
+                BigDecimal totalScope3 = resultado.get(3);
+                resultado.put(3, totalScope3.add(calcularEmisionCommuting(commuting)));
             }
         }
 
@@ -262,30 +248,6 @@ public class ServicioCalculoHuella {
             totalAnual = totalAnual.add(getHuellaAnualDepartamento(departamento, anio));
         }
         return totalAnual.setScale(2, RoundingMode.HALF_UP);
-    }
-
-    // =========== VARIACIÓN MENSUAL ==============
-
-    /**
-     * Calcula la variación de emisiones de un departamento respecto al mes anterior.
-     * Un valor positivo indica más emisiones, negativo indica mejora.
-     *
-     * @param departamento Departamento a comparar
-     * @param mes          Mes actual (1-12)
-     * @param anio         Año actual
-     * @return Diferencia en kgCO2e (actual - anterior)
-     */
-    public BigDecimal getVariacionMensual(Departamento departamento, int mes, int anio) {
-        // Obtener el mes anterior
-        int mesAnterior = (mes == 1) ? 12 : mes - 1;
-        int anioAnterior = (mes == 1) ? anio - 1 : anio;
-        
-        // huellas de ambos meses
-        BigDecimal huellaActual = getHuellaTotalDepartamentoMes(departamento, mes, anio);
-        BigDecimal huellaAnterior = getHuellaTotalDepartamentoMes(departamento, mesAnterior, anioAnterior);
-        
-        // Redondeo
-        return huellaActual.subtract(huellaAnterior).setScale(2, RoundingMode.HALF_UP);
     }
 
 }

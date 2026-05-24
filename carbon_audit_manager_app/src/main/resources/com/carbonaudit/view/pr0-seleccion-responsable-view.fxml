@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<!--
+    PR0 · Selección de responsable activo
+    Muestra la lista de mandatos vigentes (fecha_fin IS NULL).
+-->
+<BorderPane prefWidth="800.0" prefHeight="560.0"
+            styleClass="pantalla-interior"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.carbonaudit.controller.PR0Controller">
+
+    <!--Hoja de estilos-->
+    <stylesheets>
+        <URL value="@estilos.css"/>
+    </stylesheets>
+
+    <!-- =========== TOPBAR ========== -->
+    <top>
+        <HBox styleClass="topbar">
+            <Label text="CarbonAudit Manager" styleClass="topbar-titulo"/>
+            <Label text=" › " styleClass="topbar-sep"/>
+            <Label text="Inicio" styleClass="topbar-breadcrumb-link"
+                   onMouseClicked="#onVolverAP0"/> <!-- Vuelve a la primera pantalla-->
+            <Label text=" › " styleClass="topbar-sep"/>
+            <Label text="Selección de responsable" styleClass="topbar-breadcrumb"/>
+            <Region HBox.hgrow="ALWAYS"/> <!--Nodo invisible separador-->
+        </HBox>
+    </top>
+
+    <!-- ==================== CONTENIDO CENTRAL ===================== -->
+    <center> <!--zona central de la pantalla-->
+        <VBox styleClass="zona-principal" spacing="20.0">
+            <padding>
+                <Insets top="40.0" right="60.0" bottom="40.0" left="60.0"/>
+            </padding>
+
+            <!-- Título -->
+            <VBox spacing="4.0">
+                <Label text="¿Quién eres?" styleClass="empresa-nombre"/>
+                <Label text="Selecciona tu nombre de la lista de responsables activos."
+                       styleClass="empresa-info"/>
+            </VBox>
+
+            <!-- Tabla de responsables activos -->
+            <!-- vgrow: la tabla crece verticamente para ocupar el espacio disponible-->
+            <TableView fx:id="tablaResponsables" VBox.vgrow="ALWAYS" styleClass="tabla">
+                <placeholder>
+                    <Label text="No hay responsables activos registrados. Contacta con el administrador."
+                           styleClass="tabla-placeholder"/>
+                </placeholder>
+                <columns>
+                    <TableColumn fx:id="colNombre"       text="Nombre"       prefWidth="250.0"/>
+                    <TableColumn fx:id="colDepartamento" text="Departamento" prefWidth="210.0"/>
+                    <TableColumn fx:id="colEmpresa"      text="Empresa"      prefWidth="210.0"/>
+                </columns>
+            </TableView>
+
+            <Label text="Haz clic en tu nombre para acceder a tu panel de responsable."
+                   styleClass="texto-ayuda"/>
+        </VBox>
+    </center>
+
+</BorderPane>

@@ -67,8 +67,14 @@ package "com.carbonaudit.service" {
     class ServicioGeograficoORS implements IServicioGeografico
 
     class ServicioCalculoHuella {
-        + asignarDistanciaTrabajo(emp: Empleado) : void
         + getCommutingMensual(emp: Empleado) : BigDecimal
+        + getConsumosMensuales(idDept, mes, anio) : List
+        + getConsumosMensualesEmpresa(idEmpresa, mes, anio) : List
+        + getConsumosAnualesEmpresa(idEmpresa, anio) : List
+        + getTotalConsumos(consumos: List) : BigDecimal
+        + crearConsumo(consumo: ConsumoMensual) : void
+        + actualizarConsumo(consumo: ConsumoMensual) : void
+        + eliminarConsumo(idConsumo: int) : void
         + getHuellaTotalDepartamentoMes(dept, mes, anio) : BigDecimal
         + getHuellaTotalEmpresaMes(empresa, mes, anio) : BigDecimal
         + getHuellaPorScope(dept, mes, anio) : Map
@@ -76,12 +82,71 @@ package "com.carbonaudit.service" {
         + getHuellaAnualEmpresa(empresa, anio) : BigDecimal
         + getVariacionMensual(dept, mes, anio) : BigDecimal
     }
+
+    class ServicioGestionEmpleado {
+        + crearEmpleado(empleado: Empleado) : Empleado
+        + actualizarEmpleado(empleado: Empleado) : void
+        + darDeBajaEmpleado(idEmpleado: int, fecha: LocalDate) : void
+        + getEmpleadosDepartamento(idDept: int) : List
+        + countEmpleadosDepartamento(idDept: int) : int
+        + persistirCoordenadas(dir: Direccion) : void
+        + calcularYPersistirDistancia(empleado: Empleado) : void
+    }
+
+    class ServicioGestionEmpresa {
+        + getEmpresas() : List
+        + crearEmpresa(empresa: Empresa) : void
+        + actualizarEmpresa(empresa: Empresa) : void
+        + eliminarEmpresa(idEmpresa: int) : void
+        + persistirCoordenadas(dir: Direccion) : void
+    }
+
+    class ServicioGestionDepartamento {
+        + getDepartamentosEmpresa(idEmpresa: int) : List
+        + crearDepartamento(departamento: Departamento) : void
+        + actualizarDepartamento(departamento: Departamento) : void
+        + eliminarDepartamento(idDepartamento: int) : void
+    }
+
+    class ServicioGestionResponsable {
+        + getAllActivos() : List
+        + getActivoByDepartamento(idDept: int) : Optional
+        + getAllByDepartamento(idDept: int) : List
+        + crearResponsable(responsable: Responsable) : void
+        + actualizarResponsable(responsable: Responsable) : void
+    }
+
+    class ServicioGestionFactores {
+        + getFactores() : List
+        + getFactoresPorAlcance(alcance: int) : List
+        + crearFactor(factor: FactorEmision) : void
+        + actualizarFactor(factor: FactorEmision) : void
+        + eliminarFactor(idFactor: int) : void
+    }
 }
 
-' Dependencias del servicio de cálculo
-ServicioCalculoHuella --> IServicioGeografico
+' Dependencias de ServicioCalculoHuella
 ServicioCalculoHuella ..> ConsumoMensualDAO    : usa
 ServicioCalculoHuella ..> CommutingEmpleadoDAO : usa
 ServicioCalculoHuella ..> DepartamentoDAO      : usa
+
+' Dependencias de ServicioGestionEmpleado
+ServicioGestionEmpleado --> IServicioGeografico
+ServicioGestionEmpleado ..> EmpleadoDAO   : usa
+ServicioGestionEmpleado ..> DireccionDAO  : usa
+
+' Dependencias de ServicioGestionEmpresa
+ServicioGestionEmpresa ..> EmpresaDAO    : usa
+ServicioGestionEmpresa ..> DireccionDAO  : usa
+
+' Dependencias de ServicioGestionDepartamento
+ServicioGestionDepartamento ..> DepartamentoDAO : usa
+
+' Dependencias de ServicioGestionResponsable
+ServicioGestionResponsable ..> ResponsableDAO : usa
+
+' Dependencias de ServicioGestionFactores
+ServicioGestionFactores ..> FactorEmisionDAO : usa
+
 
 @enduml

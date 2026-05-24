@@ -23,8 +23,6 @@ public class ResponsableDAO implements DAO<Responsable, Integer> {
      */
     @Override
     public Responsable create(Responsable responsable) {
-        // Integridad: validación de valores NOT NULL
-        validarResponsable(responsable);
         // INSERTAR
         String sql = "INSERT INTO RESPONSABLE (fecha_inicio, fecha_fin, id_dept, id_empleado) VALUES (?, ?, ?, ?) RETURNING id_asignacion";
 
@@ -49,23 +47,11 @@ public class ResponsableDAO implements DAO<Responsable, Integer> {
                 responsable.setIdAsignacion(rs.getInt(1));
             }
         } catch (SQLException e) {
-            // Si se intenta insertar otro responsable con fecha fin NULL
-            e.printStackTrace();
+            if ("23505".equals(e.getSQLState()))
+                throw new IllegalArgumentException("Ya existe un responsable activo para este departamento.");
+            throw new RuntimeException("Error al crear el responsable.", e);
         }
         return responsable;
-    }
-
-    /**
-     * Valida las restricciones de integridad de la tabla Responsable
-     * @param responsable a validar
-     */
-    private void validarResponsable(Responsable responsable) {
-        if (responsable.getFechaInicio() == null) {
-            throw new IllegalArgumentException("La fecha de inicio es obligatoria (NOT NULL).");
-        }
-        if (responsable.getDepartamento() == null || responsable.getEncargado() == null) {
-            throw new IllegalArgumentException("Un registro de responsabilidad necesita un Departamento y un Empleado.");
-        }
     }
 
     /**
@@ -145,9 +131,6 @@ public class ResponsableDAO implements DAO<Responsable, Integer> {
      */
     @Override
     public void update(Responsable responsable) {
-        //RESTRICCIONES DE INTEGRIDAD
-        validarResponsable(responsable);
-        //UPDATE
         String sql = "UPDATE RESPONSABLE SET fecha_inicio = ?, fecha_fin = ?, id_dept = ?, id_empleado = ? WHERE id_asignacion = ?";
         try (Connection conn = DatabaseManager.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -172,6 +155,26 @@ public class ResponsableDAO implements DAO<Responsable, Integer> {
 
 
     /**
+     * Devuelve el responsable activo de un departamento (fecha_fin IS NULL).
+     * Un departamento solo puede tener un responsable activo simultáneamente.
+     *
+     * @param idDepartamento ID del departamento a consultar
+     * @return El Responsable activo, o vacío si no hay ninguno
+     */
+    public Optional<Responsable> findActivoByDepartamento(int idDepartamento) {
+        String sql = "SELECT * FROM RESPONSABLE WHERE id_dept = ? AND fecha_fin IS NULL LIMIT 1";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, idDepartamento);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) return Optional.of(mapResultSetToResponsable(rs));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Borra un registro de la Tabla Responsable
      * @param id del registro del historial a borrar
      */
@@ -185,6 +188,23 @@ public class ResponsableDAO implements DAO<Responsable, Integer> {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Devuelve todos los mandatos activos (fecha_fin IS NULL) de cualquier departamento.
+     * Se usa en PR0 para listar los responsables que pueden identificarse.
+     *
+     * @return lista de responsables con mandato vigente
+     */
+    public List<Responsable> findAllActivos() {
+        List<Responsable> lista = new ArrayList<>();
+        String sql = "SELECT * FROM RESPONSABLE WHERE fecha_fin IS NULL ORDER BY fecha_inicio DESC";
+        try (Connection conn = DatabaseManager.getInstance().getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) lista.add(mapResultSetToResponsable(rs));
+        } catch (SQLException e) { e.printStackTrace(); }
+        return lista;
     }
 
     /**

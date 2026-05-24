@@ -1,0 +1,132 @@
+@startuml Diagrama de Secuencia - Alta de Empleado
+
+skinparam sequenceArrowThickness 1.5
+skinparam participant {
+    BackgroundColor White
+    BorderColor #555
+}
+skinparam actor {
+    BorderColor #555
+}
+skinparam sequence {
+    LifeLineBorderColor #777
+    GroupBackgroundColor #F5F5F5
+    GroupBorderColor #AAAAAA
+}
+
+actor "Administrador" as Admin
+participant "Vista\n(JavaFX)" as UI
+participant "PA2Controller" as Ctrl
+participant "ServicioGestionEmpleado" as ServGestion
+participant "EmpleadoDAO" as EmpDAO
+participant "DireccionDAO" as DirDAO
+participant "ServicioGeograficoORS" as ORS
+database "Base de Datos" as BD
+participant "ORS API\n(REST)" as ORSAPI
+
+== Fase síncrona ==
+
+Admin -> UI : 1. rellena formulario y pulsa "Guardar"
+activate UI
+
+UI -> Ctrl : 1.1. onGuardarEmpleado()
+activate Ctrl
+
+alt campos inválidos
+    Ctrl --> UI : 1.1.1. mostrarError()
+    UI --> Admin : muestra aviso y cancela
+else campos válidos
+
+    Ctrl -> ServGestion : 1.1.2. crearEmpleado(nuevo)
+    activate ServGestion
+        ServGestion -> EmpDAO : 1.1.2.1. create(nuevo)
+        activate EmpDAO
+            EmpDAO -> BD : 1.1.2.1.1. INSERT INTO empleado
+            BD --> EmpDAO : 1.1.2.1.2. Empleado (con id)
+        EmpDAO --> ServGestion : 1.1.2.2. Empleado guardado
+        deactivate EmpDAO
+    ServGestion --> Ctrl : 1.1.3. Empleado guardado
+    deactivate ServGestion
+
+    Ctrl -> ServGestion : 1.1.4. getEmpleadosDepartamento(idDept)\n[cargarEmpleados]
+    activate ServGestion
+        ServGestion -> EmpDAO : 1.1.4.1. findAllByDepartamento(idDept)
+        activate EmpDAO
+            EmpDAO -> BD : 1.1.4.1.1. SELECT empleados WHERE idDept
+            BD --> EmpDAO : 1.1.4.1.2. List<Empleado>
+        EmpDAO --> ServGestion : 1.1.4.2. List<Empleado>
+        deactivate EmpDAO
+    ServGestion --> Ctrl : 1.1.5. List<Empleado>
+    deactivate ServGestion
+
+    Ctrl --> UI : 1.1.6. actualiza tabla y cierra panel
+    note right of Ctrl : lanza hilo daemon →\ncontinúa en fase asíncrona
+
+end
+
+deactivate Ctrl
+UI --> Admin : 1.2. tabla actualizada (distancia pendiente)
+deactivate UI
+
+== Fase asíncrona — hilo daemon (JavaFX Task) ==
+
+Ctrl -> ServGestion : 2.1. calcularYPersistirDistancia(empleado)
+activate ServGestion
+
+ServGestion -> ORS : 2.1.1. completarCoordenadas(dirEmpleado)
+activate ORS
+    ORS -> ORSAPI : 2.1.1.1. HTTP geocoding · dirección empleado
+    ORSAPI --> ORS : 2.1.1.2. lat / lon
+ORS --> ServGestion : 2.1.2. coordenadas asignadas a dirEmpleado
+deactivate ORS
+
+ServGestion -> ORS : 2.1.3. completarCoordenadas(dirDepartamento)
+activate ORS
+    ORS -> ORSAPI : 2.1.3.1. HTTP geocoding · dirección departamento
+    ORSAPI --> ORS : 2.1.3.2. lat / lon
+ORS --> ServGestion : 2.1.4. coordenadas asignadas a dirDepartamento
+deactivate ORS
+
+ServGestion -> ORS : 2.1.5. calcularDistancia(dirEmpleado, dirDepartamento)
+activate ORS
+    ORS -> ORSAPI : 2.1.5.1. HTTP route · coordenadas origen y destino
+    ORSAPI --> ORS : 2.1.5.2. distancia en km
+ORS --> ServGestion : 2.1.6. distanciaKm
+deactivate ORS
+
+ServGestion -> ServGestion : 2.1.7. empleado.setDistanciaTrabajo(distanciaKm)
+
+ServGestion -> EmpDAO : 2.1.8. update(empleado)\n[persiste distancia_trabajo + coordenadas]
+activate EmpDAO
+    EmpDAO -> BD : 2.1.8.1. UPDATE empleado SET distancia_trabajo, ...
+    BD --> EmpDAO : 2.1.8.2. OK
+EmpDAO --> ServGestion : 2.1.9. actualizado
+deactivate EmpDAO
+
+ServGestion -> DirDAO : 2.1.10. update(dirDepartamento)\n[persiste coordenadas del departamento]
+activate DirDAO
+    DirDAO -> BD : 2.1.10.1. UPDATE direccion SET lat, lon WHERE idDireccion
+    BD --> DirDAO : 2.1.10.2. OK
+DirDAO --> ServGestion : 2.1.11. actualizado
+deactivate DirDAO
+
+ServGestion --> Ctrl : 2.2. tarea completada (onSucceeded)
+deactivate ServGestion
+
+note over Ctrl : onSucceeded ejecuta en el hilo de JavaFX
+
+Ctrl -> ServGestion : 2.3. getEmpleadosDepartamento(idDept)\n[cargarEmpleados — refresca tabla]
+activate ServGestion
+    ServGestion -> EmpDAO : 2.3.1. findAllByDepartamento(idDept)
+    activate EmpDAO
+        EmpDAO -> BD : 2.3.1.1. SELECT empleados WHERE idDept
+        BD --> EmpDAO : 2.3.1.2. List<Empleado>
+    EmpDAO --> ServGestion : 2.3.2. List<Empleado>
+    deactivate EmpDAO
+ServGestion --> Ctrl : 2.4. List<Empleado>
+deactivate ServGestion
+
+Ctrl --> UI : 2.5. tabla actualizada con distancia al trabajo
+UI --> Admin : 2.6. muestra distancia calculada en la fila del empleado
+
+@enduml

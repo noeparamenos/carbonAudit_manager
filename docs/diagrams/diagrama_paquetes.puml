@@ -1,0 +1,106 @@
+@startuml Diagrama de Paquetes - CarbonAudit Manager
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam package {
+    BackgroundColor #FAFAFA
+    BorderColor #555
+    FontStyle bold
+}
+skinparam component {
+    BackgroundColor White
+    BorderColor #777
+    FontSize 11
+}
+skinparam database {
+    BackgroundColor #EEF6FF
+    BorderColor #4A90D9
+}
+skinparam cloud {
+    BackgroundColor #FFF8EE
+    BorderColor #E0963A
+}
+skinparam arrow {
+    Color #555
+    FontSize 10
+}
+skinparam shadowing false
+
+' ========================= PAQUETES INTERNOS =========================
+
+package "com.carbonaudit" as Root {
+    [Launcher]
+    [Main]
+}
+
+package "com.carbonaudit.controller" as Controller {
+    [SeleccionRolController]
+    [PA0Controller]
+    [PA1Controller]
+    [PA2Controller]
+    [PR0Controller]
+    [PR1Controller]
+}
+
+package "com.carbonaudit.service" as Service {
+    [ServicioCalculoHuella]
+    [ServicioGestionEmpleado]
+    [ServicioGestionEmpresa]
+    [ServicioGestionDepartamento]
+    [ServicioGestionResponsable]
+    [ServicioGestionFactores]
+
+    package "com.carbonaudit.service.external" as ServiceExt {
+        [IServicioGeografico]
+        [ServicioGeograficoORS]
+    }
+}
+
+package "com.carbonaudit.util" as Util {
+    [Validador]
+}
+
+package "com.carbonaudit.dao" as Dao {
+    [DAO<T,K>]
+    [DatabaseManager]
+    [EmpresaDAO]
+    [DepartamentoDAO]
+    [EmpleadoDAO]
+    [ResponsableDAO]
+    [DireccionDAO]
+    [ConsumoMensualDAO]
+    [CommutingEmpleadoDAO]
+    [FactorEmisionDAO]
+}
+
+package "com.carbonaudit.model" as Model {
+    [Empresa]
+    [Departamento]
+    [Empleado]
+    [Responsable]
+    [Direccion]
+    [ConsumoMensual]
+    [CommutingEmpleado]
+    [FactorEmision]
+}
+
+' ========================= SISTEMAS EXTERNOS =========================
+
+database "PostgreSQL" as DB
+cloud "OpenRouteService\nAPI (REST)" as ORS
+
+' ========================= ORDEN HORIZONTAL (enlaces ocultos) ========
+
+Root       -[hidden]r-> Controller
+Controller -[hidden]r-> Service
+Service    -[hidden]r-> Util
+Util       -[hidden]r-> Dao
+Dao        -[hidden]r-> Model
+
+' ========================= DEPENDENCIAS CON SISTEMAS EXTERNOS =========
+
+Dao        --> DB
+ServiceExt --> ORS
+
+
+@enduml

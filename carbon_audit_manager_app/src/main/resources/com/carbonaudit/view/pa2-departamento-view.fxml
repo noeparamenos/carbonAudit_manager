@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<!--
+    PA2 · Gestión de departamento
+    Layout: BorderPane con topbar fija arriba y contenido central variable.
+    El contenido central es un HBox con la zona principal (izquierda) y los
+    paneles laterales (derecha, ocultos por defecto).
+    Paneles laterales posibles (solo uno activo a la vez):
+      - panelEmpleado   → nuevo empleado / editar empleado
+      - panelResponsable → asignar nuevo responsable
+      - panelEditDpto   → editar datos del departamento
+-->
+<BorderPane prefWidth="1000.0" prefHeight="700.0" minWidth="700.0" minHeight="500.0"
+            styleClass="pantalla-interior"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.carbonaudit.controller.PA2Controller">
+
+    <stylesheets>
+        <URL value="@estilos.css"/>
+    </stylesheets>
+
+    <!-- =========== TOPBAR ========== -->
+    <!--
+        Breadcrumb de tres niveles: Empresas › NombreEmpresa › NombreDepartamento.
+        "Empresas" vuelve a PA0; el nombre de la empresa vuelve a PA1.
+        El nombre del departamento es el nivel activo (no clicable).
+    -->
+    <top>
+        <HBox styleClass="topbar">
+            <Label text="CarbonAudit Manager" styleClass="topbar-titulo"/>
+            <Label text=" › " styleClass="topbar-sep"/>
+            <Label text="Inicio" styleClass="topbar-breadcrumb-link"
+                   onMouseClicked="#onVolverAP0"/>
+            <Label text=" › " styleClass="topbar-sep"/>
+            <Label text="Empresas" styleClass="topbar-breadcrumb-link"
+                   onMouseClicked="#onVolverAPA0"/>
+            <Label text=" › " styleClass="topbar-sep"/>
+            <Label fx:id="lblBreadcrumbEmpresa" text="" styleClass="topbar-breadcrumb-link"
+                   onMouseClicked="#onVolverAPA1"/>
+            <Label text=" › " styleClass="topbar-sep"/>
+            <Label fx:id="lblBreadcrumbDpto" text="" styleClass="topbar-breadcrumb"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="Administrador" styleClass="topbar-rol"/>
+        </HBox>
+    </top>
+
+    <!-- ==================== CONTENIDO CENTRAL ===================== -->
+    <center>
+        <HBox>
+
+            <!-- Zona principal: ocupa todo el ancho libre -->
+            <VBox HBox.hgrow="ALWAYS" styleClass="zona-principal">
+                <padding>
+                    <Insets top="24.0" right="24.0" bottom="24.0" left="24.0"/>
+                </padding>
+
+                <!-- ── Cabecera del departamento ──────────────────────────── -->
+                <!--
+                    Muestra el nombre y datos básicos del departamento activo,
+                    junto con los botones de editar y eliminar.
+                -->
+                <VBox styleClass="cabecera-empresa" spacing="10.0">
+                    <HBox alignment="CENTER_LEFT" spacing="12.0">
+                        <VBox spacing="3.0" HBox.hgrow="ALWAYS">
+                            <Label fx:id="lblNombreDpto" text="" styleClass="empresa-nombre"/>
+                            <Label fx:id="lblInfoDpto"   text="" styleClass="empresa-info"/>
+                        </VBox>
+                        <Button text="Editar" styleClass="btn-secundario" onAction="#onEditarDpto"/>
+                    </HBox>
+                </VBox>
+
+                <VBox.margin>
+                    <Insets bottom="16.0"/>
+                </VBox.margin>
+
+                <!-- ── TabPane ──────────────────────────────────────────── -->
+                <TabPane fx:id="tabPane" VBox.vgrow="ALWAYS" styleClass="tab-pane-verde">
+                    <tabs>
+
+                        <!-- ── Tab: Empleados ──────────────────────────── -->
+                        <Tab fx:id="tabEmpleados" text="Empleados" closable="false">
+                            <content>
+                                <VBox spacing="12.0">
+                                    <padding>
+                                        <Insets top="16.0"/>
+                                    </padding>
+
+                                    <HBox alignment="CENTER_LEFT">
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <Button text="+ Nuevo empleado" styleClass="btn-primario"
+                                                onAction="#onNuevoEmpleado"/>
+                                    </HBox>
+
+                                    <!--
+                                        Clic en fila → abre panel lateral en modo edición.
+                                        La columna Distancia muestra "—" hasta que se calcule
+                                        con el servicio de geolocalización.
+                                    -->
+                                    <TableView fx:id="tablaEmpleados" VBox.vgrow="ALWAYS"
+                                               styleClass="tabla">
+                                        <placeholder>
+                                            <Label text="No hay empleados en este departamento."
+                                                   styleClass="tabla-placeholder"/>
+                                        </placeholder>
+                                        <columns>
+                                            <TableColumn fx:id="colEmpNombre"
+                                                         text="Nombre"          prefWidth="200.0"/>
+                                            <TableColumn fx:id="colEmpCiudad"
+                                                         text="Ciudad"          prefWidth="130.0"/>
+                                            <TableColumn fx:id="colEmpDias"
+                                                         text="Días pres./mes"  prefWidth="110.0"/>
+                                            <TableColumn fx:id="colEmpVehiculo"
+                                                         text="Vehículo"        prefWidth="160.0"/>
+                                            <TableColumn fx:id="colEmpDistancia"
+                                                         text="Distancia (km)"  prefWidth="110.0"/>
+                                        </columns>
+                                    </TableView>
+
+                                    <Label text="Haz clic en un empleado para editar sus datos."
+                                           styleClass="texto-ayuda"/>
+                                </VBox>
+                            </content>
+                        </Tab>
+
+                        <!-- ── Tab: Responsable ────────────────────────── -->
+                        <!--
+                            Muestra el responsable activo en la parte superior (con botones
+                            "Asignar" y "Finalizar mandato") y el historial completo debajo.
+                            Los datos se cargan al llamar setDepartamento() en el controlador.
+                        -->
+                        <Tab fx:id="tabResponsable" text="Responsable" closable="false">
+                            <content>
+                                <VBox spacing="16.0">
+                                    <padding>
+                                        <Insets top="16.0"/>
+                                    </padding>
+
+                                    <!-- Tarjeta: responsable activo -->
+                                    <VBox spacing="8.0" styleClass="cabecera-empresa">
+                                        <padding>
+                                            <Insets bottom="12.0"/>
+                                        </padding>
+                                        <Label text="Responsable activo" styleClass="form-seccion"/>
+                                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                            <Label fx:id="lblResponsableActivo" text="—"
+                                                   styleClass="empresa-info" HBox.hgrow="ALWAYS"/>
+                                            <!--
+                                                btnFinalizarMandato solo es visible si hay un
+                                                responsable activo. El controlador lo gestiona.
+                                            -->
+                                            <Button fx:id="btnFinalizarMandato"
+                                                    text="Finalizar mandato"
+                                                    styleClass="btn-peligro"
+                                                    visible="false" managed="false"
+                                                    onAction="#onFinalizarMandato"/>
+                                            <Button text="Asignar responsable"
+                                                    styleClass="btn-secundario"
+                                                    onAction="#onAsignarResponsable"/>
+                                        </HBox>
+                                    </VBox>
+
+                                    <Label text="Historial de mandatos" styleClass="form-seccion"/>
+
+                                    <TableView fx:id="tablaHistorial" VBox.vgrow="ALWAYS"
+                                               styleClass="tabla">
+                                        <placeholder>
+                                            <Label text="No hay historial de responsables para este departamento."
+                                                   styleClass="tabla-placeholder"/>
+                                        </placeholder>
+                                        <columns>
+                                            <TableColumn fx:id="colRespNombre"
+                                                         text="Empleado"  prefWidth="220.0"/>
+                                            <TableColumn fx:id="colRespDesde"
+                                                         text="Desde"     prefWidth="140.0"/>
+                                            <TableColumn fx:id="colRespHasta"
+                                                         text="Hasta"     prefWidth="140.0"/>
+                                        </columns>
+                                    </TableView>
+
+                                </VBox>
+                            </content>
+                        </Tab>
+
+                    </tabs>
+                </TabPane>
+
+            </VBox>
+
+            <!-- ── PANEL LATERAL: Nuevo / Editar empleado ───────────────── -->
+            <!--
+                Modo nuevo: título "Nuevo empleado", sin botón "Dar de baja".
+                Modo edición: título "Editar empleado", botón "Dar de baja" visible.
+                La dirección de residencia siempre es obligatoria para el cálculo de commuting.
+            -->
+            <VBox fx:id="panelEmpleado" managed="false" visible="false"
+                  styleClass="panel-lateral" spacing="14.0">
+                <HBox alignment="CENTER_LEFT" spacing="8.0">
+                    <Label fx:id="panelEmpleadoTitulo" text="Nuevo empleado" styleClass="panel-titulo"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Cerrar" styleClass="btn-cerrar" onAction="#onCancelarEmpleado"/>
+                </HBox>
+                <Separator/>
+
+                <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="scroll-formulario">
+                    <GridPane hgap="10.0" vgap="10.0">
+                        <padding>
+                            <Insets top="4.0" right="4.0" bottom="4.0" left="4.0"/>
+                        </padding>
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="90.0" prefWidth="90.0"/>
+                            <ColumnConstraints hgrow="ALWAYS"/>
+                        </columnConstraints>
+
+                        <Label text="Nombre *" styleClass="form-label"
+                               GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campEmpNombre" promptText="Ej: Ana García"
+                                   GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                        <Label text="Días pres. *" styleClass="form-label"
+                               GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campEmpDias" promptText="20"
+                                   GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                        <Label text="Vehículo *" styleClass="form-label"
+                               GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                        <!--
+                            Poblado en el controlador con factores de alcance 3
+                            (medios de transporte para el cálculo de commuting).
+                        -->
+                        <ComboBox fx:id="combEmpVehiculo" maxWidth="Infinity"
+                                  GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                        <Label text="Residencia" styleClass="form-seccion"
+                               GridPane.rowIndex="3" GridPane.columnIndex="0"
+                               GridPane.columnSpan="2"/>
+
+                        <Label text="Calle *" styleClass="form-label"
+                               GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campEmpCalle"
+                                   GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+                        <Label text="Número *" styleClass="form-label"
+                               GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campEmpNumero"
+                                   GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+
+                        <Label text="Ciudad *" styleClass="form-label"
+                               GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campEmpCiudad"
+                                   GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+
+                        <Label text="C. Postal *" styleClass="form-label"
+                               GridPane.rowIndex="7" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campEmpCp"
+                                   GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+
+                        <Label text="Provincia" styleClass="form-label"
+                               GridPane.rowIndex="8" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campEmpProvincia"
+                                   GridPane.rowIndex="8" GridPane.columnIndex="1"/>
+                    </GridPane>
+                </ScrollPane>
+
+                <HBox spacing="8.0" alignment="CENTER">
+                    <Button text="Guardar"  styleClass="btn-primario"   onAction="#onGuardarEmpleado"/>
+                    <Button text="Cancelar" styleClass="btn-secundario" onAction="#onCancelarEmpleado"/>
+                </HBox>
+                <Button fx:id="btnDarDeBaja" text="Dar de baja al empleado"
+                        styleClass="btn-peligro" visible="false" managed="false"
+                        maxWidth="Infinity" onAction="#onDarDeBaja"/>
+            </VBox>
+
+            <!-- ── PANEL LATERAL: Asignar responsable ───────────────────── -->
+            <!--
+                Permite asignar un nuevo responsable entre los empleados activos
+                del departamento. Si hay un responsable activo, su mandato se
+                cierra automáticamente el día anterior a la nueva fecha de inicio.
+            -->
+            <VBox fx:id="panelResponsable" managed="false" visible="false"
+                  styleClass="panel-lateral" spacing="14.0">
+                <HBox alignment="CENTER_LEFT" spacing="8.0">
+                    <Label text="Asignar responsable" styleClass="panel-titulo"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Cerrar" styleClass="btn-cerrar" onAction="#onCancelarResponsable"/>
+                </HBox>
+                <Separator/>
+
+                <GridPane hgap="10.0" vgap="14.0">
+                    <padding>
+                        <Insets top="4.0" right="4.0" bottom="4.0" left="4.0"/>
+                    </padding>
+                    <columnConstraints>
+                        <ColumnConstraints minWidth="80.0" prefWidth="80.0"/>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                    </columnConstraints>
+
+                    <Label text="Empleado *" styleClass="form-label"
+                           GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                    <ComboBox fx:id="combRespEmpleado" maxWidth="Infinity"
+                              GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                    <Label text="Desde *" styleClass="form-label"
+                           GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                    <DatePicker fx:id="dateRespInicio" maxWidth="Infinity"
+                                GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                </GridPane>
+
+                <Region VBox.vgrow="ALWAYS"/>
+
+                <HBox spacing="10.0" alignment="CENTER">
+                    <Button text="Guardar"  styleClass="btn-primario"   onAction="#onGuardarResponsable"/>
+                    <Button text="Cancelar" styleClass="btn-secundario" onAction="#onCancelarResponsable"/>
+                </HBox>
+            </VBox>
+
+            <!-- ── PANEL LATERAL: Editar departamento ───────────────────── -->
+            <!--
+                Al guardar, resetea latitud/longitud de la dirección para forzar
+                re-geocoding en la próxima llamada a la API (AsignarDistanciaTrabajo).
+            -->
+            <VBox fx:id="panelEditDpto" managed="false" visible="false"
+                  styleClass="panel-lateral" spacing="14.0">
+                <HBox alignment="CENTER_LEFT" spacing="8.0">
+                    <Label text="Editar departamento" styleClass="panel-titulo"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Cerrar" styleClass="btn-cerrar" onAction="#onCancelarEditDpto"/>
+                </HBox>
+                <Separator/>
+
+                <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="scroll-formulario">
+                    <GridPane hgap="10.0" vgap="10.0">
+                        <padding>
+                            <Insets top="4.0" right="4.0" bottom="4.0" left="4.0"/>
+                        </padding>
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="90.0" prefWidth="90.0"/>
+                            <ColumnConstraints hgrow="ALWAYS"/>
+                        </columnConstraints>
+
+                        <Label text="Nombre *" styleClass="form-label"
+                               GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                        <TextField fx:id="editDptoNombre"
+                                   GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                        <Label text="Descripción" styleClass="form-label"
+                               GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                        <TextField fx:id="editDptoDesc"
+                                   GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                        <CheckBox fx:id="chkAlcance3" text="Incluir Alcance 3 (commuting)"
+                                  styleClass="chk-periodo"
+                                  GridPane.rowIndex="2" GridPane.columnIndex="0"
+                                  GridPane.columnSpan="2"/>
+
+                        <Label text="Ubicación" styleClass="form-seccion"
+                               GridPane.rowIndex="3" GridPane.columnIndex="0"
+                               GridPane.columnSpan="2"/>
+
+                        <Label text="Calle *" styleClass="form-label"
+                               GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                        <TextField fx:id="editDptoCalle"
+                                   GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+                        <Label text="Número *" styleClass="form-label"
+                               GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+                        <TextField fx:id="editDptoNumero"
+                                   GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+
+                        <Label text="Ciudad *" styleClass="form-label"
+                               GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+                        <TextField fx:id="editDptoCiudad"
+                                   GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+
+                        <Label text="C. Postal *" styleClass="form-label"
+                               GridPane.rowIndex="7" GridPane.columnIndex="0"/>
+                        <TextField fx:id="editDptoCp"
+                                   GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+
+                        <Label text="Provincia" styleClass="form-label"
+                               GridPane.rowIndex="8" GridPane.columnIndex="0"/>
+                        <TextField fx:id="editDptoProvincia"
+                                   GridPane.rowIndex="8" GridPane.columnIndex="1"/>
+                    </GridPane>
+                </ScrollPane>
+
+                <HBox spacing="10.0" alignment="CENTER">
+                    <Button text="Guardar"  styleClass="btn-primario"   onAction="#onGuardarEditDpto"/>
+                    <Button text="Cancelar" styleClass="btn-secundario" onAction="#onCancelarEditDpto"/>
+                </HBox>
+                <Button text="Eliminar departamento" styleClass="btn-peligro"
+                        maxWidth="Infinity" onAction="#onEliminarDpto"/>
+            </VBox>
+
+        </HBox>
+    </center>
+
+</BorderPane>

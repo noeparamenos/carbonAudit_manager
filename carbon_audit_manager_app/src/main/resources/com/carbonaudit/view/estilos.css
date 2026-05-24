@@ -1,0 +1,390 @@
+/*
+ * estilos.css — hoja de estilos global de CarbonAudit Manager.
+ *
+ * Paleta de color:
+ *   Verde oscuro   (títulos, bordes)
+ *   Verde medio    (bordes tarjeta, subtítulos)
+ *   Verde claro    (hover)
+ *   Fondo tarjeta #f4faf6  (blanco con tinte verde suave)
+ *   Fondo app     #eef6f1  (verde muy claro)
+ *
+ * En JavaFX las propiedades CSS llevan prefijo -fx-
+ * Ejemplo: color → -fx-text-fill, background → -fx-background-color
+ */
+
+/* ========= Variables de color ===================================== */
+
+.root {
+    -verde-oscuro:    #1b3a2a;
+    -verde-medio:     #3a6b4a;
+    -verde-hover:     #2d5a3d;
+    -verde-claro:     #e6f4ec;
+    -verde-suave:     #8ab89a;
+    -verde-texto:     #6a9a7a;
+    -verde-sep:       #5a8a6a;
+    -verde-kpi:       #c8e6d5;
+    -fondo-app:       #eef6f1;
+    -fondo-tarjeta:   #f4faf6;
+    -fondo-interior:  #f5f7f5;
+    -texto-topbar:    #e8f5e9;
+    -gris-borde:      #d5d8dc;
+    -rojo-peligro:    #c0392b;
+    -rojo-hover:      #fdecea;
+}
+
+/* ========= P0 · Pantalla selección de rol ========================= */
+
+.pantalla-seleccion {
+    -fx-background-color: -fondo-app;
+}
+
+.titulo-app {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -verde-oscuro;
+}
+
+.subtitulo {
+    -fx-font-size: 13px;
+    -fx-text-fill: -verde-medio;
+}
+
+/* ========= Tarjetas de selección de rol =========================== */
+
+.tarjeta {
+    -fx-background-color: -fondo-tarjeta;
+    -fx-border-color: -verde-medio;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-pref-width: 210px;
+    -fx-pref-height: 108px;
+}
+
+/* :hover se aplica automáticamente al pasar el ratón */
+.tarjeta:hover {
+    -fx-background-color: -verde-claro;
+    -fx-border-color: #5aab72;
+}
+
+.tarjeta-titulo {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -verde-oscuro;
+}
+
+.tarjeta-descripcion {
+    -fx-font-size: 12px;
+    -fx-text-fill: -verde-texto;
+    -fx-text-alignment: center;
+    /* maxWidth se controla con el atributo maxWidth del Label en el FXML */
+}
+
+/* ========= Pie de pantalla ======================================== */
+
+.version {
+    -fx-font-size: 11px;
+    -fx-text-fill: #b0ccb8;
+}
+
+/* ========= Pantallas interiores (PA1, PA2, PA3, PR0, PR1) ========= */
+
+.pantalla-interior {
+    -fx-background-color: -fondo-interior;
+}
+
+/* ========= Topbar ================================================= */
+
+.topbar {
+    -fx-background-color: -verde-oscuro;
+    -fx-padding: 12px 20px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-spacing: 16px;
+}
+
+.topbar-titulo {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -texto-topbar;
+}
+
+.topbar-rol {
+    -fx-font-size: 12px;
+    -fx-text-fill: -verde-suave;
+}
+
+/* ========= Zona principal ========================================= */
+
+.zona-principal {
+    -fx-background-color: -fondo-interior;
+}
+
+.seccion-titulo {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -verde-oscuro;
+}
+
+/* ========= Botones ================================================ */
+
+.btn-primario {
+    -fx-background-color: -verde-medio;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-padding: 8px 16px;
+}
+
+.btn-primario:hover {
+    -fx-background-color: -verde-hover;
+}
+
+.btn-secundario {
+    -fx-background-color: transparent;
+    -fx-text-fill: -verde-medio;
+    -fx-border-color: -verde-medio;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-padding: 8px 16px;
+}
+
+.btn-secundario:hover {
+    -fx-background-color: -fondo-app;
+}
+
+.btn-cerrar {
+    -fx-background-color: transparent;
+    -fx-text-fill: #7f8c8d;
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+    -fx-padding: 4px 8px;
+}
+
+.btn-cerrar:hover {
+    -fx-text-fill: -rojo-peligro;
+}
+
+/* Botón de acción destructiva (Eliminar) */
+.btn-peligro {
+    -fx-background-color: transparent;
+    -fx-text-fill: -rojo-peligro;
+    -fx-border-color: -rojo-peligro;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-padding: 8px 16px;
+}
+
+.btn-peligro:hover {
+    -fx-background-color: -rojo-hover;
+}
+
+/* ========= TableView ============================================== */
+
+.tabla {
+    -fx-background-color: white;
+    -fx-border-color: -gris-borde;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+
+.tabla .column-header {
+    -fx-background-color: -fondo-app;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-text-fill: -verde-oscuro;
+}
+
+.tabla .table-row-cell {
+    -fx-border-color: transparent;
+    -fx-table-cell-border-color: #f0f0f0;
+}
+
+.tabla .table-row-cell:odd {
+    -fx-background-color: #fafcfa;
+}
+
+.tabla .table-row-cell:hover {
+    -fx-background-color: -verde-claro;
+    -fx-cursor: hand;
+}
+
+.tabla .table-row-cell:selected {
+    -fx-background-color: -verde-kpi;
+}
+
+.tabla-placeholder {
+    -fx-text-fill: #95a5a6;
+    -fx-font-size: 13px;
+}
+
+.texto-ayuda {
+    -fx-font-size: 11px;
+    -fx-text-fill: #b0bcb4;
+    -fx-padding: 4px 0 0 0;
+}
+
+/* ========= Panel lateral ========================================== */
+
+.panel-lateral {
+    -fx-background-color: white;
+    -fx-border-color: -gris-borde;
+    -fx-border-width: 0 0 0 1px;
+    -fx-pref-width: 340px;
+    -fx-padding: 20px;
+}
+
+.panel-titulo {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -verde-oscuro;
+}
+
+.scroll-formulario {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+/* ========= Formularios ============================================ */
+
+.form-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #555;
+    -fx-alignment: CENTER_RIGHT;
+}
+
+.form-seccion {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -verde-medio;
+    -fx-padding: 8px 0 2px 0;
+}
+
+/* ========= Breadcrumb (PA2 y siguientes) ========================== */
+
+.topbar-sep {
+    -fx-font-size: 13px;
+    -fx-text-fill: -verde-sep;
+}
+
+/* Enlace clicable (niveles anteriores del breadcrumb) */
+.topbar-breadcrumb-link {
+    -fx-font-size: 13px;
+    -fx-text-fill: -verde-suave;
+    -fx-cursor: hand;
+}
+
+.topbar-breadcrumb-link:hover {
+    -fx-text-fill: -texto-topbar;
+    -fx-underline: true;
+}
+
+/* Nivel activo: texto plano, no clicable */
+.topbar-breadcrumb {
+    -fx-font-size: 13px;
+    -fx-text-fill: -texto-topbar;
+    -fx-font-weight: bold;
+}
+
+/* ========= Cabecera de empresa (PA2) ============================== */
+
+.cabecera-empresa {
+    -fx-background-color: white;
+    -fx-border-color: -gris-borde;
+    -fx-border-width: 0 0 1px 0;
+    -fx-padding: 0 0 16px 0;
+}
+
+.empresa-nombre {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -verde-oscuro;
+}
+
+.empresa-info {
+    -fx-font-size: 13px;
+    -fx-text-fill: -verde-texto;
+}
+
+/* ========= TabPane ================================================ */
+
+/*
+ * En JavaFX, los selectores de TabPane usan sintaxis específica.
+ * .tab-pane-verde es nuestra clase personalizada que aplica sobre el TabPane.
+ */
+.tab-pane-verde > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: -fondo-interior;
+    -fx-padding: 6px 20px;
+}
+
+.tab-pane-verde > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: white;
+}
+
+.tab-pane-verde > .tab-header-area > .headers-region > .tab .tab-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: -verde-medio;
+}
+
+.tab-pane-verde > .tab-header-area > .headers-region > .tab:selected .tab-label {
+    -fx-font-weight: bold;
+    -fx-text-fill: -verde-oscuro;
+}
+
+.tab-pane-verde > .tab-header-area {
+    -fx-background-color: -fondo-interior;
+    -fx-border-color: -gris-borde;
+    -fx-border-width: 0 0 1px 0;
+}
+
+.tab-pane-verde > .tab-content-area {
+    -fx-background-color: white;
+    -fx-padding: 0 0 0 0;
+}
+
+/* ========= Checkbox "Año completo" ================================ */
+
+.chk-periodo {
+    -fx-font-size: 12px;
+    -fx-text-fill: -verde-medio;
+}
+
+/* ========= Total departamento (Tab Consumos) ====================== */
+
+.total-empresa {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -verde-oscuro;
+}
+
+/* ========= KPI cards (PR1 · Tab Huella mensual) =================== */
+
+.kpi-card {
+    -fx-background-color: -fondo-tarjeta;
+    -fx-border-color: -verde-kpi;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 12px 16px;
+    -fx-spacing: 4px;
+    -fx-alignment: CENTER;
+}
+
+.kpi-titulo {
+    -fx-font-size: 11px;
+    -fx-text-fill: -verde-texto;
+}
+
+.kpi-valor {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -verde-oscuro;
+}

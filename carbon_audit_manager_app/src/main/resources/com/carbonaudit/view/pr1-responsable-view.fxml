@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<!--
+    PR1 · Vista responsable
+    Layout: BorderPane con topbar fija arriba y contenido central variable.
+    El contenido central es un HBox con la zona principal (izquierda) y el
+    panel lateral de consumos (derecha, oculto por defecto).
+
+    Tabs disponibles:
+      - Consumos mensuales  → tabla de consumos + panel lateral alta/edición
+      - Trabajadores        → tabla de empleados del departamento (solo lectura)
+      - Huella mensual      → KPIs + desglose + sección commuting
+      - Gráficos            → placeholder
+-->
+<BorderPane prefWidth="1000.0" prefHeight="700.0" minWidth="700.0" minHeight="500.0"
+            styleClass="pantalla-interior"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.carbonaudit.controller.PR1Controller">
+
+    <stylesheets>
+        <URL value="@estilos.css"/>
+    </stylesheets>
+
+    <!-- =========== TOPBAR ========== -->
+    <!--
+        Breadcrumb de tres niveles: Inicio › Selección de responsable › [nombre responsable].
+        "Inicio" vuelve a P0; "Selección de responsable" vuelve a PR0.
+    -->
+    <top>
+        <HBox styleClass="topbar">
+            <Label text="CarbonAudit Manager" styleClass="topbar-titulo"/>
+            <Label text=" › " styleClass="topbar-sep"/>
+            <Label text="Inicio" styleClass="topbar-breadcrumb-link"
+                   onMouseClicked="#onVolverAP0"/>
+            <Label text=" › " styleClass="topbar-sep"/>
+            <Label text="Selección de responsable" styleClass="topbar-breadcrumb-link"
+                   onMouseClicked="#onVolverAPR0"/>
+            <Label text=" › " styleClass="topbar-sep"/>
+            <Label fx:id="lblBreadcrumb" text="" styleClass="topbar-breadcrumb"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="Responsable" styleClass="topbar-rol"/>
+        </HBox>
+    </top>
+
+    <!-- ==================== CONTENIDO CENTRAL ===================== -->
+    <center>
+        <HBox>
+
+            <!-- Zona principal: ocupa todo el ancho libre -->
+            <VBox HBox.hgrow="ALWAYS" styleClass="zona-principal">
+                <padding>
+                    <Insets top="24.0" right="24.0" bottom="24.0" left="24.0"/>
+                </padding>
+
+                <!--  Cabecera del responsable  -->
+                <!-- Muestra el nombre del responsable activo, su departamento y empresa.-->
+                <VBox styleClass="cabecera-empresa" spacing="10.0">
+                    <HBox alignment="CENTER_LEFT" spacing="12.0">
+                        <VBox spacing="3.0" HBox.hgrow="ALWAYS">
+                            <Label fx:id="lblNombreResponsable" text="" styleClass="empresa-nombre"/>
+                            <Label fx:id="lblInfoResponsable"   text="" styleClass="empresa-info"/>
+                        </VBox>
+                    </HBox>
+
+                    <!-- Selector de período (mes y año). Compartido entre todos los tabs. -->
+                    <HBox alignment="CENTER_LEFT" spacing="8.0">
+                        <Label text="Período:" styleClass="form-label"/>
+                        <!-- combMes y año se sincronizan con todos los tabs.
+                            Al cambiar el período se recargan los tabs activos. -->
+                        <ComboBox fx:id="combMes"  prefWidth="140.0"/>
+                        <ComboBox fx:id="combAnio" prefWidth="85.0"/>
+                    </HBox>
+                </VBox>
+
+                <VBox.margin>
+                    <Insets bottom="16.0"/>
+                </VBox.margin>
+
+                <!-- ── TabPane ──────────────────────────────────────────── -->
+                <TabPane fx:id="tabPane" VBox.vgrow="ALWAYS" styleClass="tab-pane-verde">
+                    <tabs>
+
+                        <!-- ── Tab: Consumos mensuales ──────────────────── -->
+                        <!-- Para registrar, editar y duplicar consumos.
+                            Un clic en la fila abre el panel lateral en modo edición.
+                            "Duplicar mes anterior" copia los registros del mes previo.-->
+                        <Tab fx:id="tabConsumos" text="Consumos mensuales" closable="false">
+                            <content>
+                                <VBox spacing="12.0">
+                                    <padding>
+                                        <Insets top="16.0"/>
+                                    </padding>
+
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                        <Button text="+ Nuevo consumo" styleClass="btn-primario"
+                                                onAction="#onNuevoConsumo"/>
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <Button text="Duplicar mes anterior" styleClass="btn-secundario"
+                                                onAction="#onDuplicarMes"/>
+                                    </HBox>
+
+                                    <TableView fx:id="tablaConsumos" VBox.vgrow="ALWAYS"
+                                               styleClass="tabla">
+                                        <placeholder>
+                                            <Label text="No hay consumos registrados para el período seleccionado."
+                                                   styleClass="tabla-placeholder"/>
+                                        </placeholder>
+                                        <columns>
+                                            <TableColumn fx:id="colConsRecurso"  text="Recurso"           prefWidth="180.0"/>
+                                            <TableColumn fx:id="colConsUnidad"   text="Unidad"            prefWidth="90.0"/>
+                                            <TableColumn fx:id="colConsCantidad" text="Cantidad"          prefWidth="90.0"/>
+                                            <TableColumn fx:id="colConsAlcance"  text="Alcance"           prefWidth="80.0"/>
+                                            <TableColumn fx:id="colConsEmision"  text="Emisión CO₂e (kg)" prefWidth="140.0"/>
+                                        </columns>
+                                    </TableView>
+
+                                    <HBox alignment="CENTER_RIGHT" spacing="6.0">
+                                        <Label text="Total departamento:" styleClass="form-label"/>
+                                        <Label fx:id="lblTotalDpto" text="—" styleClass="total-empresa"/>
+                                    </HBox>
+                                </VBox>
+                            </content>
+                        </Tab>
+
+                        <!-- Tab: Trabajadores -->
+                        <!--Vista de solo lectura.-->
+                        <Tab fx:id="tabTrabajadores" text="Trabajadores" closable="false">
+                            <content>
+                                <VBox spacing="12.0">
+                                    <padding>
+                                        <Insets top="16.0"/>
+                                    </padding>
+                                    <!--tabla puede crecer verticalmente para ocupar todo el espacio libre disponible-->
+                                    <TableView fx:id="tablaEmpleados" VBox.vgrow="ALWAYS"
+                                               styleClass="tabla">
+                                        <placeholder>
+                                            <Label text="No hay empleados registrados en este departamento."
+                                                   styleClass="tabla-placeholder"/>
+                                        </placeholder>
+                                        <columns>
+                                            <TableColumn fx:id="colEmpNombre"    text="Nombre"            prefWidth="200.0"/>
+                                            <TableColumn fx:id="colEmpCiudad"    text="Localidad"         prefWidth="140.0"/>
+                                            <TableColumn fx:id="colEmpDias"      text="Días presenciales" prefWidth="130.0"/>
+                                            <TableColumn fx:id="colEmpVehiculo"  text="Vehículo"          prefWidth="140.0"/>
+                                            <TableColumn fx:id="colEmpDistancia" text="Distancia (km)"    prefWidth="120.0"/>
+                                        </columns>
+                                    </TableView>
+
+                                    <Label text="Vista de solo lectura. Para modificar empleados, contacta con el administrador."
+                                           styleClass="texto-ayuda"/>
+                                </VBox>
+                            </content>
+                        </Tab>
+
+                        <!-- Tab: Huella mensual  -->
+                        <!--
+                            Muestra los KPIs de CO₂e del período (total + por Scope),
+                            la tabla de consumos con la emisión calculada y la sección
+                            de commuting (Alcance 3). Los botones de exportar son placeholders.
+                        -->
+                        <Tab fx:id="tabHuella" text="Huella mensual" closable="false">
+                            <content>
+                                <VBox spacing="16.0">
+                                    <padding>
+                                        <Insets top="16.0"/>
+                                    </padding>
+
+                                    <!-- KPIs: Total, Alcance 1, 2 y 3 -->
+                                    <HBox spacing="12.0">
+                                        <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS" alignment="CENTER">
+                                            <Label text="Total CO₂e" styleClass="kpi-titulo"/>
+                                            <Label fx:id="kpiTotal" text="—" styleClass="kpi-valor"/>
+                                        </VBox>
+                                        <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS" alignment="CENTER">
+                                            <Label text="Alcance 1" styleClass="kpi-titulo"/>
+                                            <Label fx:id="kpiScope1" text="—" styleClass="kpi-valor"/>
+                                        </VBox>
+                                        <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS" alignment="CENTER">
+                                            <Label text="Alcance 2" styleClass="kpi-titulo"/>
+                                            <Label fx:id="kpiScope2" text="—" styleClass="kpi-valor"/>
+                                        </VBox>
+                                        <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS" alignment="CENTER">
+                                            <Label text="Alcance 3 (Commuting)" styleClass="kpi-titulo"/>
+                                            <Label fx:id="kpiScope3" text="—" styleClass="kpi-valor"/>
+                                        </VBox>
+                                    </HBox>
+
+                                    <!-- Desglose de consumos -->
+                                    <Label text="Desglose por recurso" styleClass="form-seccion"/>
+
+                                    <!--
+                                        tablaHuella comparte la misma ObservableList que tablaConsumos.
+                                        Se actualiza automáticamente cuando cambia el período.
+                                    -->
+                                    <TableView fx:id="tablaHuella" VBox.vgrow="ALWAYS"
+                                               styleClass="tabla">
+                                        <placeholder>
+                                            <Label text="No hay consumos registrados para el período seleccionado."
+                                                   styleClass="tabla-placeholder"/>
+                                        </placeholder>
+                                        <columns>
+                                            <TableColumn fx:id="colHuellaRecurso"  text="Recurso"           prefWidth="180.0"/>
+                                            <TableColumn fx:id="colHuellaUnidad"   text="Unidad"            prefWidth="90.0"/>
+                                            <TableColumn fx:id="colHuellaCantidad" text="Cantidad"          prefWidth="90.0"/>
+                                            <TableColumn fx:id="colHuellaAlcance"  text="Alcance"           prefWidth="80.0"/>
+                                            <TableColumn fx:id="colHuellaEmision"  text="Emisión CO₂e (kg)" prefWidth="140.0"/>
+                                        </columns>
+                                    </TableView>
+
+                                    <!-- Sección commuting -->
+                                    <Label text="Commuting (Alcance 3)" styleClass="form-seccion"/>
+                                    <Label fx:id="lblCommuting" text="—" styleClass="empresa-info"/>
+
+                                    <!-- Exportar (placeholder) -->
+                                    <HBox spacing="10.0">
+                                        <Button text="Exportar PDF" styleClass="btn-secundario"
+                                                onAction="#onExportarPDF"/>
+                                        <Button text="Exportar CSV" styleClass="btn-secundario"
+                                                onAction="#onExportarCSV"/>
+                                    </HBox>
+                                </VBox>
+                            </content>
+                        </Tab>
+
+                        <!-- ── Tab: Gráficos ──────────────────────────────── -->
+                        <Tab fx:id="tabGraficos" text="Gráficos" closable="false">
+                            <content>
+                                <ScrollPane fitToWidth="true" styleClass="scroll-formulario">
+                                    <VBox spacing="20.0">
+                                        <padding>
+                                            <Insets top="16.0" right="8.0" bottom="16.0" left="0.0"/>
+                                        </padding>
+
+                                        <Label text="Desglose por Alcance (período seleccionado)"
+                                               styleClass="form-seccion"/>
+                                        <PieChart fx:id="grafPorScope" prefHeight="260.0"
+                                                  animated="false" legendSide="RIGHT"/>
+
+                                        <Label text="Evolución mensual de emisiones"
+                                               styleClass="form-seccion"/>
+                                        <LineChart fx:id="grafTendencia" prefHeight="240.0"
+                                                   animated="false" createSymbols="true">
+                                            <xAxis><CategoryAxis/></xAxis>
+                                            <yAxis><NumberAxis label="kg CO₂e" forceZeroInRange="true"/></yAxis>
+                                        </LineChart>
+
+                                        <Label text="Evolución por recurso"
+                                               styleClass="form-seccion"/>
+                                        <LineChart fx:id="grafConsumibles" prefHeight="260.0"
+                                                   animated="false" createSymbols="false">
+                                            <xAxis><CategoryAxis/></xAxis>
+                                            <yAxis><NumberAxis label="kg CO₂e" forceZeroInRange="true"/></yAxis>
+                                        </LineChart>
+                                    </VBox>
+                                </ScrollPane>
+                            </content>
+                        </Tab>
+
+                    </tabs>
+                </TabPane>
+
+            </VBox>
+
+            <!-- ── PANEL LATERAL: Nuevo / Editar consumo ────────────────── -->
+            <!--
+                Se abre al hacer clic en "+ Nuevo consumo" (panel vacío) o en
+                una fila de tablaConsumos (panel pre-rellenado con el registro).
+                Solo un panel activo a la vez; cerrar restablece visible=false.
+            -->
+            <VBox fx:id="panelConsumo" managed="false" visible="false"
+                  styleClass="panel-lateral" spacing="14.0">
+                <HBox alignment="CENTER_LEFT" spacing="8.0">
+                    <Label fx:id="panelConsumoTitulo" text="Nuevo consumo" styleClass="panel-titulo"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Cerrar" styleClass="btn-cerrar" onAction="#onCancelarConsumo"/>
+                </HBox>
+                <Separator/>
+
+                <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="scroll-formulario">
+                    <GridPane hgap="10.0" vgap="12.0">
+                        <padding>
+                            <Insets top="4.0" right="4.0" bottom="4.0" left="4.0"/>
+                        </padding>
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="80.0" prefWidth="80.0"/>
+                            <ColumnConstraints hgrow="ALWAYS"/>
+                        </columnConstraints>
+
+                        <!-- Factor de emisión (recurso) -->
+                        <Label text="Recurso *" styleClass="form-label"
+                               GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                        <!--
+                            Al seleccionar un factor, el controlador actualiza
+                            automáticamente lblUnidad y lblAlcance.
+                        -->
+                        <ComboBox fx:id="combFactor" maxWidth="Infinity"
+                                  GridPane.rowIndex="0" GridPane.columnIndex="1"
+                                  onAction="#onFactorSeleccionado"/>
+
+                        <!-- Unidad: derivada del factor, solo lectura -->
+                        <Label text="Unidad" styleClass="form-label"
+                               GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                        <Label fx:id="lblUnidad" text="—"
+                               GridPane.rowIndex="1" GridPane.columnIndex="1"
+                               styleClass="empresa-info"/>
+
+                        <!-- Alcance: derivado del factor, solo lectura -->
+                        <Label text="Alcance" styleClass="form-label"
+                               GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                        <Label fx:id="lblAlcance" text="—"
+                               GridPane.rowIndex="2" GridPane.columnIndex="1"
+                               styleClass="empresa-info"/>
+
+                        <!-- Cantidad introducida por el responsable -->
+                        <Label text="Cantidad *" styleClass="form-label"
+                               GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campCantidad" promptText="0.00"
+                                   GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                    </GridPane>
+                </ScrollPane>
+
+                <HBox spacing="10.0" alignment="CENTER">
+                    <Button text="Guardar"  styleClass="btn-primario"   onAction="#onGuardarConsumo"/>
+                    <Button text="Cancelar" styleClass="btn-secundario" onAction="#onCancelarConsumo"/>
+                </HBox>
+                <Button fx:id="btnEliminarConsumo" text="Eliminar consumo" styleClass="btn-peligro"
+                        visible="false" managed="false"
+                        maxWidth="Infinity" onAction="#onEliminarConsumo"/>
+            </VBox>
+
+        </HBox>
+    </center>
+
+</BorderPane>

@@ -18,9 +18,6 @@ public class FactorEmisionDAO implements DAO<FactorEmision, Integer> {
      */
     @Override
     public FactorEmision create(FactorEmision factor) {
-        // 1. VALIDACIÓN DE RESTRICCIONES (Aseguramos NOT NULL y CHECK)
-        validarFactor(factor);
-
         String sql = "INSERT INTO FACTOR_EMISION (nombre, unidad, valor_factor, alcance) " +
                         "VALUES (?, ?, ?, ?) RETURNING id_factor";
 
@@ -37,30 +34,11 @@ public class FactorEmisionDAO implements DAO<FactorEmision, Integer> {
                 factor.setIdFactor(rs.getInt(1)); // Asignamos el ID autogenerado por la BD
             }
         } catch (SQLException e) {
-            // Lanza error si se viola la restriccion UNIQUE (nombre, unidad)
-            e.printStackTrace();
+            if ("23505".equals(e.getSQLState()))
+                throw new IllegalArgumentException("Ya existe un factor con ese nombre y unidad.");
+            throw new RuntimeException("Error al crear el factor de emisión.", e);
         }
-        return factor; // Objeto con el ID actualizado generado por la BD
-    }
-
-    /**
-     * Valida las restricciones antes de tocar la BD.
-     * @param f factor de emision a validar
-     */
-    private void validarFactor(FactorEmision f) {
-        if (f.getNombre() == null || f.getNombre().trim().isEmpty()) {
-            throw new IllegalArgumentException("El nombre del factor es obligatorio.");
-        }
-        if (f.getUnidad() == null || f.getUnidad().trim().isEmpty()) {
-            throw new IllegalArgumentException("La unidad (kWh, litros, etc.) es obligatoria.");
-        }
-        if (f.getValorFactor() == null) {
-            throw new IllegalArgumentException("El coeficiente de emisión no puede ser nulo.");
-        }
-        // Validación del CHECK (alcance IN (1,2,3))
-        if (f.getAlcance() < 1 || f.getAlcance() > 3) {
-            throw new IllegalArgumentException("Alcance no válido. Debe ser 1 (Directo), 2 (Energía) o 3 (Otros indirectos).");
-        }
+        return factor;
     }
 
     /**
@@ -118,7 +96,7 @@ public class FactorEmisionDAO implements DAO<FactorEmision, Integer> {
                 factores.add(mapResultSetToFactor(rs)); // Mapeado a Objetos
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            if (!"42P01".equals(e.getSQLState())) e.printStackTrace(); // 42P01 = tabla no existe (BD vacía)
         }
         return factores;
     }
@@ -129,8 +107,6 @@ public class FactorEmisionDAO implements DAO<FactorEmision, Integer> {
      */
     @Override
     public void update(FactorEmision factor) {
-        // Validacion de restricciones
-        validarFactor(factor);
         String sql = "UPDATE FACTOR_EMISION SET nombre = ?, unidad = ?, valor_factor = ?, alcance = ? WHERE id_factor = ?";
         try (Connection conn = DatabaseManager.getInstance().getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {

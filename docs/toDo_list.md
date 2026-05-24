@@ -61,7 +61,7 @@ Desarrollo del Motor de Cálculo (Service) y la lógica de negocio
     - [ ] Crear cuenta en la API de Google
     - [ ] Implementar los metodos para calcular la geolocalización de la dirección y el calculo de distancias
     - [ ] Implementar una clase test para comprobar el funcionamiento de la API
-  - [ ] Implementar La lógica del calculo del Commuting
+  - [x] Implementar La lógica del calculo del Commuting
     - [x] Implementar metodo que calcule la **distancia al trabajo** del empelado usando el servicio externo
     - [x] Implementar un método que calcule el **impacto mensual del commuting** de un empleado 
     - [x] Implementar pruebas para asegurar la precisión en los cálculos de transporte por distancia y tipo de combustible.
@@ -74,23 +74,57 @@ Desarrollo del Motor de Cálculo (Service) y la lógica de negocio
 
 ## Fase 3: Interfaz de Usuario y Dashboard 
 Creación de la UI con JavaFX y visualización de resultados.
-    - [ ] Diseño Frontend
-    - [ ] Diseñar pantallas (`.fxml`) utilizando **Scene Builder**.
-    - [ ] Crear formularios de entrada de datos para consumos de energía y desplazamientos.
-  - [ ] Visualización de Impacto:**
-    - [ ] Desarrollar un **Dashboard** gráfico que muestre el desglose de emisiones por departamentos
-    - [ ] Asegurar la visualización dinámica de los datos procesados en el Backend.
-    - [ ] Implementar la generación de resúmenes de datos para facilitar la toma de decisiones.
-- [ ] Validaciones de integridad en la UI
-    - [ ] Al borrar un Departamento: comprobar si tiene Empleados/Consumos asociados. Si los tiene, informar al usuario de que debe reasignarlos o eliminarlos antes de proceder.
-    - [ ] Al borrar un Empleado: comprobar si tiene registros de CommutingEmpleado asociados. Mismo comportamiento.
-    - [ ] Al borrar una Empresa: comprobar si tiene Departamentos asociados.
+  - **Diseño y planificación:**
+    - [x] Definir el flujo de navegación entre pantallas con un diagráma
+    - [x] Documentar el mapa de navegación 
+    - [x] Especificar cada pantalla: actores, objetivo, elementos y acciones (`screens.md`)
+    - [x] Crear wireframes de las pantallas principales
+      - [x] P0 · Selección de rol
+      - [x] PA0 · Lista de empresas
+      - [x] PA1 · Vista empresa
+      - [x] PA2 · Gestión de departamento
+      - [x] PR0 · Selección de responsable
+      - [x] PR1 · Vista responsable
+    - [x] Ajustar tamaño y calidad del logo en P0
+    - [x] Resolver centrado de ventana P0 en el primer arranque en frío (ver error 6)
+  - **Implementación:**
+    - [x] Diseñar pantallas (`.fxml`) y controladores
+      - [x] P0 · Selección de rol
+      - [x] PA0 · Lista de empresas — tabla, panel lateral alta empresa, tab Factores de emisión, navegación a PA1
+      - [x] PA1 · Vista empresa — tabs: Departamentos, Consumos, Gráficos (Gráficos: placeholder)
+      - [x] PA2 · Gestión de departamento — tabs: Empleados (CRUD + cálculo distancia ORS), Responsable (asignar, finalizar, historial)
+      - [x] PR0 · Selección de responsable activo
+      - [x] PR1 · Vista responsable — tabs: Consumos, Trabajadores, Huella, Gráficos
+    - [x] Edición y borrado de empresas (desde PA1)
+    - [x] Crear formularios de alta/edición como paneles laterales deslizantes
+    - [x] Script de seed de factores de emisión (`database/seed_factores_emision.sql`)
+    - [x] Geocodificación automática en segundo plano al crear/modificar empresa, departamento y empleado
+  - **Gráficos (actualmente placeholders):**
+    - [ ] PA1 · Tab Gráficos (Administrador) — evolución histórica de emisiones por departamento
+    - [ ] PR1 · Tab Gráficos (Responsable) — evolución histórica de emisiones del departamento por período
+  - **Validaciones de integridad en la UI:**
+    - [x] Al borrar un Departamento: comprobar si tiene Empleados activos asociados.
+    - [x] Al borrar un Empleado: soft delete — se registra fecha_baja en lugar de borrar (preserva auditoría).
+    - [x] Al borrar una Empresa: comprobar si tiene Departamentos asociados.
+    - [ ] Al borrar un Departamento: comprobar también si tiene Consumos asociados.
 
 ---
 
 ## Fase 4: Pruebas Finales y Documentación
 Refinado del software y preparación del proyecto final.
+  - [ ] Refactorizar código duplicado entre `PA1Controller` y `PR1Controller` en una clase `util/UIHelper`: `mostrarError()`, `NOMBRES_MESES`, patrón de navegación (`FXMLLoader` + `Stage`), patrón `Task<Void>` en background, `configurarSelectorPeriodo()` y diálogo de confirmación antes de borrar.
+  - [ ] Exportación a CSV en `PR1Controller` (placeholder actual): reutilizar lógica de `PA1Controller.onExportarCSV()` adaptando nombre de fichero y columnas al contexto de departamento.
   - [ ] Pruebas de compatibilidad en el sistema operativo Linux.
   - [ ] Optimización de consultas SQL en PostgreSQL.
-  - [ ] Finalizar la memoria del proyecto detallando la arquitectura y el cumplimiento de requerimientos.
-  - [ ] Empaquetado para distribución 
+    - [ ] **Métodos de reporting en DAOs con JOIN**: añadir métodos específicos en `ConsumoMensualDAO` y `CommutingEmpleadoDAO` que devuelvan las emisiones ya agregadas mediante queries con JOIN y GROUP BY, sin reconstruir el grafo completo de objetos. Actualizar `ServicioCalculoHuella` para que `getHuellaTotalEmpresaMes`, `getHuellaPorScope` y los métodos anuales usen estos nuevos métodos. Actualmente cada llamada mensual genera ~107 queries por la composición en cadena de los DAOs; con esta mejora se reducirían a ~2. El CRUD de composición existente no se toca.
+    - [ ] **Eliminar hilos de fondo en controladores**: una vez implementados los métodos con JOIN, la latencia de carga se reducirá lo suficiente para que `cargarConsumos()` y `cargarGraficos()` puedan ejecutarse directamente en el Application Thread sin `Task`. Los métodos `geocodificarDireccionEnSegundoPlano` y `calcularDistanciaEnSegundoPlano` sí deben conservar el hilo (dependen de una API externa).
+  - [x] Finalizar la memoria del proyecto detallando la arquitectura y el cumplimiento de requerimientos.
+  - [ ] Empaquetado para distribución
+    - [ ] **Configuración inicial en primer arranque**: detectar ausencia de credenciales de BD y mostrar una pantalla de configuración donde el usuario introduzca la URL, usuario y contraseña de su PostgreSQL. Guardarlas en un fichero local (`.env` o `config.properties`) que no se incluya en la distribución. Actualmente las credenciales se leen de un `.env` que el usuario tendría que crear manualmente.
+  - **Sistema de autenticación (opcional, si queda margen):**
+    - [ ] Nueva tabla `usuarios` en BD (username, password hash, rol, referencia a empleado)
+    - [ ] Clase `Usuario` (POJO) y `UsuarioDAO`
+    - [ ] Pantalla de login (`login.fxml` + controlador)
+    - [ ] Singleton `Sesion` que almacena el usuario logado y su contexto
+    - [ ] Reemplazar P0 y PR0 por la sesión activa en la navegación
+    - [ ] Actualizar documentación: navegacion.puml, navigation_map.md, screens.md

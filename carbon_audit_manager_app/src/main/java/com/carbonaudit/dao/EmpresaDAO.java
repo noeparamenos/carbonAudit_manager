@@ -25,9 +25,6 @@ public class EmpresaDAO implements DAO<Empresa, Integer> {
      */
     @Override
     public Empresa create(Empresa empresa) {
-        // 1. VALIDACIÓN DE CAMPOS OBLIGATORIOS (NOT NULL )
-        validarEmpresa(empresa);
-
         // DIRECCION (si no existe se crea)
         if (empresa.getDireccion().getIdDireccion() == 0) {
             Direccion dirGuardada = direccionDAO.create(empresa.getDireccion());
@@ -45,7 +42,6 @@ public class EmpresaDAO implements DAO<Empresa, Integer> {
             pstmt.setString(3, empresa.getTelefono());
             pstmt.setString(4, empresa.getEmail());
             pstmt.setString(5, empresa.getSector());
-
             // FK NOT NULL (composicion)
             pstmt.setInt(6, empresa.getDireccion().getIdDireccion());
 
@@ -54,32 +50,18 @@ public class EmpresaDAO implements DAO<Empresa, Integer> {
                 empresa.setIdEmpresa(rs.getInt(1));// Guardamos el id asignado por la BD en el objeto
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            if ("23505".equals(e.getSQLState()))
+                throw new IllegalArgumentException("Ya existe una empresa con ese CIF o nombre social.");
+            throw new RuntimeException("Error al crear la empresa.", e);
         }
-        return empresa; //Devolvemos el objeto creado con el ID (PK) actualizado
-    }
-
-    /**
-     * Valida las restricciones de la BD
-     * @param empresa a validar la restricciones
-     */
-    private void validarEmpresa (Empresa empresa) {
-        if (empresa.getNombreSocial() == null || empresa.getNombreSocial().trim().isEmpty()) {
-            throw new IllegalArgumentException("El nombre social es obligatorio y único.");
-        }
-        if (empresa.getCif() == null || empresa.getCif().trim().isEmpty()) {
-            throw new IllegalArgumentException("El CIF es obligatorio y único.");
-        }
-        if (empresa.getDireccion() == null) {
-            throw new IllegalArgumentException("La dirección de la sede es obligatoria para los cálculos de huella.");
-        }
+        return empresa;
     }
 
     /**
      * Busca una empresa concreta por su id (PK de la BD)
      *
      * @param id PK de la empresa a buscar
-     * @return Objeto Empresa si exite.
+     * @return Objeto Empresa si existe.
      */
     @Override
     public Optional<Empresa> findById(Integer id) {
@@ -90,13 +72,14 @@ public class EmpresaDAO implements DAO<Empresa, Integer> {
             pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
 
-            if (rs.next()) {
+            if (rs.next()) { //Fila encontrada
+                //Mapea la fila y envuelve el objeto en un Optional
                 return Optional.of(mapResultSetToEmpresa(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return Optional.empty();
+        return Optional.empty(); // empresa no encontrada
     }
 
     /**
@@ -115,12 +98,10 @@ public class EmpresaDAO implements DAO<Empresa, Integer> {
         e.setEmail(rs.getString("email"));
         e.setSector(rs.getString("sector"));
 
-        // COMPOSICIÓN: Recuperamos el ID de la dirección de la fila actual
+        // COMPOSICIÓN: resuelve la FK cargando el objeto Direccion completo
         int idDir = rs.getInt("id_direccion");
-        // Si existe se asignamos la composicion
         direccionDAO.findById(idDir).ifPresent(e::setDireccion);
-
-        return e; // El Objeto Empresa mapeado desde la BD
+        return e;
     }
 
     /**
@@ -140,21 +121,19 @@ public class EmpresaDAO implements DAO<Empresa, Integer> {
                 empresas.add(mapResultSetToEmpresa(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            if (!"42P01".equals(e.getSQLState())) e.printStackTrace(); // 42P01 = tabla no existe (BD vacía)
         }
         return empresas;
     }
 
 
     /**
-     * Actualiza los datos de una Emrpesa presente en la BD
+     * Actualiza los datos de una Empresa presente en la BD.
      *
-     * @param empresa
+     * @param empresa objeto con los datos actualizados (debe tener idEmpresa válido)
      */
     @Override
     public void update(Empresa empresa) {
-        // VALIDAR LAS RESTRICCIONES
-        validarEmpresa(empresa);
         // Si se la empresa tiene una direccion
         if (empresa.getDireccion() != null) {
             // Si se la ha asignado una direccion nueva se crea

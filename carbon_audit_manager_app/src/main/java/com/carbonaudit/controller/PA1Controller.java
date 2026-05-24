@@ -1,0 +1,775 @@
+package com.carbonaudit.controller;
+
+import com.carbonaudit.model.*;
+import com.carbonaudit.service.ServicioCalculoHuella;
+import com.carbonaudit.service.ServicioGestionDepartamento;
+import com.carbonaudit.service.ServicioGestionEmpleado;
+import com.carbonaudit.service.ServicioGestionEmpresa;
+import com.carbonaudit.service.ServicioGestionResponsable;
+import com.carbonaudit.service.external.ServicioGeograficoORS;
+import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.scene.chart.*;
+import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * Controlador de PA1 · Vista empresa.
+ *
+ * Realiza:
+ *   - Mostrar la cabecera de la empresa (nombre, CIF, ciudad).
+ *   - Gestionar el selector de período (mes/año) compartido entre tabs.
+ *   - Tab Departamentos: listar departamentos, nuevo dpto., navegar a PA2.
+ *   - Tab Consumos: mostrar consumos agregados de toda la empresa para el período.
+ *   - Editar y eliminar la empresa activa.
+ *   - Exportar consumos a CSV.
+ */
+public class PA1Controller {
+
+    // ── Cabecera ─────────────────────────────────────────────────────────
+
+    @FXML private Label lblBreadcrumb;
+    @FXML private Label lblNombreEmpresa;
+    @FXML private Label lblInfoEmpresa;
+
+    // ── Selector de período ───────────────────────────────────────────────
+    /*
+     * combMes se deshabilita cuando el usuario marca "Año completo".
+     * combAnio siempre permanece activo.
+     */
+    @FXML private ComboBox<String>  combMes;
+    @FXML private ComboBox<Integer> combAnio;
+    @FXML private CheckBox chkAnioCompleto;
+
+    // ── TabPane ───────────────────────────────────────────────────────────
+
+    @FXML private TabPane tabPane;
+    @FXML private Tab     tabDepartamentos;
+    @FXML private Tab     tabConsumos;
+    @FXML private Tab     tabGraficos;
+
+    // ── Gráficos ──────────────────────────────────────────────────────────
+
+    @FXML private PieChart                  grafDepartamentos;
+    @FXML private BarChart<String, Number>  grafEmpresaMensual;
+    @FXML private LineChart<String, Number> grafTendenciaDeps;
+
+    // ========= Tab Departamentos ==========================
+
+    @FXML private TableView<Departamento>        tablaDepartamentos;
+    @FXML private TableColumn<Departamento, String> colDeptNombre;
+    @FXML private TableColumn<Departamento, String> colDeptLocalidad;
+    @FXML private TableColumn<Departamento, String> colDeptEmpleados;
+    @FXML private TableColumn<Departamento, String> colDeptResponsable;
+
+    @FXML private VBox  panelDpto;
+    @FXML private Label panelDptoTitulo;
+    @FXML private TextField campDptoNombre;
+    @FXML private TextField campDptoCalle;
+    @FXML private TextField campDptoNumero;
+    @FXML private TextField campDptoCiudad;
+    @FXML private TextField campDptoCp;
+    @FXML private TextField campDptoProvincia;
+
+    // ================== Tab Consumos ======================
+
+    @FXML private TableView<ConsumoMensual>        tablaConsumos;
+    @FXML private TableColumn<ConsumoMensual, String> colConsDept;
+    @FXML private TableColumn<ConsumoMensual, String> colConsRecurso;
+    @FXML private TableColumn<ConsumoMensual, String> colConsCantidad;
+    @FXML private TableColumn<ConsumoMensual, String> colConsUnidad;
+    @FXML private TableColumn<ConsumoMensual, String> colConsAlcance;
+    @FXML private TableColumn<ConsumoMensual, String> colConsEmision;
+    @FXML private Label lblTotalEmpresa;
+
+    // ========= Panel editar empresa =========
+
+    @FXML private VBox      panelEditEmpresa;
+    @FXML private TextField editNombre;
+    @FXML private TextField editCif;
+    @FXML private TextField editTelefono;
+    @FXML private TextField editEmail;
+    @FXML private TextField editSector;
+    @FXML private TextField editCalle;
+    @FXML private TextField editNumero;
+    @FXML private TextField editCiudad;
+    @FXML private TextField editCp;
+    @FXML private TextField editProvincia;
+
+    // ── Servicios ─────────────────────────────────────────────────────────
+
+    private final ServicioGestionEmpresa      servicioEmpresa      = new ServicioGestionEmpresa();
+    private final ServicioGestionDepartamento servicioDepartamento = new ServicioGestionDepartamento();
+    private final ServicioGestionResponsable  servicioResponsable  = new ServicioGestionResponsable();
+    private final ServicioGestionEmpleado     servicioGestion      = new ServicioGestionEmpleado();
+    private final ServicioGeograficoORS       geoService           = new ServicioGeograficoORS();
+    private final ServicioCalculoHuella       servicioHuella       = new ServicioCalculoHuella();
+
+    // ── Estado ────────────────────────────────────────────────────────────
+
+    private Empresa empresa;
+
+    /*
+     * Nombres de los meses en español. 0 = Enero
+     * Para el ComboBox y para convertir índice ↔ número de mes.
+     */
+    private static final String[] NOMBRES_MESES = {
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    };
+
+    private final ObservableList<Departamento>   listaDepartamentos = FXCollections.observableArrayList();
+    private final ObservableList<ConsumoMensual> listaConsumos      = FXCollections.observableArrayList();
+
+    // ── Inicialización ─────────────────────────────────────────────────────
+
+    /**
+     * Se ejecuta automáticamente cuando JavaFX termina de cargar el FXML.
+     * En este punto 'empresa' aún es null — se asigna después en setEmpresa().
+     * Solo se configuran las partes estáticas que no dependen de la empresa.
+     */
+    @FXML
+    public void initialize() {
+
+        configurarSelectorPeriodo();
+        configurarColumnasDepartamentos();
+        configurarColumnasConsumos();
+        configurarClicEnFila();
+        configurarCambioTab();
+    }
+
+    /**
+     * Recibe la empresa seleccionada desde PA0 y actualiza toda la pantalla.
+     *
+     * El controlador origen llama a este método
+     * DESPUÉS de cargar el FXML (loader.getController()) y ANTES de mostrar
+     * la escena, para pasar datos al controlador destino.
+     */
+    public void setEmpresa(Empresa empresa) {
+        this.empresa = empresa;
+        actualizarCabecera();
+        tablaDepartamentos.setItems(listaDepartamentos); // suscripción única
+        tablaConsumos.setItems(listaConsumos);
+        cargarDepartamentos();
+    }
+
+    // ============== Configuración inicial ================
+
+    /**
+     * Rellena los ComboBox de mes y año con los valores posibles y selecciona el período actual.
+     * Registra los listeners que recargan la pestaña activa al cambiar el período.
+     */
+    private void configurarSelectorPeriodo() {
+        combMes.getItems().addAll(NOMBRES_MESES);
+        // Seleccionar el mes actual (getMonthValue() devuelve 1-12; el índice emieza en 0)
+        combMes.getSelectionModel().select(LocalDate.now().getMonthValue() - 1);
+
+        // Se muestran solo los 10 ultimos años
+        int anioActual = LocalDate.now().getYear();
+        for (int a = anioActual; a >= anioActual - 10; a--) {
+            combAnio.getItems().add(a);
+        }
+        combAnio.getSelectionModel().selectFirst();
+
+        // Al cambiar el período, recargar la pestaña activa
+        combMes.setOnAction(e -> refrescarTabActiva());
+        combAnio.setOnAction(e -> refrescarTabActiva());
+    }
+
+    /**
+     * Asocia cada columna de la tabla de departamentos con el campo del objeto que debe mostrar.
+     * La columna de empleados y la de responsable activo lanzan consultas a BD por cada fila.
+     */
+    private void configurarColumnasDepartamentos() {
+        tablaDepartamentos.setColumnResizePolicy(
+                TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+
+        colDeptNombre.setCellValueFactory(data -> //recibe el dept de la fila
+                new SimpleStringProperty(data.getValue().getNombre())); // devuelve su nombre
+
+        colDeptLocalidad.setCellValueFactory(data -> {
+            Direccion dir = data.getValue().getDireccion();
+            return new SimpleStringProperty(dir != null ? dir.getCiudad() : "—");
+        });
+
+        // countEmpleadosDepartamento() lanza una consulta COUNT(*) por cada fila
+        colDeptEmpleados.setCellValueFactory(data -> {
+            int count = servicioGestion.countEmpleadosDepartamento(
+                    data.getValue().getIdDepartamento());
+            return new SimpleStringProperty(String.valueOf(count)); // Total de empleados en el Departamento
+        });
+
+        colDeptResponsable.setCellValueFactory(data -> {
+            Optional<Responsable> resp = servicioResponsable.getActivoByDepartamento(
+                    data.getValue().getIdDepartamento());
+            // Si no hay responsable activo, mostramos un guion
+            return new SimpleStringProperty(
+                    resp.map(r -> r.getEncargado().getNombre()).orElse("—"));
+        });
+    }
+
+    /**
+     * Asocia cada columna de la tabla de consumos con el campo del objeto que debe mostrar.
+     * La emisión se calcula en el momento con calcularEmision() (cantidad × factor).
+     */
+    private void configurarColumnasConsumos() {
+        tablaConsumos.setColumnResizePolicy(
+                TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+
+        colConsDept.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().getDepartamento().getNombre()));
+
+        colConsRecurso.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().getFactorEmision().getNombre()));
+
+        colConsCantidad.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().getCantidad().toPlainString()));
+
+        colConsUnidad.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().getFactorEmision().getUnidad()));
+
+        colConsAlcance.setCellValueFactory(data ->
+                new SimpleStringProperty("Alcance " + data.getValue().getFactorEmision().getAlcance()));
+
+        colConsEmision.setCellValueFactory(data -> {
+            BigDecimal emision = data.getValue().calcularEmision();
+            return new SimpleStringProperty(String.format("%.2f", emision));
+        });
+    }
+
+    /**
+     * Configura la navegación a PA2 con un clic en la fila del departamento.
+     */
+    private void configurarClicEnFila() {
+        tablaDepartamentos.setRowFactory(tv -> {
+            TableRow<Departamento> fila = new TableRow<>();
+            fila.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 1 && !fila.isEmpty()) {
+                    navegarAPA2(fila.getItem());
+                }
+            });
+            return fila;
+        });
+    }
+
+    /**
+     * Carga el tab de Consumos al seleccionarlo, evitando consultas innecesarias
+     * si el usuario no visita ese tab durante la sesión.
+     */
+    private void configurarCambioTab() {
+        tabPane.getSelectionModel().selectedItemProperty().addListener(
+                (obs, anterior, nuevo) -> {
+                    if (empresa == null || nuevo == null) return;
+                    if      (nuevo == tabConsumos)  cargarConsumos();
+                    else if (nuevo == tabGraficos)  cargarGraficos();
+                });
+    }
+
+    // ── Carga de datos ─────────────────────────────────────────────────────
+
+    /** Actualiza los labels de cabecera con los datos de la empresa activa. */
+    private void actualizarCabecera() {
+        lblBreadcrumb.setText(empresa.getNombreSocial());
+        lblNombreEmpresa.setText(empresa.getNombreSocial());
+        String ciudad = (empresa.getDireccion() != null)
+                ? empresa.getDireccion().getCiudad() : "";
+        lblInfoEmpresa.setText("CIF: " + empresa.getCif() + "  ·  " + ciudad);
+    }
+
+    /** Consulta todos los departamentos de la empresa activa y los muestra en la tabla. */
+    private void cargarDepartamentos() {
+        listaDepartamentos.setAll(
+                servicioDepartamento.getDepartamentosEmpresa(empresa.getIdEmpresa()));
+    }
+
+    /**
+     * Carga los consumos según el período activo en un hilo de fondo.
+     * Si "Año completo" está marcado, consulta los 12 meses; si no, solo el mes seleccionado.
+     * El total incluye Alcance 3 solo para los departamentos que lo tengan habilitado.
+     */
+    private void cargarConsumos() {
+        if (empresa == null) return;
+
+        final int     anio        = combAnio.getSelectionModel().getSelectedItem();
+        final boolean anioCompleto = chkAnioCompleto.isSelected();
+        final int     mes         = anioCompleto ? 1 : combMes.getSelectionModel().getSelectedIndex() + 1;
+
+        // Arrays de un solo elemento: truco para compartir datos entre el lambda (call) y el hilo principal.
+        // Las lambdas en Java solo pueden capturar variables "effectively final"; un array sí lo es aunque
+        // se modifique su contenido, por lo que usamos [0] como variable mutable dentro del lambda.
+        @SuppressWarnings("unchecked")
+        final List<ConsumoMensual>[] consumosHolder = new List[1];
+        final BigDecimal[]           totalHolder    = new BigDecimal[1];
+
+        // Task<Void>: unidad de trabajo asíncrono de JavaFX.
+        //   · call()          → se ejecuta en el hilo de fondo (NO en el hilo de JavaFX).
+        //                        Aquí van todas las consultas a BD que bloquearían la UI.
+        //   · setOnSucceeded  → se ejecuta en el hilo de JavaFX cuando call() termina sin excepción.
+        //                        Aquí se actualizan los componentes visuales (tabla, labels…).
+        //   · setOnFailed     → se ejecuta en el hilo de JavaFX si call() lanza una excepción.
+        Task<Void> tarea = new Task<>() {
+            @Override
+            protected Void call() {
+                if (anioCompleto) {
+                    consumosHolder[0] = servicioHuella.getConsumosAnualesEmpresa(empresa.getIdEmpresa(), anio);
+                    totalHolder[0]    = servicioHuella.getHuellaAnualEmpresa(empresa, anio);
+                } else {
+                    consumosHolder[0] = servicioHuella.getConsumosMensualesEmpresa(empresa.getIdEmpresa(), mes, anio);
+                    totalHolder[0]    = servicioHuella.getHuellaTotalEmpresaMes(empresa, mes, anio);
+                }
+                return null;
+            }
+        };
+
+        // Actualizar la UI solo cuando los datos ya están listos (hilo de JavaFX)
+        tarea.setOnSucceeded(e -> {
+            listaConsumos.setAll(consumosHolder[0]);
+            lblTotalEmpresa.setText(String.format("%.2f kg CO₂e", totalHolder[0]));
+        });
+
+        tarea.setOnFailed(e ->
+                mostrarError("Error al cargar los consumos: " + tarea.getException().getMessage()));
+
+        Thread hilo = new Thread(tarea);
+        // Daemon: el hilo muere automáticamente si se cierra la aplicación; no bloquea el JVM al salir.
+        hilo.setDaemon(true);
+        hilo.start();
+    }
+
+    /** Activa o desactiva el modo año completo y deshabilita el combo de mes en consecuencia. */
+    @FXML
+    private void onToggleAnioCompleto() {
+        combMes.setDisable(chkAnioCompleto.isSelected());
+        refrescarTabActiva();
+    }
+
+    /** Recarga los datos de la pestaña activa al cambiar el selector de período. */
+    private void refrescarTabActiva() {
+        if (empresa == null) return;
+        Tab activa = tabPane.getSelectionModel().getSelectedItem();
+        if      (activa == tabConsumos) cargarConsumos();
+        else if (activa == tabGraficos) cargarGraficos();
+    }
+
+    // =========== Panel lateral: NUEVO DEPARTAMENTO =======================
+
+    /**
+     * Abre el panel lateral de nuevo departamento con los campos de dirección
+     * pre-rellenos con los datos de la empresa activa como punto de partida.
+     */
+    @FXML
+    private void onNuevoDepartamento() {
+        // Pre-rellenar con la dirección de la empresa como punto de partida
+        campDptoNombre.clear();
+        if (empresa.getDireccion() != null) {
+            Direccion dir = empresa.getDireccion();
+            campDptoCalle.setText(dir.getCalle());
+            campDptoNumero.setText(String.valueOf(dir.getNumero()));
+            campDptoCiudad.setText(dir.getCiudad());
+            campDptoCp.setText(dir.getCodigoPostal());
+            campDptoProvincia.setText(dir.getProvincia() != null ? dir.getProvincia() : "");
+        }
+        cerrarPanelEditEmpresa();
+        panelDpto.setVisible(true);
+        panelDpto.setManaged(true);
+    }
+
+    /**
+     * Crea el departamento con una Dirección propia.
+     * Se crea siempre una Dirección nueva (idDireccion = 0) para que el departamento
+     * sea independiente de la empresa — si luego se edita una, la otra no cambia.
+     */
+    @FXML
+    private void onGuardarDpto() {
+        String nombre = campDptoNombre.getText().trim();
+        if (nombre.isEmpty()
+                || campDptoCalle.getText().trim().isEmpty()
+                || campDptoNumero.getText().trim().isEmpty()
+                || campDptoCiudad.getText().trim().isEmpty()
+                || campDptoCp.getText().trim().isEmpty()) {
+            mostrarError("Los campos marcados con * son obligatorios.");
+            return;
+        }
+        try {
+            // Dirección nueva con idDireccion = 0 → el DAO la inserta como registro propio
+            Direccion dir = new Direccion();
+            dir.setCalle(campDptoCalle.getText().trim());
+            dir.setNumero(Integer.parseInt(campDptoNumero.getText().trim()));
+            dir.setCiudad(campDptoCiudad.getText().trim());
+            dir.setCodigoPostal(campDptoCp.getText().trim());
+            dir.setProvincia(campDptoProvincia.getText().trim());
+
+            Departamento dpto = new Departamento();
+            dpto.setNombre(nombre);
+            dpto.setEmpresa(empresa);
+            dpto.setDireccion(dir);
+            servicioDepartamento.crearDepartamento(dpto);
+            cargarDepartamentos();
+            cerrarPanelDpto();
+        } catch (NumberFormatException e) {
+            mostrarError("El número de calle debe ser un valor numérico.");
+        } catch (IllegalArgumentException e) {
+            mostrarError(e.getMessage());
+        }
+    }
+
+    @FXML
+    private void onCancelarDpto() {
+        cerrarPanelDpto();
+    }
+
+    // ── Panel lateral: Editar empresa ──────────────────────────────────────
+
+    @FXML
+    private void onEditarEmpresa() {
+        // Pre-rellenar el formulario con los datos actuales de la empresa
+        editNombre.setText(empresa.getNombreSocial());
+        editCif.setText(empresa.getCif());
+        editTelefono.setText(empresa.getTelefono() != null ? empresa.getTelefono() : "");
+        editEmail.setText(empresa.getEmail()    != null ? empresa.getEmail()    : "");
+        editSector.setText(empresa.getSector()  != null ? empresa.getSector()   : "");
+        if (empresa.getDireccion() != null) {
+            Direccion dir = empresa.getDireccion();
+            editCalle.setText(dir.getCalle());
+            editNumero.setText(String.valueOf(dir.getNumero()));
+            editCiudad.setText(dir.getCiudad());
+            editCp.setText(dir.getCodigoPostal());
+            editProvincia.setText(dir.getProvincia());
+        }
+        cerrarPanelDpto();
+        panelEditEmpresa.setVisible(true);
+        panelEditEmpresa.setManaged(true);
+    }
+
+    @FXML
+    private void onGuardarEditEmpresa() {
+        if (editNombre.getText().trim().isEmpty()  || editCif.getText().trim().isEmpty()
+                || editCalle.getText().trim().isEmpty()  || editNumero.getText().trim().isEmpty()
+                || editCiudad.getText().trim().isEmpty() || editCp.getText().trim().isEmpty()
+                || editProvincia.getText().trim().isEmpty()) {
+            mostrarError("Los campos marcados con * son obligatorios.");
+            return;
+        }
+        // Guardar originales para restaurar si la validación falla
+        String origNombre   = empresa.getNombreSocial();
+        String origCif      = empresa.getCif();
+        String origTelefono = empresa.getTelefono();
+        String origEmail    = empresa.getEmail();
+        String origSector   = empresa.getSector();
+        Direccion dir = empresa.getDireccion() != null ? empresa.getDireccion() : new Direccion();
+        String origCalle    = dir.getCalle();
+        int    origNumero   = dir.getNumero();
+        String origCiudad   = dir.getCiudad();
+        String origCp       = dir.getCodigoPostal();
+        String origProvincia = dir.getProvincia();
+        try {
+            empresa.setNombreSocial(editNombre.getText().trim());
+            empresa.setCif(editCif.getText().trim());
+            empresa.setTelefono(editTelefono.getText().trim());
+            empresa.setEmail(editEmail.getText().trim());
+            empresa.setSector(editSector.getText().trim());
+
+            dir.setCalle(editCalle.getText().trim());
+            dir.setNumero(Integer.parseInt(editNumero.getText().trim()));
+            dir.setCiudad(editCiudad.getText().trim());
+            dir.setCodigoPostal(editCp.getText().trim());
+            dir.setProvincia(editProvincia.getText().trim());
+            empresa.setDireccion(dir);
+
+            servicioEmpresa.actualizarEmpresa(empresa);
+            actualizarCabecera();
+            cerrarPanelEditEmpresa();
+            geocodificarDireccionEnSegundoPlano(dir);
+        } catch (NumberFormatException e) {
+            restaurarEmpresa(empresa, dir,
+                    origNombre, origCif, origTelefono, origEmail, origSector,
+                    origCalle, origNumero, origCiudad, origCp, origProvincia);
+            mostrarError("El número de calle debe ser un valor numérico.");
+        } catch (IllegalArgumentException e) {
+            restaurarEmpresa(empresa, dir,
+                    origNombre, origCif, origTelefono, origEmail, origSector,
+                    origCalle, origNumero, origCiudad, origCp, origProvincia);
+            mostrarError(e.getMessage());
+        }
+    }
+
+    @FXML
+    private void onCancelarEditEmpresa() {
+        cerrarPanelEditEmpresa();
+    }
+
+    // ── Eliminar empresa ───────────────────────────────────────────────────
+
+    @FXML
+    private void onEliminarEmpresa() {
+        List<Departamento> departamentos =
+                servicioDepartamento.getDepartamentosEmpresa(empresa.getIdEmpresa());
+        if (!departamentos.isEmpty()) {
+            mostrarError("No se puede eliminar la empresa porque tiene "
+                    + departamentos.size() + " departamento(s) asociado(s).\n"
+                    + "Elimina primero todos los departamentos.");
+            return;
+        }
+
+        Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmacion.setTitle("Confirmar eliminación");
+        confirmacion.setHeaderText("¿Eliminar \"" + empresa.getNombreSocial() + "\"?");
+        confirmacion.setContentText("Esta acción no se puede deshacer.");
+        confirmacion.showAndWait().ifPresent(respuesta -> {
+            if (respuesta == ButtonType.OK) {
+                servicioEmpresa.eliminarEmpresa(empresa.getIdEmpresa());
+                navegarAPA0();
+            }
+        });
+    }
+
+    // Exportar CSV
+
+    @FXML
+    private void onExportarCSV() {
+        if (listaConsumos.isEmpty()) {
+            mostrarError("No hay datos que exportar para el período seleccionado.");
+            return;
+        }
+
+        // Mostrar el elector de carpetas
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Guardar CSV");
+        fileChooser.getExtensionFilters().add( //Solo muestra los .cvs
+                new FileChooser.ExtensionFilter("Archivo CSV (*.csv)", "*.csv"));
+        fileChooser.setInitialFileName( // Nombre sugerido con '_'
+                "consumos_" + empresa.getNombreSocial().replaceAll("\\s+", "_") + ".csv");
+
+        Stage stage = (Stage) tablaConsumos.getScene().getWindow(); //Ventana principal
+        java.io.File archivo = fileChooser.showSaveDialog(stage); //Muestra la ventana y devuelve la ruta del archivo
+        if (archivo == null) return;
+
+        //Rellenar el archivo con los datos
+        try (FileWriter fw = new FileWriter(archivo)) {
+            fw.write("Departamento;Recurso;Cantidad;Unidad;Alcance;Emision_kgCO2e\n");
+            for (ConsumoMensual c : listaConsumos) {
+                fw.write(c.getDepartamento().getNombre() + ";"
+                        + c.getFactorEmision().getNombre()  + ";"
+                        + c.getCantidad()                   + ";"
+                        + c.getFactorEmision().getUnidad()  + ";"
+                        + c.getFactorEmision().getAlcance() + ";"
+                        + c.calcularEmision()               + "\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostrarError("Error al exportar el archivo: " + e.getMessage());
+        }
+    }
+
+    // ── Gráficos
+
+    private void cargarGraficos() {
+        if (empresa == null) return;
+
+        final int anio = combAnio.getSelectionModel().getSelectedItem();
+        final boolean anioCompleto = chkAnioCompleto.isSelected();
+        final int mes = anioCompleto ? 1 : combMes.getSelectionModel().getSelectedIndex() + 1;
+        final List<Departamento> departamentos =
+                servicioDepartamento.getDepartamentosEmpresa(empresa.getIdEmpresa());
+
+        // Contenedores para los datos calculados en segundo plano
+        final Map<Departamento, BigDecimal>       valPeriodo = new LinkedHashMap<>();
+        final List<BigDecimal>                    totalesMes = new ArrayList<>(12);
+        final Map<Departamento, List<BigDecimal>> valMesDept = new LinkedHashMap<>();
+
+        Task<Void> tarea = new Task<>() {
+            @Override
+            protected Void call() {
+                // Calcula huella dept × mes una sola vez — base para los tres gráficos
+                for (int m = 1; m <= 12; m++) {
+                    BigDecimal totalMes = BigDecimal.ZERO;
+                    for (Departamento dep : departamentos) {
+                        BigDecimal val = servicioHuella.getHuellaTotalDepartamentoMes(dep, m, anio);
+                        valMesDept.computeIfAbsent(dep, k -> new ArrayList<>(12)).add(val);
+                        totalMes = totalMes.add(val);
+                    }
+                    totalesMes.add(totalMes.setScale(2, RoundingMode.HALF_UP));
+                }
+                // Valor de cada departamento para el período (tarta)
+                for (Departamento dep : departamentos) {
+                    List<BigDecimal> mensuales = valMesDept.get(dep);
+                    BigDecimal valor = anioCompleto
+                            ? mensuales.stream().reduce(BigDecimal.ZERO, BigDecimal::add)
+                                       .setScale(2, RoundingMode.HALF_UP)
+                            : mensuales.get(mes - 1);
+                    valPeriodo.put(dep, valor);
+                }
+                return null;
+            }
+        };
+
+        tarea.setOnSucceeded(e -> {
+            // Tarta: peso por departamento
+            grafDepartamentos.getData().clear();
+            valPeriodo.forEach((dep, valor) -> {
+                if (valor.compareTo(BigDecimal.ZERO) > 0)
+                    grafDepartamentos.getData().add(
+                            new PieChart.Data(dep.getNombre(), valor.doubleValue()));
+            });
+
+            // Barras: evolución mensual empresa
+            grafEmpresaMensual.getData().clear();
+            XYChart.Series<String, Number> serieEmpresa = new XYChart.Series<>();
+            serieEmpresa.setName(String.valueOf(anio));
+            for (int m = 1; m <= 12; m++)
+                serieEmpresa.getData().add(new XYChart.Data<>(
+                        NOMBRES_MESES[m - 1].substring(0, 3), totalesMes.get(m - 1).doubleValue()));
+            grafEmpresaMensual.getData().add(serieEmpresa);
+
+            // Líneas: tendencia por departamento
+            grafTendenciaDeps.getData().clear();
+            valMesDept.forEach((dep, mensuales) -> {
+                XYChart.Series<String, Number> serie = new XYChart.Series<>();
+                serie.setName(dep.getNombre());
+                for (int m = 1; m <= 12; m++)
+                    serie.getData().add(new XYChart.Data<>(
+                            NOMBRES_MESES[m - 1].substring(0, 3), mensuales.get(m - 1).doubleValue()));
+                grafTendenciaDeps.getData().add(serie);
+            });
+        });
+
+        tarea.setOnFailed(e ->
+                mostrarError("Error al cargar los gráficos: " + tarea.getException().getMessage()));
+
+        Thread hilo = new Thread(tarea);
+        hilo.setDaemon(true);
+        hilo.start();
+    }
+
+    // ── Navegación ─────────────────────────────────────────────────────────
+
+    /** Vuelve a PA1 al hacer clic en "Empresas" del breadcrumb. */
+    @FXML
+    private void onVolverAPA0() {
+        navegarAPA0();
+    }
+
+    @FXML
+    private void onVolverAP0() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/carbonaudit/view/p0-seleccion-rol-view.fxml"));
+            Scene escena = new Scene(loader.load());
+            Stage stage = (Stage) lblNombreEmpresa.getScene().getWindow();
+            stage.setScene(escena);
+            stage.sizeToScene();
+            stage.setResizable(false);
+            stage.setMinWidth(0);
+            stage.setMinHeight(0);
+            stage.centerOnScreen();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void navegarAPA0() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/carbonaudit/view/pa0-empresas-view.fxml"));
+            Scene escena = new Scene(loader.load());
+            Stage stage = (Stage) lblNombreEmpresa.getScene().getWindow();
+            stage.setScene(escena);
+            stage.sizeToScene();
+            stage.setMinWidth(800);
+            stage.setMinHeight(580);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Navega a PA2 pasando el departamento seleccionado al controlador destino.
+     * Mismo patrón que PA0 → PA1: cargar FXML, obtener controlador, pasar objeto, mostrar.
+     */
+    private void navegarAPA2(Departamento departamento) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/carbonaudit/view/pa2-departamento-view.fxml"));
+            Scene escena = new Scene(loader.load());
+            PA2Controller pa2 = loader.getController();
+            pa2.setDepartamento(departamento);
+            Stage stage = (Stage) tablaDepartamentos.getScene().getWindow();
+            stage.setScene(escena);
+            stage.sizeToScene();
+            stage.setMinWidth(800);
+            stage.setMinHeight(580);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────────
+
+    private void cerrarPanelDpto() {
+        panelDpto.setVisible(false);
+        panelDpto.setManaged(false);
+        campDptoNombre.clear();
+        campDptoCalle.clear();    campDptoNumero.clear();
+        campDptoCiudad.clear();   campDptoCp.clear();
+        campDptoProvincia.clear();
+    }
+
+    private void cerrarPanelEditEmpresa() {
+        panelEditEmpresa.setVisible(false);
+        panelEditEmpresa.setManaged(false);
+    }
+
+    private void restaurarEmpresa(Empresa emp, Direccion dir,
+                                   String nombre, String cif, String telefono,
+                                   String email, String sector,
+                                   String calle, int numero, String ciudad,
+                                   String cp, String provincia) {
+        emp.setNombreSocial(nombre); emp.setCif(cif);
+        emp.setTelefono(telefono);   emp.setEmail(email); emp.setSector(sector);
+        dir.setCalle(calle);         dir.setNumero(numero);
+        dir.setCiudad(ciudad);       dir.setCodigoPostal(cp); dir.setProvincia(provincia);
+    }
+
+    private void mostrarError(String mensaje) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Aviso");
+        alert.setHeaderText(null);
+        alert.setContentText(mensaje);
+        alert.showAndWait();
+    }
+
+    private void geocodificarDireccionEnSegundoPlano(Direccion dir) {
+        Task<Void> tarea = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                geoService.completarCoordenadas(dir);
+                return null;
+            }
+        };
+        tarea.setOnSucceeded(e -> servicioEmpresa.persistirCoordenadas(dir));
+        tarea.setOnFailed(e -> Platform.runLater(() ->
+                mostrarError("No se pudo geocodificar la dirección de la empresa.")));
+        Thread hilo = new Thread(tarea);
+        hilo.setDaemon(true);
+        hilo.start();
+    }
+}

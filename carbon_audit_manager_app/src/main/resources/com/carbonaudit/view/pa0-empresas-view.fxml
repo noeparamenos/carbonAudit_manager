@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<!--
+    PA0 · Lista de empresas
+    Layout: BorderPane con topbar fija arriba y contenido central variable.
+    El contenido central es un HBox con la zona principal (TabPane) y los
+    paneles laterales (derecha, ocultos por defecto).
+    Tabs:
+      - Empresas         → tabla de empresas + alta de empresa
+      - Factores de emisión → tabla de factores + alta/edición de factor
+-->
+<BorderPane prefWidth="960.0" prefHeight="640.0" minWidth="700.0" minHeight="500.0"
+            styleClass="pantalla-interior"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.carbonaudit.controller.PA0Controller">
+
+    <stylesheets>
+        <URL value="@estilos.css"/>
+    </stylesheets>
+
+    <!-- =========== TOPBAR ========== -->
+    <top>
+        <HBox styleClass="topbar">
+            <Label text="CarbonAudit Manager" styleClass="topbar-titulo"/>
+            <Label text=" › " styleClass="topbar-sep"/>
+            <Label text="Inicio" styleClass="topbar-breadcrumb-link"
+                   onMouseClicked="#onVolverAP0"/>
+            <Label text=" › " styleClass="topbar-sep"/>
+            <Label text="Empresas" styleClass="topbar-breadcrumb"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="Administrador" styleClass="topbar-rol"/>
+        </HBox>
+    </top>
+
+    <!-- ==================== CONTENIDO CENTRAL ===================== -->
+    <center>
+        <HBox>
+
+            <!-- Zona principal -->
+            <VBox HBox.hgrow="ALWAYS" styleClass="zona-principal">
+                <padding>
+                    <Insets top="24.0" right="24.0" bottom="24.0" left="24.0"/>
+                </padding>
+
+                <TabPane fx:id="tabPane" VBox.vgrow="ALWAYS" styleClass="tab-pane-verde">
+                    <tabs>
+
+                        <!-- ── Tab: Empresas ──────────────────────────── -->
+                        <Tab text="Empresas" closable="false">
+                            <content>
+                                <VBox spacing="12.0">
+                                    <padding>
+                                        <Insets top="16.0"/>
+                                    </padding>
+
+                                    <HBox alignment="CENTER_LEFT">
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <Button text="+ Nueva empresa" styleClass="btn-primario"
+                                                onAction="#onNuevaEmpresa"/>
+                                    </HBox>
+
+                                    <TableView fx:id="tablaEmpresas" VBox.vgrow="ALWAYS"
+                                               styleClass="tabla">
+                                        <placeholder>
+                                            <Label text="No hay empresas registradas."
+                                                   styleClass="tabla-placeholder"/>
+                                        </placeholder>
+                                        <columns>
+                                            <TableColumn fx:id="colNombre" text="Nombre social" prefWidth="300.0"/>
+                                            <TableColumn fx:id="colCif"    text="CIF"            prefWidth="120.0"/>
+                                            <TableColumn fx:id="colCiudad" text="Ciudad"         prefWidth="160.0"/>
+                                            <TableColumn fx:id="colSector" text="Sector"         prefWidth="140.0"/>
+                                        </columns>
+                                    </TableView>
+
+                                    <Label text="Haz clic en una empresa para acceder a sus departamentos y consumos."
+                                           styleClass="texto-ayuda"/>
+                                </VBox>
+                            </content>
+                        </Tab>
+
+                        <!-- ── Tab: Factores de emisión ───────────────── -->
+                        <!--
+                            Datos de referencia globales usados en toda la aplicación:
+                            - Alcance 1: combustión directa (gas, gasóleo, gasolina...)
+                            - Alcance 2: energía indirecta (electricidad de red)
+                            - Alcance 3: transporte y movilidad (commuting de empleados)
+                            Clic en fila → abre panel lateral en modo edición.
+                        -->
+                        <Tab text="Factores de emisión" closable="false">
+                            <content>
+                                <VBox spacing="12.0">
+                                    <padding>
+                                        <Insets top="16.0"/>
+                                    </padding>
+
+                                    <HBox alignment="CENTER_LEFT">
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <Button text="+ Nuevo factor" styleClass="btn-primario"
+                                                onAction="#onNuevoFactor"/>
+                                    </HBox>
+
+                                    <TableView fx:id="tablaFactores" VBox.vgrow="ALWAYS"
+                                               styleClass="tabla">
+                                        <placeholder>
+                                            <Label text="No hay factores de emisión registrados."
+                                                   styleClass="tabla-placeholder"/>
+                                        </placeholder>
+                                        <columns>
+                                            <TableColumn fx:id="colFactNombre"  text="Nombre"            prefWidth="240.0"/>
+                                            <TableColumn fx:id="colFactUnidad"  text="Unidad"            prefWidth="80.0"/>
+                                            <TableColumn fx:id="colFactValor"   text="kg CO₂e / unidad"  prefWidth="140.0"/>
+                                            <TableColumn fx:id="colFactAlcance" text="Alcance"           prefWidth="130.0"/>
+                                        </columns>
+                                    </TableView>
+
+                                    <Label text="Haz clic en un factor para editarlo o eliminarlo."
+                                           styleClass="texto-ayuda"/>
+                                </VBox>
+                            </content>
+                        </Tab>
+
+                    </tabs>
+                </TabPane>
+
+            </VBox>
+
+            <!-- ── PANEL LATERAL: Nueva / Editar empresa ────────────────── -->
+            <VBox fx:id="panelEmpresa" managed="false" visible="false"
+                  styleClass="panel-lateral" spacing="14.0"
+                  prefWidth="340.0" minWidth="340.0">
+
+                <HBox alignment="CENTER_LEFT" spacing="8.0">
+                    <Label text="Nueva empresa" styleClass="panel-titulo"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Cerrar" styleClass="btn-cerrar" onAction="#onCancelarEmpresa"/>
+                </HBox>
+                <Separator/>
+
+                <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="scroll-formulario">
+                    <GridPane hgap="10.0" vgap="10.0">
+                        <padding>
+                            <Insets top="4.0" right="4.0" bottom="4.0" left="4.0"/>
+                        </padding>
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="90.0" prefWidth="90.0"/>
+                            <ColumnConstraints hgrow="ALWAYS"/>
+                        </columnConstraints>
+
+                        <Label text="Nombre *"   styleClass="form-label" GridPane.rowIndex="0"  GridPane.columnIndex="0"/>
+                        <TextField fx:id="campNombre"   promptText="Nombre social"
+                                   GridPane.rowIndex="0"  GridPane.columnIndex="1"/>
+
+                        <Label text="CIF *"      styleClass="form-label" GridPane.rowIndex="1"  GridPane.columnIndex="0"/>
+                        <TextField fx:id="campCif"      promptText="B12345678"
+                                   GridPane.rowIndex="1"  GridPane.columnIndex="1"/>
+
+                        <Label text="Teléfono"   styleClass="form-label" GridPane.rowIndex="2"  GridPane.columnIndex="0"/>
+                        <TextField fx:id="campTelefono" promptText="600 000 000"
+                                   GridPane.rowIndex="2"  GridPane.columnIndex="1"/>
+
+                        <Label text="Email"      styleClass="form-label" GridPane.rowIndex="3"  GridPane.columnIndex="0"/>
+                        <TextField fx:id="campEmail"    promptText="empresa@correo.com"
+                                   GridPane.rowIndex="3"  GridPane.columnIndex="1"/>
+
+                        <Label text="Sector"     styleClass="form-label" GridPane.rowIndex="4"  GridPane.columnIndex="0"/>
+                        <TextField fx:id="campSector"   promptText="Tecnología, Industria..."
+                                   GridPane.rowIndex="4"  GridPane.columnIndex="1"/>
+
+                        <Label text="Dirección"  styleClass="form-seccion"
+                               GridPane.rowIndex="5"  GridPane.columnIndex="0" GridPane.columnSpan="2"/>
+
+                        <Label text="Calle *"    styleClass="form-label" GridPane.rowIndex="6"  GridPane.columnIndex="0"/>
+                        <TextField fx:id="campCalle"    promptText="Calle Mayor"
+                                   GridPane.rowIndex="6"  GridPane.columnIndex="1"/>
+
+                        <Label text="Número *"   styleClass="form-label" GridPane.rowIndex="7"  GridPane.columnIndex="0"/>
+                        <TextField fx:id="campNumero"   promptText="12"
+                                   GridPane.rowIndex="7"  GridPane.columnIndex="1"/>
+
+                        <Label text="Ciudad *"   styleClass="form-label" GridPane.rowIndex="8"  GridPane.columnIndex="0"/>
+                        <TextField fx:id="campCiudad"   promptText="Madrid"
+                                   GridPane.rowIndex="8"  GridPane.columnIndex="1"/>
+
+                        <Label text="C. Postal *" styleClass="form-label" GridPane.rowIndex="9"  GridPane.columnIndex="0"/>
+                        <TextField fx:id="campCp"       promptText="28001"
+                                   GridPane.rowIndex="9"  GridPane.columnIndex="1"/>
+
+                        <Label text="Provincia *" styleClass="form-label" GridPane.rowIndex="10" GridPane.columnIndex="0"/>
+                        <TextField fx:id="campProvincia" promptText="Madrid"
+                                   GridPane.rowIndex="10" GridPane.columnIndex="1"/>
+                    </GridPane>
+                </ScrollPane>
+
+                <HBox spacing="10.0" alignment="CENTER">
+                    <Button text="Guardar"  styleClass="btn-primario"   onAction="#onGuardarEmpresa"/>
+                    <Button text="Cancelar" styleClass="btn-secundario" onAction="#onCancelarEmpresa"/>
+                </HBox>
+            </VBox>
+
+            <!-- ── PANEL LATERAL: Nuevo / Editar factor de emisión ──────── -->
+            <!--
+                El alcance determina el tipo de recurso:
+                  1 · Combustión directa → gas, gasóleo, gasolina...
+                  2 · Energía            → electricidad de red...
+                  3 · Transporte         → medios de desplazamiento de empleados
+                El valor_factor es siempre en kg CO₂e por unidad del recurso.
+            -->
+            <VBox fx:id="panelFactor" managed="false" visible="false"
+                  styleClass="panel-lateral" spacing="14.0"
+                  prefWidth="300.0" minWidth="300.0">
+
+                <HBox alignment="CENTER_LEFT" spacing="8.0">
+                    <Label fx:id="panelFactorTitulo" text="Nuevo factor" styleClass="panel-titulo"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Cerrar" styleClass="btn-cerrar" onAction="#onCancelarFactor"/>
+                </HBox>
+                <Separator/>
+
+                <GridPane hgap="10.0" vgap="12.0" VBox.vgrow="ALWAYS">
+                    <padding>
+                        <Insets top="4.0" right="4.0" bottom="4.0" left="4.0"/>
+                    </padding>
+                    <columnConstraints>
+                        <ColumnConstraints minWidth="80.0" prefWidth="80.0"/>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                    </columnConstraints>
+
+                    <Label text="Nombre *"  styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                    <TextField fx:id="campFactNombre" promptText="Ej: Electricidad red"
+                               GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                    <Label text="Unidad *"  styleClass="form-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                    <TextField fx:id="campFactUnidad" promptText="kWh, litros, km, m³"
+                               GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                    <Label text="kg CO₂e *" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                    <TextField fx:id="campFactValor" promptText="0.00000"
+                               GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                    <Label text="Alcance *"  styleClass="form-label" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                    <ComboBox fx:id="combFactAlcance" maxWidth="Infinity"
+                              GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                </GridPane>
+
+                <Region VBox.vgrow="ALWAYS"/>
+
+                <HBox spacing="8.0" alignment="CENTER">
+                    <Button text="Guardar"  styleClass="btn-primario"   onAction="#onGuardarFactor"/>
+                    <Button text="Cancelar" styleClass="btn-secundario" onAction="#onCancelarFactor"/>
+                </HBox>
+                <Button fx:id="btnEliminarFactor" text="Eliminar factor"
+                        styleClass="btn-peligro" visible="false" managed="false"
+                        maxWidth="Infinity" onAction="#onEliminarFactor"/>
+            </VBox>
+
+        </HBox>
+    </center>
+
+</BorderPane>

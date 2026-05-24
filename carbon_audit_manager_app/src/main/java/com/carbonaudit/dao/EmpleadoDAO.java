@@ -21,9 +21,6 @@ public class EmpleadoDAO implements DAO<Empleado, Integer> {
      */
     @Override
     public Empleado create(Empleado empleado) {
-        // Validaciones de integridad (campos NOT NULL de la BD)
-        validarEmpleado(empleado);
-
         // Creamos una nueva direccion si se le ha asignado una nueva
         if (empleado.getDireccion().getIdDireccion() == 0) {
             Direccion nuevaDir = direccionDAO.create(empleado.getDireccion());
@@ -54,27 +51,11 @@ public class EmpleadoDAO implements DAO<Empleado, Integer> {
                 empleado.setIdEmpleado(rs.getInt(1)); // Recuperación del ID autogenerado
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            if ("23505".equals(e.getSQLState()))
+                throw new IllegalArgumentException("Ya existe un empleado con esos datos.");
+            throw new RuntimeException("Error al crear el empleado.", e);
         }
         return empleado;
-    }
-
-    private void validarEmpleado(Empleado empleado) {
-        if (empleado.getNombre() == null || empleado.getNombre().isEmpty()) {
-            throw new IllegalArgumentException("El nombre del empleado es obligatorio.");
-        }
-        if (empleado.getFechaAlta() == null) {
-            throw new IllegalArgumentException("La fecha de alta es obligatoria.");
-        }
-        if (empleado.getDireccion() == null) {
-            throw new IllegalArgumentException("La dirección de residencia es obligatoria.");
-        }
-        if (empleado.getMedioTransporte() == null) {
-            throw new IllegalArgumentException("El medio de transporte es obligatorio para el cálculo de movilidad.");
-        }
-        if (empleado.getDepartamento() == null || empleado.getDepartamento().getIdDepartamento() == 0) {
-            throw new IllegalArgumentException("El departamento es obligatorio.");
-        }
     }
 
     /**
@@ -114,8 +95,6 @@ public class EmpleadoDAO implements DAO<Empleado, Integer> {
      */
     @Override
     public void update(Empleado empleado) {
-        // Restricciones de integridad
-        validarEmpleado(empleado);
         // Al actualizar, siempre refrescamos los datos de la dirección en su tabla
         if (empleado.getDireccion() != null) {
             direccionDAO.update(empleado.getDireccion());
@@ -177,7 +156,7 @@ public class EmpleadoDAO implements DAO<Empleado, Integer> {
 
     /**
      * Cuenta cuántos empleados pertenecen a un departamento concreto.
-     * Se usa en PA2 para mostrar la columna "Nº empleados" de la tabla.
+     * Se usa en UI (PA2) para mostrar la columna "Nº empleados" de la tabla.
      *
      * @param idDepartamento ID del departamento
      * @return Número de empleados en ese departamento
